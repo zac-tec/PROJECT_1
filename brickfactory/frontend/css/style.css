@@ -1,39 +1,36 @@
 :root {
-  /* Palette: edit this block to retheme the entire redesign. */
-  --black: #000505;
-  --space-indigo: #3b3355;
-  --dusty-grape: #5d5d81;
-  --pale-sky: #bfcde0;
-  --white: #fefcfd;
-  --signal: #8c7bff;
-  --signal-soft: #e8e4ff;
-  --signal-glow: rgba(140, 123, 255, 0.38);
-
-  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  /* Monochrome theme: edit this block to retheme the entire redesign. */
+  --black: #08090a;
+  --charcoal: #17191c;
+  --slate: #626872;
+  --silver: #c8ccd1;
+  --white: #fafafa;
+  --signal: #f4f4f4;
+  --signal-soft: #e6e7e9;
+  --signal-glow: rgba(255, 255, 255, 0.42);
+  --font-display: "Syne", "Arial Black", sans-serif;
   --font-body: "DM Sans", "Segoe UI", sans-serif;
-
-  --primary: var(--space-indigo);
+  --primary: var(--charcoal);
   --primary-dark: var(--black);
-  --primary-light: var(--pale-sky);
+  --primary-light: var(--silver);
   --accent: var(--signal);
   --sidebar-bg: var(--black);
-  --sidebar-text: var(--pale-sky);
+  --sidebar-text: var(--silver);
   --sidebar-text-active: var(--white);
-  --bg: #dce6f2;
+  --bg: #e4e5e7;
   --card: var(--white);
   --ink: var(--black);
-  --muted: var(--dusty-grape);
-  --border: color-mix(in srgb, var(--dusty-grape) 35%, var(--white));
-  --ok: #2f6f62;
-  --ok-bg: #d8ebe5;
-  --bad: #9f3e55;
-  --bad-bg: #f4dce3;
-  --warn: #856c2f;
+  --muted: var(--slate);
+  --border: #c4c7cb;
+  --ok: #3d4a43;
+  --ok-bg: #e0e5e2;
+  --bad: #4d4141;
+  --bad-bg: #ebe4e4;
+  --warn: #57534b;
   --radius: 10px;
-  --shadow: 0 1px 3px rgba(0, 5, 5, 0.08), 0 1px 2px rgba(0, 5, 5, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 5, 5, 0.1);
+  --shadow: 0 1px 3px rgba(8, 9, 10, 0.1), 0 1px 2px rgba(8, 9, 10, 0.08);
+  --shadow-md: 0 8px 22px rgba(8, 9, 10, 0.14);
 }
-
 * { box-sizing: border-box; }
 
 body {
@@ -44,11 +41,27 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    width: 42vw;
+    height: 42vw;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(70px);
+    opacity: .22;
+    background: radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 68%);
+    animation: ambientDrift 15s ease-in-out infinite alternate;
+  }
+  body::before { top: -18vw; left: -10vw; }
+  body::after { right: -12vw; bottom: -20vw; animation-delay: -6s; animation-direction: alternate-reverse; }
+
 svg { display: inline-block; vertical-align: middle; }
 .icon { width: 18px; height: 18px; stroke-width: 2.2; }
-
 .brand-lockup { display: inline-flex; align-items: center; letter-spacing: .015em; }
 .brand-lockup > span { display: inline-block; }
+@keyframes ambientDrift { from { transform: translate3d(-3vw, 2vh, 0) scale(.9); } to { transform: translate3d(5vw, -3vh, 0) scale(1.1); } }
 
 /* ---------------- Topbar ---------------- */
 header.topbar {
@@ -84,9 +97,9 @@ header.topbar button.logout-btn {
   cursor: pointer;
   display: flex;
   align-items: center;
-  box-shadow: 0 0 0 1px rgba(191, 205, 224, .1), 0 0 0 rgba(140, 123, 255, 0);
+  box-shadow: 0 0 0 1px rgba(250, 250, 250, .1), 0 0 0 rgba(255, 255, 255, 0);
 }
-header.topbar button.logout-btn:hover { background: rgba(140, 123, 255, .2); box-shadow: 0 0 18px var(--signal-glow); }
+header.topbar button.logout-btn:hover { background: rgba(250, 250, 250, .14); box-shadow: 0 0 18px var(--signal-glow); }
 header.topbar button.logout-btn:active { transform: scale(0.94); }
 
 /* ---------------- PWA install button ---------------- */
@@ -106,8 +119,8 @@ header.topbar button.install-btn {
 header.topbar button.install-btn:hover { background: var(--primary); animation: none; box-shadow: 0 0 18px var(--signal-glow); }
 header.topbar button.install-btn:active { transform: scale(0.94); }
 @keyframes installPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(79,70,229,0.5); }
-  50% { box-shadow: 0 0 0 5px rgba(79,70,229,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+  50% { box-shadow: 0 0 0 5px rgba(255,255,255,0); }
 }
 
 /* Standalone variant used on the login page — full pill with label */
@@ -157,9 +170,9 @@ nav.sidebar button {
   margin-bottom: 2px;
   transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
-nav.sidebar button:hover { background: rgba(140, 123, 255, .14); color: var(--sidebar-text-active); box-shadow: 0 0 18px rgba(140, 123, 255, .16); transform: translateX(2px); }
+nav.sidebar button:hover { background: rgba(250, 250, 250, .12); color: var(--sidebar-text-active); box-shadow: 0 0 18px rgba(255, 255, 255, .16); transform: translateX(2px); }
 nav.sidebar button:active { transform: scale(0.98); }
-nav.sidebar button.active { background: linear-gradient(90deg, var(--primary), var(--dusty-grape)); color: white; font-weight: 600; box-shadow: 0 0 22px rgba(140, 123, 255, .24); }
+nav.sidebar button.active { background: linear-gradient(90deg, var(--charcoal), var(--slate)); color: white; font-weight: 600; box-shadow: 0 0 22px rgba(255, 255, 255, .18); }
 
 main.content { flex: 1; padding: 20px 24px 40px; max-width: 920px; }
 
@@ -212,21 +225,21 @@ label { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 4
 
 /* ---------------- Buttons ---------------- */
 button.primary {
-  background: linear-gradient(135deg, var(--signal), var(--primary));
-  color: white;
+  background: linear-gradient(135deg, #ffffff, var(--silver));
+  color: var(--black);
   border: none;
   padding: 10px 18px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
-  box-shadow: 0 8px 18px rgba(59, 51, 85, .2), 0 0 0 rgba(140, 123, 255, 0);
+  box-shadow: 0 8px 18px rgba(8, 9, 10, .2), 0 0 0 rgba(255, 255, 255, 0);
 }
-button.primary:hover { background: linear-gradient(135deg, #a294ff, var(--primary)); box-shadow: 0 10px 24px rgba(59, 51, 85, .28), 0 0 22px var(--signal-glow); transform: translateY(-2px); }
+button.primary:hover { background: linear-gradient(135deg, #ffffff, #aeb3b9); box-shadow: 0 10px 24px rgba(8, 9, 10, .24), 0 0 22px var(--signal-glow); transform: translateY(-2px); }
 button.primary:active { transform: scale(0.96); }
 
 button.secondary {
-  background: rgba(254, 252, 253, .78);
+  background: rgba(250, 250, 250, .82);
   border: 1.5px solid var(--border);
   color: var(--ink);
   padding: 10px 16px;
@@ -234,9 +247,9 @@ button.secondary {
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(59, 51, 85, .08);
+  box-shadow: 0 4px 14px rgba(8, 9, 10, .08);
 }
-button.secondary:hover { border-color: var(--signal); background: var(--signal-soft); box-shadow: 0 0 18px var(--signal-glow); transform: translateY(-2px); }
+button.secondary:hover { border-color: var(--slate); background: var(--signal-soft); box-shadow: 0 0 18px var(--signal-glow); transform: translateY(-2px); }
 button.secondary:active { transform: scale(0.96); }
 
 /* Small icon-only buttons, used for inline editing */
@@ -254,7 +267,7 @@ button.icon-btn {
   transition: border-color 0.18s ease, color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease, background .18s ease;
   margin-right: 4px;
 }
-button.icon-btn:hover { border-color: var(--signal); color: var(--signal); background: var(--signal-soft); box-shadow: 0 0 16px var(--signal-glow); transform: translateY(-2px); }
+button.icon-btn:hover { border-color: var(--slate); color: var(--black); background: var(--signal-soft); box-shadow: 0 0 16px var(--signal-glow); transform: translateY(-2px); }
 button.icon-btn:active { transform: scale(0.92); }
 button.icon-btn.save { border-color: var(--ok); color: var(--ok); }
 button.icon-btn.save:hover { background: var(--ok-bg); }
@@ -366,7 +379,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
 }
 
 .app-dialog {
-  border: 1px solid color-mix(in srgb, var(--pale-sky) 70%, var(--space-indigo));
+  border: 1px solid #b7bbc0;
   border-radius: 18px;
   padding: 0;
   width: min(440px, calc(100vw - 40px));
@@ -393,7 +406,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   font-size: 17px;
   line-height: 1.25;
   letter-spacing: .01em;
-  background: linear-gradient(135deg, var(--space-indigo), var(--dusty-grape));
+  background: linear-gradient(135deg, var(--charcoal), var(--slate));
   color: var(--white);
 }
 .app-dialog h2::after { content: ""; display: block; width: 34px; height: 2px; margin-top: 12px; background: var(--signal); border-radius: 2px; }
