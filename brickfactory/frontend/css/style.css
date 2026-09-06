@@ -47,20 +47,8 @@ body {
 svg { display: inline-block; vertical-align: middle; }
 .icon { width: 18px; height: 18px; stroke-width: 2.2; }
 
-.brand-lockup { display: inline-flex; align-items: center; gap: 10px; letter-spacing: .02em; }
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid rgba(191, 205, 224, .28);
-  border-radius: 9px;
-  color: var(--signal);
-  background: linear-gradient(145deg, rgba(140, 123, 255, .2), rgba(191, 205, 224, .06));
-  box-shadow: 0 0 18px rgba(140, 123, 255, .18), inset 0 1px rgba(254, 252, 253, .14);
-}
-.brand-mark .icon { width: 17px; height: 17px; }
-.brand-subtitle { color: var(--pale-sky); opacity: .55; font: 600 9px/1 var(--font-body); letter-spacing: .16em; margin-left: 2px; }
+.brand-lockup { display: inline-flex; align-items: center; letter-spacing: .015em; }
+.brand-lockup > span { display: inline-block; }
 
 /* ---------------- Topbar ---------------- */
 header.topbar {
@@ -399,7 +387,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
 .app-dialog.is-closing::backdrop { animation: backdropExit 180ms ease both; }
 .app-dialog h2 {
   margin: 0;
-  padding: 20px 24px 14px 58px;
+  padding: 20px 24px 14px;
   position: relative;
   font-family: var(--font-display);
   font-size: 17px;
@@ -408,16 +396,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   background: linear-gradient(135deg, var(--space-indigo), var(--dusty-grape));
   color: var(--white);
 }
-.app-dialog h2::before {
-  content: "✦";
-  position: absolute;
-  left: 24px;
-  top: 17px;
-  color: var(--pale-sky);
-  font-family: var(--font-body);
-  font-size: 22px;
-  animation: dialogSpark 1.8s ease-in-out infinite;
-}
+.app-dialog h2::after { content: ""; display: block; width: 34px; height: 2px; margin-top: 12px; background: var(--signal); border-radius: 2px; }
 .app-dialog p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; padding: 22px 24px 0; margin: 0; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin: 0; padding: 20px 24px 24px; }
 .app-dialog .dialog-actions button { min-width: 112px; }
@@ -428,10 +407,34 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 @keyframes dialogExit { to { opacity: 0; transform: translateY(12px) scale(.96); } }
 @keyframes backdropEnter { from { opacity: 0; } to { opacity: 1; } }
 @keyframes backdropExit { to { opacity: 0; } }
-@keyframes dialogSpark { 0%, 100% { transform: rotate(0) scale(1); opacity: .8; } 50% { transform: rotate(18deg) scale(1.16); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .app-dialog, .app-dialog::backdrop, .app-dialog.is-closing, .app-dialog.is-closing::backdrop, .app-dialog h2::before { animation: none; }
+  .app-dialog, .app-dialog::backdrop, .app-dialog.is-closing, .app-dialog.is-closing::backdrop { animation: none; }
   button, .icon-btn, [role="button"] { transition: none; }
+}
+
+/* Fast title sequence for the redesign preview login. */
+.brand-intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--black); color: var(--white); animation: introExit 360ms ease 1.05s forwards; }
+.brand-intro-word { display: flex; font: 400 clamp(30px, 8vw, 76px)/1 var(--font-display); letter-spacing: .08em; }
+.brand-intro-word span { display: inline-block; opacity: 0; transform: translateY(18px); animation: letterReveal 220ms cubic-bezier(.2, .8, .2, 1) forwards; }
+.brand-intro-word span:nth-child(1) { animation-delay: 80ms; }
+.brand-intro-word span:nth-child(2) { animation-delay: 125ms; }
+.brand-intro-word span:nth-child(3) { animation-delay: 170ms; }
+.brand-intro-word span:nth-child(4) { animation-delay: 215ms; }
+.brand-intro-word span:nth-child(5) { animation-delay: 260ms; }
+.brand-intro-word span:nth-child(6) { animation-delay: 305ms; }
+.brand-intro-word span:nth-child(7) { animation-delay: 350ms; }
+.brand-intro-word span:nth-child(8) { animation-delay: 395ms; }
+.brand-intro-word span:nth-child(9) { animation-delay: 440ms; }
+.brand-intro-word span:nth-child(10) { animation-delay: 485ms; }
+.brand-intro-word span:nth-child(11) { animation-delay: 530ms; }
+.brand-intro-word span:nth-child(12) { animation-delay: 575ms; }
+.login-card { animation: loginSettle 520ms cubic-bezier(.2, .8, .2, 1) 1.12s both; }
+@keyframes letterReveal { to { opacity: 1; transform: translateY(0); } }
+@keyframes introExit { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+@keyframes loginSettle { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .brand-intro { animation: introExit 1ms linear forwards; }
+  .brand-intro-word span, .login-card { animation: none; opacity: 1; transform: none; }
 }
 .stock-stage-grid { display:grid; grid-template-columns:repeat(4,minmax(130px,1fr)); gap:12px; margin:14px 0; }
 .stock-stage-grid .stat { padding:14px; border:1px solid var(--border); border-radius:10px; }
