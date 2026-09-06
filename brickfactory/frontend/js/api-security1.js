@@ -424,7 +424,10 @@ function appDialog(title, message, confirm = false, isError = false) {
         return;
       }
       dialog.classList.add("is-closing");
-      dialog.addEventListener("animationend", () => dialog.close(), { once: true });
+      // Cached/disabled CSS must never leave a confirmation stuck open.
+      const fallback = setTimeout(() => dialog.close(), 350);
+      dialog.addEventListener("animationend", () => { clearTimeout(fallback); dialog.close(); }, { once: true });
+      dialog.addEventListener("close", () => clearTimeout(fallback), { once: true });
     };
     dialog.addEventListener("click", (event) => {
       if (event.target === dialog) closeDialog("cancel");

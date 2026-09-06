@@ -193,7 +193,12 @@ const sessionUI = (() => {
     attach: hooks => { adapter = hooks; adapter.setSaleId?.(state.saleId); },
     saleCleared: () => { state.saleId = null; persist(); },
     select: section => { state.section = section; persist(); },
-    initial: fallback => document.getElementById(`sec-${state.section}`) ? state.section : fallback,
+    initial: fallback => {
+      // Preserve location when the redesign combines the old admin sections.
+      const renamed = {rates: "pricing", charges: "pricing", fixedcharges: "pricing", recipe: "pricing", saleprice: "pricing", overview: "orders"};
+      const section = role === "admin" ? (renamed[state.section] || state.section) : state.section;
+      return document.getElementById(`sec-${section}`) ? section : fallback;
+    },
     initialize: () => { restore(); adapter.afterRestore?.(); },
     forget: () => { remembering = false; sessionStorage.removeItem(key); },
   };

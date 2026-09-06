@@ -10,6 +10,7 @@
 
 ## In progress
 
+
 - Database setup verification: document fresh/restore paths, enforce migration order, and add an isolated temporary-database test.
 
 ## Repository reset
@@ -46,3 +47,7 @@
 Completed frontend recovery/security changes and the verified Pi backend/Git-tracking cleanup have been removed from this task list. Historical details and backups remain available; secret rotation and the review/commit step are still outstanding.
 
 Database setup documentation, an ordered runner, and the isolated test have been added. The test still requires a PostgreSQL role with permission to create/use a disposable database; it has not touched the live Pi database.
+
+## UI merge status — 2026-09-07
+
+`ui-redesign` was already merged into `main` at `db18bce`. Integration removes demo API code/references, preserves recovery/security behavior, maps old admin sections into Pricing/Orders, and adds a dialog-close fallback. Asset/cache version is `ui-live1`. Focused recovery, stored-XSS, navigation/asset and integration tests passed without live business writes. Current branch and uncommitted frontend were backed up in `/home/vps/app-update-backups/ui-merge-20260907-011606` and branch `backup/ui-merge-20260907-011606`. The redesign worktree is retained. No push performed by this agent.
