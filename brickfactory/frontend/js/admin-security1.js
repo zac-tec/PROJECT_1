@@ -455,12 +455,8 @@ async function sendEmailNow() {
 
 onSectionLoad("dashboard", markSeen => loadDashboard(markSeen));
 onSectionLoad("reportsettings", loadDeliverySettings);
-onSectionLoad("rates", () => Promise.all([loadRates(), loadRateHistory()]));
-onSectionLoad("charges", () => Promise.all([loadCharges(), loadChargeHistory()]));
+onSectionLoad("pricing", () => Promise.all([loadRates(), loadCharges(), loadFixedCharges(), loadRecipe(), loadDefaultBrickPrice()]));
 onSectionLoad("history", () => Promise.all([loadRateHistory(), loadChargeHistory()]));
-onSectionLoad("fixedcharges", loadFixedCharges);
-onSectionLoad("recipe", loadRecipe);
-onSectionLoad("saleprice", loadDefaultBrickPrice);
 onSectionLoad("productionCosts", loadProductionCosts);
 onSectionLoad("stock", () => Promise.all([loadStockOverview(), loadMaxProducible()]));
 onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); await runProfitCalculator(); });

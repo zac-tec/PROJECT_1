@@ -77,8 +77,7 @@ header.topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
 }
 
@@ -169,6 +168,9 @@ nav.sidebar {
   z-index: 35;
   transition: opacity .28s ease, transform .28s ease, filter .28s ease;
 }
+.pricing-session { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.pricing-session .pricing-panel { min-width: 0; }
+.pricing-session .pricing-panel .card { height: 100%; margin-bottom: 0; }
 nav.sidebar.nav-receded { opacity: .2; transform: translateY(-62%); filter: blur(.2px); }
 nav.sidebar.nav-receded:hover, nav.sidebar.nav-receded:focus-within { opacity: 1; transform: translateY(0); filter: none; }
 
@@ -420,6 +422,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   nav.sidebar button { padding: 9px 10px; font-size: 12px; }
   .report-actions { grid-template-columns: 1fr; gap: 8px; }
   .report-actions button { width: 100%; }
+  .pricing-session { grid-template-columns: 1fr; }
 
   .card { padding: 14px 15px; }
   header.topbar h1 { font-size: 14px; }
