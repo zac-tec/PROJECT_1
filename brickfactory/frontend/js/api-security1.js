@@ -139,6 +139,15 @@ function closeDrawer() {
   if (sidebar) sidebar.classList.remove("open");
   if (overlay) overlay.classList.remove("open");
 }
+
+let lastScrollY = 0;
+window.addEventListener("scroll", () => {
+  const nav = document.querySelector("nav.sidebar");
+  if (!nav) return;
+  const currentY = window.scrollY;
+  nav.classList.toggle("nav-receded", currentY > lastScrollY && currentY > 80);
+  lastScrollY = currentY;
+}, { passive: true });
 // -------------------- Daily Report Sharing (WhatsApp) --------------------
 // Sends the text summary via a wa.me link, pre-filled to the configured
 // client number — the user still taps "Send" themselves (WhatsApp/browsers

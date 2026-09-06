@@ -164,19 +164,25 @@ nav.sidebar {
   overflow-x: auto;
   scrollbar-width: thin;
   border-bottom: 1px solid rgba(255,255,255,.12);
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  transition: opacity .28s ease, transform .28s ease, filter .28s ease;
 }
+nav.sidebar.nav-receded { opacity: .2; transform: translateY(-62%); filter: blur(.2px); }
+nav.sidebar.nav-receded:hover, nav.sidebar.nav-receded:focus-within { opacity: 1; transform: translateY(0); filter: none; }
 
 nav.sidebar button {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   width: auto;
   flex: 0 0 auto;
   text-align: center;
   background: none;
   border: none;
-  padding: 10px 12px;
-  font-size: 13.5px;
+  padding: 8px 9px;
+  font-size: 12px;
   color: var(--sidebar-text);
   cursor: pointer;
   border-radius: 8px;

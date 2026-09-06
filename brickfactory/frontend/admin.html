@@ -28,19 +28,19 @@
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <button data-section="dashboard"><i data-lucide="layout-dashboard" class="icon"></i> Dashboard <span id="dashboardBadge" class="hidden" style="background:var(--bad); color:white; border-radius:10px; padding:1px 7px; font-size:11px; margin-left:auto;"></span></button>
-    <button data-section="reportsettings"><i data-lucide="settings" class="icon"></i> Report Settings</button>
-    <button data-section="overview"><i data-lucide="chart-no-axes-combined" class="icon"></i> Business Overview</button>
-    <button data-section="rates"><i data-lucide="tags" class="icon"></i> Rate Management</button>
-    <button data-section="charges"><i data-lucide="receipt" class="icon"></i> Making Charges</button>
-    <button data-section="fixedcharges"><i data-lucide="landmark" class="icon"></i> Fixed Monthly Charges</button>
-    <button data-section="recipe"><i data-lucide="flask-conical" class="icon"></i> Recipe Management</button>
-    <button data-section="saleprice"><i data-lucide="indian-rupee" class="icon"></i> Brick Sale Price</button>
-    <button data-section="productionCosts"><i data-lucide="calculator" class="icon"></i> Production &amp; Costs</button>
-    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i> Stock Overview</button>
-    <button data-section="profit"><i data-lucide="trending-up" class="icon"></i> Profit Calculator</button>
-    <button data-section="orders"><i data-lucide="package-plus" class="icon"></i> Order & Stock Planning</button>
-    <button data-section="brickSales"><i data-lucide="shopping-cart" class="icon"></i> Brick Sales</button>
+    <button data-section="dashboard" title="Dashboard"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span><span id="dashboardBadge" class="hidden"></span></button>
+    <button data-section="brickSales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
+    <button data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Prod / Costs</span></button>
+    <button data-section="stock" title="Stock Overview"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
+    <button data-section="rates" title="Rate Management"><i data-lucide="tags" class="icon"></i><span>Rates</span></button>
+    <button data-section="charges" title="Making Charges"><i data-lucide="receipt" class="icon"></i><span>Charges</span></button>
+    <button data-section="fixedcharges" title="Fixed Monthly Charges"><i data-lucide="landmark" class="icon"></i><span>Fixed</span></button>
+    <button data-section="saleprice" title="Brick Sale Price"><i data-lucide="indian-rupee" class="icon"></i><span>Price</span></button>
+    <button data-section="orders" title="Order and Stock Planning"><i data-lucide="package-plus" class="icon"></i><span>Orders</span></button>
+    <button data-section="recipe" title="Recipe Management"><i data-lucide="flask-conical" class="icon"></i><span>Recipe</span></button>
+    <button data-section="history" title="Rate and Charge History"><i data-lucide="history" class="icon"></i><span>History</span></button>
+    <button data-section="profit" title="Profit Calculator"><i data-lucide="trending-up" class="icon"></i><span>Profit</span></button>
+    <button data-section="reportsettings" title="Report Settings"><i data-lucide="settings" class="icon"></i><span>Reports</span></button>
   </nav>
 
   <main class="content">
@@ -139,30 +139,11 @@
       </div>
 
     </section>
-    <section id="sec-overview" class="hidden">
-      <div class="card">
-        <h2><i data-lucide="pin" class="icon"></i> At a Glance</h2>
-        <div id="factCards" style="display:flex; flex-wrap:wrap; gap:18px;">
-          <div class="stat"><div class="value" id="fact-totalBricks">—</div><div class="label">bricks produced (all time)</div></div>
-          <div class="stat"><div class="value" id="fact-houses">—</div><div class="label">≈ small houses worth</div></div>
-          <div class="stat"><div class="value" id="fact-streak">—</div><div class="label">longest work streak (days)</div></div>
-          <div class="stat"><div class="value" id="fact-crew">—</div><div class="label">avg crew size</div></div>
-          <div class="stat"><div class="value" id="fact-sold">—</div><div class="label">bricks sold (all time)</div></div>
-          <div class="stat"><div class="value" id="fact-pending">—</div><div class="label">pending customer dues</div></div>
-        </div>
-        <p id="fact-bestday" style="margin-top:12px; color:var(--muted); font-size:13px;"></p>
-      </div>
-
-    </section>
     <!-- RATE MANAGEMENT -->
     <section id="sec-rates" class="hidden">
       <div class="card">
         <h2><i data-lucide="tags" class="icon"></i> Material Rates</h2><p>Changes take effect tomorrow at midnight (India time). Editing again replaces tomorrow’s scheduled rate.</p>
         <table id="ratesTable"><thead><tr><th>Material</th><th style="text-align:right;">Current Rate</th><th></th></tr></thead><tbody></tbody></table>
-      </div>
-      <div class="card">
-        <h2>Rate Change History</h2>
-        <table id="rateHistoryTable"><thead><tr><th>Changed</th><th>Material</th><th>Previous</th><th>New</th><th>Effective From</th></tr></thead><tbody></tbody></table>
       </div>
     </section>
 
@@ -173,8 +154,15 @@
         <table id="chargesTable"><thead><tr><th>Charge</th><th style="text-align:right;">Value</th><th></th></tr></thead><tbody></tbody></table>
         <p style="margin-top:10px; font-size:13.5px;"><strong>Total: </strong><span id="chargesTotal"></span></p>
       </div>
+    </section>
+
+    <section id="sec-history" class="hidden">
       <div class="card">
-        <h2>Charge Change History</h2>
+        <h2><i data-lucide="history" class="icon"></i> Rate Change History</h2>
+        <table id="rateHistoryTable"><thead><tr><th>Changed</th><th>Material</th><th>Previous</th><th>New</th><th>Effective From</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h2><i data-lucide="history" class="icon"></i> Charge Change History</h2>
         <table id="chargeHistoryTable"><thead><tr><th>Time</th><th>Charge</th><th>Old</th><th>New</th></tr></thead><tbody></tbody></table>
       </div>
     </section>
@@ -262,6 +250,18 @@
 
     <!-- ORDER PLANNING -->
     <section id="sec-orders" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="pin" class="icon"></i> Business Overview</h2>
+        <div id="factCards" style="display:flex; flex-wrap:wrap; gap:18px;">
+          <div class="stat"><div class="value" id="fact-totalBricks">—</div><div class="label">bricks produced</div></div>
+          <div class="stat"><div class="value" id="fact-houses">—</div><div class="label">small houses worth</div></div>
+          <div class="stat"><div class="value" id="fact-streak">—</div><div class="label">work streak</div></div>
+          <div class="stat"><div class="value" id="fact-crew">—</div><div class="label">average crew</div></div>
+          <div class="stat"><div class="value" id="fact-sold">—</div><div class="label">bricks sold</div></div>
+          <div class="stat"><div class="value" id="fact-pending">—</div><div class="label">pending dues</div></div>
+        </div>
+        <p id="fact-bestday" style="margin-top:12px; color:var(--muted); font-size:13px;"></p>
+      </div>
       <div class="card">
         <h2><i data-lucide="package-plus" class="icon"></i> Materials Needed for an Order</h2>
         <label>Bricks Ordered</label>
