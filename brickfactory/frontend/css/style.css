@@ -61,7 +61,15 @@ body {
 svg { display: inline-block; vertical-align: middle; }
 .icon { width: 18px; height: 18px; stroke-width: 2.2; }
 .brand-lockup { display: inline-flex; align-items: center; letter-spacing: .015em; }
-.brand-lockup > span { display: inline-block; }
+.brand-lockup > span {
+  display: inline-block;
+  background: linear-gradient(112deg, currentColor 0%, currentColor 42%, #ffffff 49%, currentColor 56%, currentColor 100%);
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: wordmarkGlare 5s ease-in-out infinite;
+}
 @keyframes ambientDrift { from { transform: translate3d(-3vw, 2vh, 0) scale(.9); } to { transform: translate3d(5vw, -3vh, 0) scale(1.1); } }
 
 /* ---------------- Topbar ---------------- */
@@ -274,6 +282,7 @@ button.icon-btn.save { border-color: var(--ok); color: var(--ok); }
 button.icon-btn.save:hover { background: var(--ok-bg); }
 button.icon-btn.cancel { border-color: var(--bad); color: var(--bad); }
 button.icon-btn.cancel:hover { background: var(--bad-bg); }
+button:hover { box-shadow: 0 0 18px var(--signal-glow); }
 
 /* Inline edit cells */
 .inline-edit-cell input { margin-bottom: 0; padding: 6px 8px; max-width: 120px; }
@@ -424,9 +433,11 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 @keyframes dialogExit { to { transform: translateY(10px) scale(.98); } }
 @keyframes backdropEnter { from { opacity: 0; } to { opacity: 1; } }
 @keyframes backdropExit { to { opacity: 0; } }
+@keyframes wordmarkGlare { 0%, 25% { background-position: 140% 0; } 55%, 100% { background-position: -40% 0; } }
 @media (prefers-reduced-motion: reduce) {
   .app-dialog, .app-dialog::backdrop, .app-dialog.is-closing, .app-dialog.is-closing::backdrop { animation: none; }
   button, .icon-btn, [role="button"] { transition: none; }
+  .brand-lockup > span { animation: none; background: none; color: currentColor; }
 }
 
 /* Fast title sequence for the redesign preview login. */
@@ -452,6 +463,7 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 @media (prefers-reduced-motion: reduce) {
   .brand-intro { animation: introExit 1ms linear forwards; }
   .brand-intro-word span, .login-card { animation: none; opacity: 1; transform: none; }
+  .brand-intro-word { background: none; color: var(--white); }
 }
 .stock-stage-grid { display:grid; grid-template-columns:repeat(4,minmax(130px,1fr)); gap:12px; margin:14px 0; }
 .stock-stage-grid .stat { padding:14px; border:1px solid var(--border); border-radius:10px; }

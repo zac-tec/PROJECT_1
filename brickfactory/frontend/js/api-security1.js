@@ -357,7 +357,6 @@ function appDialog(title, message, confirm = false, isError = false) {
     const heading = document.createElement("h2");
     heading.id = "app-dialog-title";
     heading.textContent = title;
-    if (isError) heading.style.color = "var(--bad)";
     const content = document.createElement("p");
     content.id = "app-dialog-message";
     content.textContent = message.replace(/Resend with confirm_overwrite=true to replace it\./g, "");
