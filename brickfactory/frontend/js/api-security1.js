@@ -140,6 +140,15 @@ function closeDrawer() {
   if (overlay) overlay.classList.remove("open");
 }
 
+function toggleNavLabels() {
+  const nav = document.querySelector("nav.sidebar");
+  const button = nav?.querySelector(".nav-settings");
+  if (!nav) return;
+  const expanded = nav.classList.toggle("nav-labels-open");
+  button?.setAttribute("aria-label", expanded ? "Hide menu labels" : "Show menu labels");
+  button?.setAttribute("title", expanded ? "Hide menu labels" : "Show menu labels");
+}
+
 let lastScrollY = 0;
 window.addEventListener("scroll", () => {
   const nav = document.querySelector("nav.sidebar");

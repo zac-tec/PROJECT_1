@@ -190,7 +190,7 @@ nav.sidebar button {
   background: none;
   border: none;
   padding: 9px 7px;
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--sidebar-text);
   cursor: pointer;
   border-radius: 8px;
@@ -199,6 +199,7 @@ nav.sidebar button {
   justify-content: center;
   white-space: nowrap;
 }
+.nav-settings { display: none !important; }
 nav.sidebar button:hover { background: rgba(250, 250, 250, .12); color: var(--sidebar-text-active); box-shadow: 0 0 18px rgba(255, 255, 255, .16); transform: translateY(-1px); }
 nav.sidebar button:active { transform: scale(0.98); }
 nav.sidebar button.active { background: linear-gradient(90deg, var(--charcoal), var(--slate)); color: white; font-weight: 600; box-shadow: 0 0 22px rgba(255, 255, 255, .18); }
@@ -430,6 +431,10 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   .layout { display: block; }
   nav.sidebar { padding: 7px 10px; gap: 3px; }
   nav.sidebar button { flex: 0 0 auto; padding: 9px 10px; font-size: 12px; }
+  nav.sidebar button > span:not(#dashboardBadge) { display: none; }
+  nav.sidebar.nav-labels-open button > span:not(#dashboardBadge) { display: inline; }
+  nav.sidebar .nav-settings { display: inline-flex !important; flex: 0 0 auto; order: 99; }
+  nav.sidebar.nav-labels-open .nav-settings { background: var(--charcoal); color: var(--white); }
   .logout-label { display: none; }
   .report-actions { grid-template-columns: 1fr; gap: 8px; }
   .report-actions button { width: 100%; }

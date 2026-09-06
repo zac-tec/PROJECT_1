@@ -25,11 +25,12 @@
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <button data-section="production"><i data-lucide="hard-hat" class="icon"></i> Today's Production</button>
-    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i> Raw Materials</button>
-    <button data-section="sales"><i data-lucide="shopping-cart" class="icon"></i> Brick Sales</button>
-    <button data-section="adjustments"><i data-lucide="package-minus" class="icon"></i> Stock Adjustments</button>
-    <button data-section="utility"><i data-lucide="receipt" class="icon"></i> Utility Bills</button>
+    <button data-section="production" title="Today's Production"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
+    <button data-section="stock" title="Raw Materials"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
+    <button data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
+    <button data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
+    <button data-section="utility" title="Utility Bills"><i data-lucide="receipt" class="icon"></i><span>Utility</span></button>
+    <button class="nav-settings" type="button" title="Show menu labels" aria-label="Show menu labels" onclick="toggleNavLabels()"><i data-lucide="settings-2" class="icon"></i></button>
   </nav>
 
   <main class="content">
