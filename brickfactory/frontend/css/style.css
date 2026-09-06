@@ -63,11 +63,8 @@ svg { display: inline-block; vertical-align: middle; }
 .brand-lockup { display: inline-flex; align-items: center; letter-spacing: .015em; }
 .brand-lockup > span {
   display: inline-block;
-  background: linear-gradient(112deg, currentColor 0%, currentColor 42%, #ffffff 49%, currentColor 56%, currentColor 100%);
-  background-size: 240% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--black);
+  text-shadow: 0 0 0 rgba(255, 255, 255, 0), 0 2px 0 rgba(8, 9, 10, .08);
   animation: wordmarkGlare 5s ease-in-out infinite;
 }
 @keyframes ambientDrift { from { transform: translate3d(-3vw, 2vh, 0) scale(.9); } to { transform: translate3d(5vw, -3vh, 0) scale(1.1); } }
@@ -94,6 +91,7 @@ header.topbar h1 {
   align-items: center;
   gap: 0;
 }
+header.topbar .brand-lockup > span { color: var(--white); text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
 
 header.topbar .who { font-size: 13px; opacity: 0.75; margin-right: 14px; }
 
@@ -398,7 +396,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   max-height: 85vh;
   overflow: auto;
   color: var(--ink);
-  background: var(--card);
+  background: radial-gradient(circle at center, #ffffff 0%, #f2f3f4 48%, #e2e4e6 100%);
   box-shadow: 0 28px 80px rgba(0, 5, 5, 0.3), 0 0 0 1px rgba(254, 252, 253, 0.16) inset;
   transform-origin: 50% 80%;
   animation: dialogEnter 280ms cubic-bezier(.2, .9, .25, 1.2) both;
@@ -419,11 +417,11 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   font-weight: 800;
   line-height: 1.25;
   letter-spacing: .01em;
-  background: linear-gradient(135deg, var(--charcoal), var(--slate));
-  color: var(--white);
+  color: var(--ink);
+  background: transparent;
 }
-.app-dialog h2::after { content: ""; display: block; width: 34px; height: 2px; margin-top: 12px; background: var(--signal); border-radius: 2px; }
-.app-dialog p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; padding: 18px 22px 0; margin: 0; font-weight: 500; }
+.app-dialog h2::after { content: ""; display: block; width: 34px; height: 2px; margin-top: 12px; background: var(--slate); border-radius: 2px; }
+.app-dialog p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; padding: 18px 22px 0; margin: 0; color: var(--ink); font-weight: 500; }
 .dialog-actions { display: flex; justify-content: center; gap: 10px; margin: 0; padding: 18px 22px 22px; }
 .app-dialog .dialog-actions button { min-width: 112px; }
 button, .icon-btn, [role="button"] { transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease; }
@@ -433,11 +431,11 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 @keyframes dialogExit { to { transform: translateY(10px) scale(.98); } }
 @keyframes backdropEnter { from { opacity: 0; } to { opacity: 1; } }
 @keyframes backdropExit { to { opacity: 0; } }
-@keyframes wordmarkGlare { 0%, 25% { background-position: 140% 0; } 55%, 100% { background-position: -40% 0; } }
+@keyframes wordmarkGlare { 0%, 25% { text-shadow: 0 0 0 rgba(255, 255, 255, 0), 0 2px 0 rgba(8, 9, 10, .08); } 55%, 100% { text-shadow: 0 0 14px rgba(255, 255, 255, .9), 0 2px 0 rgba(8, 9, 10, .08); } }
 @media (prefers-reduced-motion: reduce) {
   .app-dialog, .app-dialog::backdrop, .app-dialog.is-closing, .app-dialog.is-closing::backdrop { animation: none; }
   button, .icon-btn, [role="button"] { transition: none; }
-  .brand-lockup > span { animation: none; background: none; color: currentColor; }
+  .brand-lockup > span { animation: none; color: var(--black); text-shadow: 0 2px 0 rgba(8, 9, 10, .08); }
 }
 
 /* Fast title sequence for the redesign preview login. */
