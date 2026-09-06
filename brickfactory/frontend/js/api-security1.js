@@ -368,16 +368,32 @@ function appDialog(title, message, confirm = false, isError = false) {
       cancel.textContent = "Keep existing";
       cancel.className = "secondary";
       cancel.autofocus = true;
-      cancel.onclick = () => dialog.close("cancel");
+      cancel.onclick = () => closeDialog("cancel");
       actions.append(cancel);
     }
     const ok = document.createElement("button");
     ok.textContent = confirm ? "Replace entry" : "OK";
     ok.className = "primary";
-    ok.onclick = () => dialog.close("ok");
+    ok.onclick = () => closeDialog("ok");
     actions.append(ok);
     dialog.append(heading, content, actions);
     document.body.append(dialog);
+    let closing = false;
+    const closeDialog = (value) => {
+      if (closing) return;
+      closing = true;
+      dialog.returnValue = value;
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        dialog.close();
+        return;
+      }
+      dialog.classList.add("is-closing");
+      dialog.addEventListener("animationend", () => dialog.close(), { once: true });
+    };
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) closeDialog("cancel");
+    });
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); closeDialog("cancel"); });
     dialog.addEventListener("close", () => { const accepted = dialog.returnValue === "ok"; dialog.remove(); resolve(accepted); }, {once:true});
     dialog.showModal();
   }));
