@@ -181,7 +181,7 @@ nav.sidebar button:hover { background: rgba(250, 250, 250, .12); color: var(--si
 nav.sidebar button:active { transform: scale(0.98); }
 nav.sidebar button.active { background: linear-gradient(90deg, var(--charcoal), var(--slate)); color: white; font-weight: 600; box-shadow: 0 0 22px rgba(255, 255, 255, .18); }
 
-main.content { flex: 1; padding: 20px 24px 40px; max-width: 920px; }
+main.content { flex: 1; width: min(100%, 1180px); padding: 24px 32px 48px; margin: 0 auto; }
 
 /* ---------------- Cards ---------------- */
 .card {
@@ -281,6 +281,9 @@ button.icon-btn.save:hover { background: var(--ok-bg); }
 button.icon-btn.cancel { border-color: var(--bad); color: var(--bad); }
 button.icon-btn.cancel:hover { background: var(--bad-bg); }
 button:hover { box-shadow: 0 0 18px var(--signal-glow); }
+.report-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.report-actions button { min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; background: linear-gradient(135deg, var(--charcoal), var(--black)); color: var(--white); border: 1px solid var(--slate); box-shadow: 0 6px 16px rgba(8, 9, 10, .16); }
+.report-actions button:hover { background: linear-gradient(135deg, #30343a, var(--black)); border-color: var(--white); }
 
 /* Inline edit cells */
 .inline-edit-cell input { margin-bottom: 0; padding: 6px 8px; max-width: 120px; }
@@ -358,6 +361,7 @@ button:hover { box-shadow: 0 0 18px var(--signal-glow); }
 }
 .login-card input:focus { border-color: var(--black); box-shadow: inset 0 2px 5px rgba(8,9,10,.06), 0 0 0 3px rgba(8,9,10,.12), 0 0 18px rgba(255,255,255,.78); }
 .login-card button.primary { width: 100%; margin-top: 18px; padding: 12px; letter-spacing: .02em; }
+.install-btn { box-shadow: 0 0 16px rgba(255,255,255,.14); }
 
 /* ---------------- Bottom Tab Bar (mobile nav) ---------------- */
 nav.bottom-nav {
@@ -398,7 +402,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 768px) {
-  main.content { padding: 14px 14px 84px; max-width: 100%; }
+  main.content { width: 100%; padding: 16px 14px 84px; }
   .layout { display: block; }
 
   nav.sidebar {
@@ -411,6 +415,8 @@ nav.bottom-nav button:active { transform: scale(0.92); }
     overflow-y: auto;
     padding-top: 60px;
   }
+  .report-actions { grid-template-columns: 1fr; gap: 8px; }
+  .report-actions button { width: 100%; }
   nav.sidebar.open { transform: translateX(0); }
 
   nav.bottom-nav { display: block; }
