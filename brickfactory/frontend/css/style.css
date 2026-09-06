@@ -36,6 +36,7 @@
 body {
   margin: 0;
   font-family: var(--font-body);
+  font-size: 16px;
   font-weight: 500;
   background: var(--bg);
   color: var(--ink);
@@ -59,7 +60,7 @@ body {
   body::after { right: -12vw; bottom: -20vw; animation-delay: -6s; animation-direction: alternate-reverse; }
 
 svg { display: inline-block; vertical-align: middle; }
-.icon { width: 18px; height: 18px; stroke-width: 2.2; }
+.icon { width: 20px; height: 20px; stroke-width: 2.2; }
 .brand-lockup { display: inline-flex; align-items: center; letter-spacing: .015em; }
 .brand-lockup > span {
   display: inline-block;
@@ -143,7 +144,7 @@ header.topbar button.install-btn:active { transform: scale(0.94); }
   border: 1.5px solid var(--border);
   color: var(--ink);
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -190,7 +191,7 @@ nav.sidebar button {
   background: none;
   border: none;
   padding: 9px 7px;
-  font-size: 13.5px;
+  font-size: 14.5px;
   color: var(--sidebar-text);
   cursor: pointer;
   border-radius: 8px;
@@ -204,7 +205,7 @@ nav.sidebar button:hover { background: rgba(250, 250, 250, .12); color: var(--si
 nav.sidebar button:active { transform: scale(0.98); }
 nav.sidebar button.active { background: linear-gradient(90deg, var(--charcoal), var(--slate)); color: white; font-weight: 600; box-shadow: 0 0 22px rgba(255, 255, 255, .18); }
 
-.logout-label { font-size: 12px; letter-spacing: .02em; }
+.logout-label { font-size: 13px; letter-spacing: .02em; }
 
 main.content { flex: 1; width: min(100%, 1180px); padding: 24px 32px 48px; margin: 0 auto; }
 
@@ -220,7 +221,7 @@ main.content { flex: 1; width: min(100%, 1180px); padding: 24px 32px 48px; margi
 
 .card h2 {
   margin: 0 0 12px 0;
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
   display: flex;
@@ -229,9 +230,9 @@ main.content { flex: 1; width: min(100%, 1180px); padding: 24px 32px 48px; margi
 }
 
 /* ---------------- Tables ---------------- */
-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); }
-th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+th { color: var(--muted); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
 tbody tr:hover { background: var(--bg); }
 tbody tr:last-child td { border-bottom: none; }
 
@@ -240,7 +241,7 @@ input, select {
   padding: 9px 11px;
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   width: 100%;
   margin-bottom: 10px;
   background: white;
@@ -253,7 +254,7 @@ input:focus, select:focus {
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-label { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 600; }
+label { font-size: 13.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 700; }
 
 /* ---------------- Buttons ---------------- */
 button.primary {
@@ -263,7 +264,7 @@ button.primary {
   padding: 10px 18px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 600;
   box-shadow: 0 8px 18px rgba(8, 9, 10, .2), 0 0 0 rgba(255, 255, 255, 0);
 }
@@ -277,7 +278,7 @@ button.secondary {
   padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(8, 9, 10, .08);
 }
@@ -289,8 +290,8 @@ button.icon-btn {
   background: none;
   border: 1.5px solid var(--border);
   color: var(--muted);
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 7px;
   cursor: pointer;
   display: inline-flex;
@@ -315,14 +316,14 @@ button:hover { box-shadow: 0 0 18px var(--signal-glow); }
 .inline-edit-actions { white-space: nowrap; text-align: right; }
 
 /* ---------------- Messages ---------------- */
-.msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13.5px; font-weight: 500; }
+.msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 14.5px; font-weight: 500; }
 .msg.ok { background: var(--ok-bg); color: var(--ok); }
 .msg.bad { background: var(--bad-bg); color: var(--bad); }
 
 /* ---------------- Stats / fact cards ---------------- */
 .stat { display: inline-block; margin-right: 22px; margin-bottom: 6px; }
 .stat .value { font-size: 22px; font-weight: 800; color: var(--primary); }
-.stat .label { font-size: 11.5px; color: var(--muted); }
+.stat .label { font-size: 12.5px; color: var(--muted); }
 
 .hidden { display: none !important; }
 
@@ -376,7 +377,7 @@ button:hover { box-shadow: 0 0 18px var(--signal-glow); }
 }
 .login-card h1::after { content: ""; width: 42px; height: 2px; position: absolute; bottom: -10px; background: var(--slate); box-shadow: 0 0 12px rgba(8,9,10,.28); }
 .login-card label { margin-top: 15px; display: flex; align-items: center; gap: 7px; color: var(--charcoal); font-weight: 700; }
-.login-card label .icon { width: 15px; height: 15px; color: var(--slate); }
+.login-card label .icon { width: 18px; height: 18px; color: var(--slate); }
 .login-card input {
   background: #ffffff;
   border-color: #b9bdc2;
@@ -441,13 +442,13 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   .pricing-session { grid-template-columns: 1fr; }
 
   .card { padding: 14px 15px; }
-  header.topbar h1 { font-size: 14px; }
+  header.topbar h1 { font-size: 15px; }
   header.topbar .who { display: none; }
 
   .stat { margin-right: 16px; }
   .stat .value { font-size: 19px; }
 
-  table { font-size: 12.5px; }
+  table { font-size: 13.5px; }
   th, td { padding: 7px 6px; }
 }
 
@@ -475,8 +476,8 @@ nav.bottom-nav button:active { transform: scale(0.92); }
   margin: 0;
   padding: 20px 24px 14px;
   position: relative;
-  font-family: var(--font-display);
-  font-size: 16px;
+  font-family: var(--font-body);
+  font-size: 17px;
   font-weight: 800;
   line-height: 1.25;
   letter-spacing: .01em;
