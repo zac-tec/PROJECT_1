@@ -1,0 +1,45 @@
+
+# Local secrets and generated runtime files
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.DS_Store
+
+# Local databases, backups, logs and test output
+*.sql.gz
+*.dump
+*.backup
+*.log
+.pytest_cache/
+htmlcov/
+coverage.xml
+
+# Editor and operating-system metadata
+.vscode/
+.idea/
+
+# Local backup of the pre-reinitialization Git metadata
+.git-pre-reinit-*/
+
+# Generated artifacts and retired browser-compatibility copies
+.coverage
+.coverage.*
+node_modules/
+*.sqlite
+*.sqlite3
+*.db
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+/brickfactory/frontend/js/dashboard.js
+/brickfactory/frontend/js/api-recovery1.js
+/brickfactory/frontend/js/manager.js
+/brickfactory/frontend/js/admin-recovery1.js
+/brickfactory/frontend/js/api.js
+/brickfactory/frontend/js/admin.js
+/brickfactory/frontend/js/manager-recovery1.js

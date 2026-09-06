@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Admin — NEO BRICKS</title>
+<link rel="stylesheet" href="css/style.css?v=security1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <h1><i data-lucide="factory" class="icon"></i> NEO BRICKS— Admin</h1>
+  <div>
+    <span class="who" id="whoami"></span>
+    <button id="installBtn" class="install-btn hidden" title="Install app"><i data-lucide="download" class="icon"></i></button>
+    <button class="logout-btn" onclick="logout()"><i data-lucide="log-out" class="icon"></i></button>
+  </div>
+</header>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <button data-section="dashboard"><i data-lucide="layout-dashboard" class="icon"></i> Dashboard <span id="dashboardBadge" class="hidden" style="background:var(--bad); color:white; border-radius:10px; padding:1px 7px; font-size:11px; margin-left:auto;"></span></button>
+    <button data-section="reportsettings"><i data-lucide="settings" class="icon"></i> Report Settings</button>
+    <button data-section="overview"><i data-lucide="chart-no-axes-combined" class="icon"></i> Business Overview</button>
+    <button data-section="rates"><i data-lucide="tags" class="icon"></i> Rate Management</button>
+    <button data-section="charges"><i data-lucide="receipt" class="icon"></i> Making Charges</button>
+    <button data-section="fixedcharges"><i data-lucide="landmark" class="icon"></i> Fixed Monthly Charges</button>
+    <button data-section="recipe"><i data-lucide="flask-conical" class="icon"></i> Recipe Management</button>
+    <button data-section="saleprice"><i data-lucide="indian-rupee" class="icon"></i> Brick Sale Price</button>
+    <button data-section="productionCosts"><i data-lucide="calculator" class="icon"></i> Production &amp; Costs</button>
+    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i> Stock Overview</button>
+    <button data-section="profit"><i data-lucide="trending-up" class="icon"></i> Profit Calculator</button>
+    <button data-section="orders"><i data-lucide="package-plus" class="icon"></i> Order & Stock Planning</button>
+    <button data-section="brickSales"><i data-lucide="shopping-cart" class="icon"></i> Brick Sales</button>
+  </nav>
+
+  <main class="content">
+    <div id="msg" class="msg hidden"></div>
+
+    <!-- DASHBOARD -->
+    <section id="sec-dashboard">
+      <div class="card" id="todayActivityCard">
+        <h2><i data-lucide="bell" class="icon"></i> Today's Activity</h2>
+        <button class="secondary" onclick="loadTodayActivity(true)">Refresh Activity</button>
+        <div id="todayActivityOutput"><p style="color:var(--muted);">Loading…</p></div>
+      </div>
+
+      <div class="card">
+        <h2><i data-lucide="send" class="icon"></i> Share Daily Report</h2>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:-4px;">
+          One-tap WhatsApp sharing (you still tap Send yourself), or email it now/automatically.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <button class="primary" onclick="shareReportText()"><i data-lucide="message-circle" class="icon"></i> Send Text Summary</button>
+          <button class="secondary" onclick="shareReportPDF()"><i data-lucide="file-text" class="icon"></i> Share Full PDF</button>
+          <button class="secondary" onclick="sendEmailNow()"><i data-lucide="mail" class="icon"></i> Email Now</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Daily Production — Last 30 Days</h2>
+        <canvas id="chartDailyProduction" height="90"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Monthly Production Trend</h2>
+        <canvas id="chartMonthlyTrend" height="90"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Monthly Profit Trend</h2>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:-6px;">
+          Uses default selling price, full production as sold — for what-if scenarios use Profit Calculator.
+        </p>
+        <canvas id="chartProfitTrend" height="90"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Cost Per Brick — Breakdown</h2>
+        <div style="max-width:300px; margin:0 auto;">
+          <canvas id="chartCostBreakdown"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Stock Runway (Days Left Per Material)</h2>
+        <canvas id="chartStockRunway" height="90"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Sales — Last 30 Days</h2>
+        <canvas id="chartSalesTrend" height="90"></canvas>
+      </div>
+
+      <div class="card">
+        <h2><i data-lucide="trophy" class="icon"></i> Top Customers</h2>
+        <table id="topCustomersTable"><thead><tr><th>Customer</th><th>Mobile</th><th>Total Bricks</th><th>Orders</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section id="sec-reportsettings" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="settings" class="icon"></i> Report Settings</h2>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:-4px;">
+          Where the daily report goes, and when it emails itself automatically.
+        </p>
+
+        <label>Client WhatsApp Number (with country code, e.g. 91XXXXXXXXXX)</label>
+        <input id="whatsappNumberInput" type="text" placeholder="91XXXXXXXXXX">
+        <button class="secondary" onclick="updateWhatsappNumber()">Save Number</button>
+
+        <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
+          <label>Client Email Address</label>
+          <input id="clientEmailInput" type="email" placeholder="client@example.com">
+          <button class="secondary" onclick="updateClientEmail()">Save Email</button>
+        </div>
+
+        <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
+          <label>Auto-Email Daily Report</label>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <input type="checkbox" id="autoSendEnabledInput" style="width:auto; margin:0;">
+            <span style="font-size:13.5px;">Send automatically every day at:</span>
+            <input id="autoSendTimeInput" type="time" style="width:auto; margin:0;">
+          </div>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 10px;">
+            Only fires while your server is actually running — it won't "catch up" on days it was off.
+          </p>
+          <button class="secondary" onclick="updateSchedule()">Save Schedule</button>
+        </div>
+      </div>
+
+    </section>
+    <section id="sec-overview" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="pin" class="icon"></i> At a Glance</h2>
+        <div id="factCards" style="display:flex; flex-wrap:wrap; gap:18px;">
+          <div class="stat"><div class="value" id="fact-totalBricks">—</div><div class="label">bricks produced (all time)</div></div>
+          <div class="stat"><div class="value" id="fact-houses">—</div><div class="label">≈ small houses worth</div></div>
+          <div class="stat"><div class="value" id="fact-streak">—</div><div class="label">longest work streak (days)</div></div>
+          <div class="stat"><div class="value" id="fact-crew">—</div><div class="label">avg crew size</div></div>
+          <div class="stat"><div class="value" id="fact-sold">—</div><div class="label">bricks sold (all time)</div></div>
+          <div class="stat"><div class="value" id="fact-pending">—</div><div class="label">pending customer dues</div></div>
+        </div>
+        <p id="fact-bestday" style="margin-top:12px; color:var(--muted); font-size:13px;"></p>
+      </div>
+
+    </section>
+    <!-- RATE MANAGEMENT -->
+    <section id="sec-rates" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="tags" class="icon"></i> Material Rates</h2><p>Changes take effect tomorrow at midnight (India time). Editing again replaces tomorrow’s scheduled rate.</p>
+        <table id="ratesTable"><thead><tr><th>Material</th><th style="text-align:right;">Current Rate</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <h2>Rate Change History</h2>
+        <table id="rateHistoryTable"><thead><tr><th>Changed</th><th>Material</th><th>Previous</th><th>New</th><th>Effective From</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- MAKING CHARGES -->
+    <section id="sec-charges" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="receipt" class="icon"></i> Making Charges (per brick)</h2>
+        <table id="chargesTable"><thead><tr><th>Charge</th><th style="text-align:right;">Value</th><th></th></tr></thead><tbody></tbody></table>
+        <p style="margin-top:10px; font-size:13.5px;"><strong>Total: </strong><span id="chargesTotal"></span></p>
+      </div>
+      <div class="card">
+        <h2>Charge Change History</h2>
+        <table id="chargeHistoryTable"><thead><tr><th>Time</th><th>Charge</th><th>Old</th><th>New</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- FIXED MONTHLY CHARGES -->
+    <section id="sec-fixedcharges" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="landmark" class="icon"></i> Fixed Monthly Charges</h2>
+        <p style="color:var(--muted); font-size:12.5px; margin-top:-4px;">
+          Changes apply from this month onward. Earlier months are retained. Actual electricity and water bills replace estimates.
+        </p>
+        <table id="fixedChargesTable"><thead><tr><th>Charge</th><th style="text-align:right;">Value</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- RECIPE -->
+    <section id="sec-recipe" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="flask-conical" class="icon"></i> Recipe (per mix)</h2>
+        <table id="recipeTable"><thead><tr><th>Material</th><th style="text-align:right;">Qty / Mix</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- BRICK SALE PRICE -->
+    <section id="sec-saleprice" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="indian-rupee" class="icon"></i> Default Brick Sale Price</h2>
+        <p style="font-size:13px; color:var(--muted);">Used to pre-fill the manager's sale form.</p>
+        <table><thead><tr><th>Charge</th><th style="text-align:right;">Value</th><th></th></tr></thead>
+          <tbody id="salePriceTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sec-productionCosts" class="hidden"><div class="card">
+      <h2>Production &amp; Costs</h2>
+      <label>Month</label><input id="costMonth" type="month">
+      <button class="primary" onclick="loadProductionCosts()">View Month</button>
+      <p>Production cost uses each saved day's mixes, recipe and rates. Bills replace estimates for their billing month.</p>
+      <div id="productionCostsOutput"></div>
+    </div></section>
+    <!-- STOCK OVERVIEW -->
+    <section id="sec-stock" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="warehouse" class="icon"></i> Stock Overview & Valuation</h2>
+        <button class="secondary" onclick="loadStockOverview()"><i data-lucide="refresh-cw" class="icon"></i> Refresh</button>
+        <div id="stockOverviewOutput" style="margin-top:14px;"></div>
+      </div>
+      <div class="card">
+        <h2>Maximum Producible Bricks (from current stock)</h2>
+        <button class="secondary" onclick="loadMaxProducible()"><i data-lucide="refresh-cw" class="icon"></i> Check</button>
+        <div id="maxProducibleOutput" style="margin-top:14px;"></div>
+      </div>
+    </section>
+
+    <!-- PROFIT CALCULATOR -->
+    <section id="sec-profit" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="trending-up" class="icon"></i> Monthly Profit & Loss Calculator</h2>
+        <label>Month (leave blank for current month)</label>
+        <input id="profitMonth" type="month" placeholder="2026-07" oninput="loadOverheadDefaultsForProfit()">
+        <label>Selling Price Per Brick (Rs.) — blank uses the default price</label>
+        <input id="profitSellingPrice" type="number" step="0.01" min="0.01" placeholder="Default: Rs. 7.50">
+        <label>Bricks Sold (blank = match production)</label>
+        <input id="profitBricksSold" type="number" step="1" min="0">
+
+        <div style="background:var(--primary-light); border-radius:8px; padding:12px; margin:10px 0;">
+          <p style="margin:0 0 8px 0; font-size:12.5px; color:var(--muted);">
+            This month's actual values — edit any to try a what-if scenario (won't change saved settings).
+          </p>
+          <label>Rent (Rs.)</label>
+          <input id="profitRentOverride" type="number" step="0.01" min="0">
+          <label>Manager Salary (Rs.)</label>
+          <input id="profitSalaryOverride" type="number" step="0.01" min="0">
+          <label>Electricity (Rs.) <span id="profitElectricitySourceTag" style="color:var(--muted); font-weight:400;"></span></label>
+          <input id="profitElectricityOverride" type="number" step="0.01" min="0">
+          <label>Water (Rs.) <span id="profitWaterSourceTag" style="color:var(--muted); font-weight:400;"></span></label>
+          <input id="profitWaterOverride" type="number" step="0.01" min="0">
+        </div>
+
+        <button class="primary" onclick="runProfitCalculator()">Calculate</button>
+        <div id="profitOutput" style="margin-top:14px;"></div>
+      </div>
+    </section>
+
+    <!-- ORDER PLANNING -->
+    <section id="sec-orders" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="package-plus" class="icon"></i> Materials Needed for an Order</h2>
+        <label>Bricks Ordered</label>
+        <input id="orderBricks" type="number" step="1" min="1">
+        <button class="primary" onclick="runOrderCalculation()">Calculate</button>
+        <div id="orderOutput" style="margin-top:14px;"></div>
+      </div>
+    </section>
+
+    <!-- ADMIN BRICK SALES VIEW -->
+    <section id="sec-brickSales" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="package" class="icon"></i> Finished Brick Availability</h2>
+        <div class="stock-stage-grid">
+          <div class="stat"><div class="value" id="adminOutletStockValue">—</div><div class="label">total bricks</div></div>
+          <div class="stat"><div class="value" id="adminCuringStockValue">—</div><div class="label">curing · under 7 days</div></div>
+          <div class="stat"><div class="value" id="adminEarlySaleStockValue">—</div><div class="label">early-sale eligible · 7–13 days</div></div>
+          <div class="stat"><div class="value" id="adminFullyCuredStockValue">—</div><div class="label">fully cured · 14+ days</div></div>
+        </div>
+        <p><strong>Saleable now: <span id="adminSaleableStockValue">—</span> bricks</strong></p>
+        <div class="table-scroll"><table id="adminBrickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Monthly Sales Summary</h2>
+        <label>Month (leave blank for current month)</label>
+        <input id="salesSummaryMonth" type="month" placeholder="2026-07">
+        <button class="primary" onclick="loadMonthlySalesSummary()">Run Summary</button>
+        <div id="salesSummaryOutput" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>All Sales (most recent first)</h2>
+        <button class="secondary" onclick="loadAllBrickSales()"><i data-lucide="refresh-cw" class="icon"></i> Refresh</button>
+        <div style="max-height:420px; overflow-y:auto; margin-top:10px; border:1px solid var(--border); border-radius:8px;">
+          <table id="allSalesTable">
+            <thead><tr><th>Date</th><th>Time</th><th>Customer</th><th>Mobile</th><th>Bricks</th><th>Total</th><th>Paid</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><i data-lucide="search" class="icon"></i> Customer Lookup</h2>
+        <label>Search by Name or Mobile Number</label>
+        <input id="customerSearchInput" type="text" placeholder="e.g. Ramesh or 9876543210" oninput="searchCustomers()">
+        <div id="customerSearchResults" style="margin-top:10px;"></div>
+        <div id="customerHistoryOutput" style="margin-top:14px;"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bn-items">
+    <button data-section="dashboard"><i data-lucide="layout-dashboard" class="icon"></i>Dashboard</button>
+    <button data-section="brickSales"><i data-lucide="shopping-cart" class="icon"></i>Sales</button>
+    <button onclick="toggleDrawer()"><i data-lucide="menu" class="icon"></i>Menu</button>
+  </div>
+</nav>
+
+<script src="js/api-security1.js?v=security1"></script>
+<script src="js/recovery.js?v=security1"></script>
+<script src="js/dashboard-security1.js?v=security1"></script>
+<script src="js/admin-security1.js?v=security1"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

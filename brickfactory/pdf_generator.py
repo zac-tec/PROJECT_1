@@ -1,0 +1,219 @@
+"""
+PDF RECEIPT GENERATOR
+Builds a clean, printable A5 sale receipt for a customer. Uses fpdf2
+(already a dependency) — pure Python, no system libraries needed, so it
+installs reliably on any machine.
+
+Company details are pulled from .env so you can rebrand the receipt
+without touching code.
+"""
+
+import os
+from io import BytesIO
+from fpdf import FPDF
+from dotenv import load_dotenv
+
+load_dotenv()
+
+COMPANY_NAME = os.getenv("COMPANY_NAME", "Brick Factory")
+COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", "")
+COMPANY_PHONE = os.getenv("COMPANY_PHONE", "")
+
+
+def generate_daily_report(data: dict) -> bytes:
+    """
+    data keys expected:
+      date, production (dict or None), stock (dict of material -> {qty, unit}),
+      outlet_stock (int), sales (dict: count, total_bricks, total_revenue, total_paid)
+    """
+    pdf = FPDF(format="A4")
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(15, 15, 15)
+
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.cell(0, 10, COMPANY_NAME, ln=True, align="C")
+    pdf.set_font("Helvetica", "", 10)
+    if COMPANY_ADDRESS:
+        pdf.cell(0, 6, COMPANY_ADDRESS, ln=True, align="C")
+    pdf.ln(2)
+    pdf.set_draw_color(180, 180, 180)
+    pdf.line(15, pdf.get_y(), pdf.w - 15, pdf.get_y())
+    pdf.ln(6)
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, f"Daily Report - {data['date']}", ln=True, align="C")
+    pdf.ln(6)
+
+    def section_title(text):
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(0, 8, f"  {text}", ln=True, fill=True)
+        pdf.ln(2)
+
+    def kv_row(label, value):
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(90, 6, label)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 6, str(value), ln=True)
+
+    # ---- Production ----
+    section_title("Today's Production")
+    if data["production"]:
+        p = data["production"]
+        kv_row("Mixes Run:", p["mixes"])
+        kv_row("Bricks Produced:", p["bricks_produced"])
+        average = p["avg_bricks_per_mix"]
+        qualifier = " (estimated)" if p["average_is_estimated"] else ""
+        kv_row(f"Average Bricks per Mix{qualifier}:", average if average is not None else "N/A")
+        kv_row("Labourers Present:", p["labourers"])
+        if p["misc_amount"] > 0:
+            kv_row("Misc Expense:", f"Rs. {p['misc_amount']:.2f} ({p['misc_note'] or '-'})")
+    else:
+        pdf.set_font("Helvetica", "I", 10)
+        pdf.cell(0, 6, "No production entry logged today.", ln=True)
+    pdf.ln(4)
+
+    # ---- Raw Material Stock ----
+    section_title("Raw Material Stock")
+    for material, info in data["stock"].items():
+        kv_row(f"{material}:", f"{info['qty']} {info['unit']}")
+    pdf.ln(4)
+
+    # ---- Outlet Stock ----
+    section_title("Finished Brick Stock")
+    finished = data.get("finished_bricks")
+    if finished:
+        kv_row("Total Bricks:", finished["total_bricks"])
+        kv_row("Saleable Now:", finished["saleable"])
+        kv_row("Curing (under 7 days):", finished["curing"])
+        kv_row("Early-sale Eligible (7-13 days):", finished["early_sale"])
+        kv_row("Fully Cured (14+ days):", finished["fully_cured"])
+    else:
+        kv_row("Bricks Available at Outlet:", data["outlet_stock"])
+    pdf.ln(4)
+
+    # ---- Sales ----
+    section_title("Today's Sales")
+    s = data["sales"]
+    if s["count"] > 0:
+        kv_row("Sales Made:", s["count"])
+        kv_row("Bricks Sold:", s["total_bricks"])
+        kv_row("Revenue Billed:", f"Rs. {s['total_revenue']:.2f}")
+        kv_row("Amount Collected:", f"Rs. {s['total_paid']:.2f}")
+    else:
+        pdf.set_font("Helvetica", "I", 10)
+        pdf.cell(0, 6, "No sales recorded today.", ln=True)
+
+    pdf.ln(10)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_text_color(120, 120, 120)
+    pdf.cell(0, 5, "Generated automatically by the Brick Factory Management System.", ln=True, align="C")
+
+    return bytes(pdf.output())
+
+
+def generate_sale_receipt(sale: dict) -> bytes:
+    """
+    sale keys expected: sale_id, date, time, customer_name, customer_mobile,
+    bricks_purchased, cost_per_brick, amount_due, other_charges,
+    total_amount, amount_paid, is_edited
+    """
+    pdf = FPDF(format="A5")
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=12)
+    pdf.set_margins(12, 12, 12)
+
+    # ---- Header ----
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 8, COMPANY_NAME, ln=True, align="C")
+
+    pdf.set_font("Helvetica", "", 9)
+    if COMPANY_ADDRESS:
+        pdf.cell(0, 5, COMPANY_ADDRESS, ln=True, align="C")
+    if COMPANY_PHONE:
+        pdf.cell(0, 5, COMPANY_PHONE, ln=True, align="C")
+
+    pdf.ln(3)
+    pdf.set_draw_color(180, 180, 180)
+    pdf.line(12, pdf.get_y(), pdf.w - 12, pdf.get_y())
+    pdf.ln(5)
+
+    # ---- Title + Receipt Info ----
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 7, "SALES RECEIPT", ln=True, align="C")
+    pdf.ln(2)
+
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, f"Receipt No: SR-{sale['sale_id']:05d}", ln=True)
+    pdf.cell(0, 5, f"Date: {sale['date']}    Time: {sale['time']}", ln=True)
+    pdf.ln(2)
+
+    # ---- Customer Info ----
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.cell(0, 5, "Customer Details", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 5, f"Name: {sale['customer_name']}", ln=True)
+    pdf.cell(0, 5, f"Mobile: {sale['customer_mobile']}", ln=True)
+    pdf.ln(3)
+
+    # ---- Line Items Table ----
+    # Usable width on A5 with 12mm margins each side = 148 - 24 = 124mm.
+    # These must add up to 124 or less, or columns run off the page edge.
+    col_widths = [58, 18, 22, 26]  # Description, Qty, Rate, Amount — sums to 124
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.cell(col_widths[0], 7, "Description", border=1, fill=True)
+    pdf.cell(col_widths[1], 7, "Qty", border=1, align="C", fill=True)
+    pdf.cell(col_widths[2], 7, "Rate", border=1, align="R", fill=True)
+    pdf.cell(col_widths[3], 7, "Amount", border=1, align="R", fill=True, ln=True)
+
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(col_widths[0], 7, "Fly Ash Bricks", border=1)
+    pdf.cell(col_widths[1], 7, str(sale["bricks_purchased"]), border=1, align="C")
+    pdf.cell(col_widths[2], 7, f"{sale['cost_per_brick']:.2f}", border=1, align="R")
+    pdf.cell(col_widths[3], 7, f"{sale['amount_due']:.2f}", border=1, align="R", ln=True)
+
+    if sale["other_charges"] > 0:
+        pdf.cell(col_widths[0], 7, "Other Charges", border=1)
+        pdf.cell(col_widths[1], 7, "-", border=1, align="C")
+        pdf.cell(col_widths[2], 7, "-", border=1, align="R")
+        pdf.cell(col_widths[3], 7, f"{sale['other_charges']:.2f}", border=1, align="R", ln=True)
+
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.cell(sum(col_widths[:3]), 7, "Total", border=1, align="R")
+    pdf.cell(col_widths[3], 7, f"Rs. {sale['total_amount']:.2f}", border=1, align="R", ln=True)
+    pdf.ln(4)
+
+    # ---- Payment Summary ----
+    balance_due = round(sale["total_amount"] - sale["amount_paid"], 2)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.cell(0, 6, f"Amount Paid: Rs. {sale['amount_paid']:.2f}", ln=True)
+
+    pdf.set_font("Helvetica", "B", 10)
+    if balance_due > 0:
+        pdf.set_text_color(200, 30, 50)
+        pdf.cell(0, 7, f"Balance Due: Rs. {balance_due:.2f}", ln=True)
+        pdf.set_text_color(0, 0, 0)
+    else:
+        pdf.set_text_color(20, 130, 80)
+        pdf.cell(0, 7, "PAID IN FULL", ln=True)
+        pdf.set_text_color(0, 0, 0)
+
+    if sale.get("is_edited") == "yes":
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "I", 8)
+        pdf.set_text_color(120, 120, 120)
+        pdf.cell(0, 5, "Note: this sale record was corrected after initial entry.", ln=True)
+        pdf.set_text_color(0, 0, 0)
+
+    # ---- Footer ----
+    pdf.ln(8)
+    pdf.set_draw_color(180, 180, 180)
+    pdf.line(12, pdf.get_y(), pdf.w - 12, pdf.get_y())
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_text_color(120, 120, 120)
+    pdf.cell(0, 5, "Thank you for your business!", ln=True, align="C")
+
+    return bytes(pdf.output())

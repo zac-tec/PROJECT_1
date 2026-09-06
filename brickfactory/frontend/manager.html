@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Manager — NEO BRICKS</title>
+<link rel="stylesheet" href="css/style.css?v=security1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <h1><i data-lucide="factory" class="icon"></i> NEO BRICKS</h1>
+  <div>
+    <span class="who" id="whoami"></span>
+    <button id="installBtn" class="install-btn hidden" title="Install app"><i data-lucide="download" class="icon"></i></button>
+    <button class="logout-btn" onclick="logout()"><i data-lucide="log-out" class="icon"></i></button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <button data-section="production"><i data-lucide="hard-hat" class="icon"></i> Today's Production</button>
+    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i> Raw Materials</button>
+    <button data-section="sales"><i data-lucide="shopping-cart" class="icon"></i> Brick Sales</button>
+    <button data-section="adjustments"><i data-lucide="package-minus" class="icon"></i> Stock Adjustments</button>
+    <button data-section="utility"><i data-lucide="receipt" class="icon"></i> Utility Bills</button>
+  </nav>
+
+  <main class="content">
+    <div id="msg" class="msg hidden"></div>
+
+    <!-- PRODUCTION ENTRY -->
+    <section id="sec-production">
+      <div class="card" id="existingEntryCard"></div>
+
+      <div class="card">
+        <h2><i data-lucide="send" class="icon"></i> Share Daily Report</h2>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:-4px;">
+          Sends today's stock, production, and sales — you'll tap Send yourself in WhatsApp.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <button class="primary" onclick="shareReportText()"><i data-lucide="message-circle" class="icon"></i> Send Text Summary</button>
+          <button class="secondary" onclick="shareReportPDF()"><i data-lucide="file-text" class="icon"></i> Share Full PDF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><i data-lucide="clipboard-list" class="icon"></i> Enter Today's Production Data</h2>
+        <label>Number of Mixes Today (leave blank if unknown)</label>
+        <input id="mixesInput" type="number" step="1" min="0">
+        <label>Number of Bricks Produced Today (leave blank if unknown)</label>
+        <input id="bricksInput" type="number" step="1" min="0">
+        <button class="primary" onclick="previewEntry()">Preview</button>
+
+        <div id="previewOutput" class="hidden" style="margin-top:14px;">
+          <div class="card">
+            <h2>Draft Entry (not saved yet)</h2>
+            <div id="previewDetails"></div>
+            <label>Number of Labourers Present Today</label>
+            <input id="labourersInput" type="number" step="1" min="0">
+            <label>Miscellaneous Charges Amount (leave blank if none)</label>
+            <input id="miscAmountInput" type="number" step="0.01" min="0">
+            <label>Miscellaneous Charges Note</label>
+            <input id="miscNoteInput" type="text" placeholder="What was this charge for?">
+            <button class="primary" onclick="saveEntry()">Confirm & Save Entry</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STOCK -->
+    <section id="sec-stock" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="boxes" class="icon"></i> Current Stock Levels</h2>
+        <button class="secondary" onclick="loadStock()"><i data-lucide="refresh-cw" class="icon"></i> Refresh</button>
+        <table id="stockTable" style="margin-top:10px;"><thead><tr><th>Material</th><th>Quantity</th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="card">
+        <h2>Add Stock (Refill)</h2>
+        <label>Material</label>
+        <select id="refillMaterial">
+          <option value="Flyash">Flyash (enter in tons)</option>
+          <option value="Sand">Sand (enter in tons)</option>
+          <option value="Chemical">Chemical (enter in litres)</option>
+          <option value="Cement">Cement (enter in packets)</option>
+        </select>
+        <label>Amount Received (whole number)</label>
+        <input id="refillAmount" type="number" step="1" min="1">
+        <button class="primary" onclick="refillStock()">Add Stock</button>
+      </div>
+
+      <div class="card">
+        <h2>Bricks Per Mix Setting</h2>
+        <p style="color:var(--muted); font-size:13px;">Current: <strong id="bricksPerMixCurrent" style="color:var(--ink);">—</strong></p>
+        <label>New Value</label>
+        <input id="bricksPerMixNew" type="number" step="0.1" min="0.1">
+        <button class="primary" onclick="updateBricksPerMix()">Update</button>
+      </div>
+    </section>
+
+    <!-- BRICK SALES -->
+    <section id="sec-sales" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="package" class="icon"></i> Finished Brick Availability</h2>
+        <div class="stock-stage-grid">
+          <div class="stat"><div class="value" id="outletStockValue">—</div><div class="label">total bricks</div></div>
+          <div class="stat"><div class="value" id="curingStockValue">—</div><div class="label">curing · under 7 days</div></div>
+          <div class="stat"><div class="value" id="earlySaleStockValue">—</div><div class="label">early-sale eligible · 7–13 days</div></div>
+          <div class="stat"><div class="value" id="fullyCuredStockValue">—</div><div class="label">fully cured · 14+ days</div></div>
+        </div>
+        <p><strong>Saleable now: <span id="saleableStockValue">—</span> bricks</strong></p>
+        <div class="table-scroll"><table id="brickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <h2>New Sale</h2>
+        <label>Customer Name</label>
+        <input id="saleCustomerName" type="text" placeholder="Full name">
+        <label>Customer Mobile Number</label>
+        <input id="saleCustomerMobile" type="text" placeholder="10-digit mobile number">
+        <label>Number of Bricks Purchased</label>
+        <input id="saleBricksPurchased" type="number" step="1" min="1" oninput="recalculateSale()">
+        <label>Cost Per Brick (Rs.)</label>
+        <input id="saleCostPerBrick" type="number" step="0.01" min="0.01" oninput="recalculateSale()">
+        <label>Other Charges (Rs., optional)</label>
+        <input id="saleOtherCharges" type="number" step="0.01" min="0" value="0" oninput="recalculateSale()">
+
+        <div id="saleCalculatedBox" class="hidden" style="background:var(--primary-light); border-radius:8px; padding:12px; margin-bottom:14px;">
+          <p style="margin:4px 0;">Amount Due: <strong id="saleAmountDue">—</strong></p>
+          <p style="margin:4px 0;">Total Amount (incl. other charges): <strong id="saleTotalAmount">—</strong></p>
+        </div>
+
+        <label>Amount Paid By Customer (Rs.)</label>
+        <input id="saleAmountPaid" type="number" step="0.01" min="0" oninput="recalculateSale()">
+
+        <button id="saleSubmitBtn" class="primary hidden" onclick="submitSale()">Submit Sale</button>
+        <button class="secondary" onclick="clearSaleForm()">Clear sale form / cancel edit</button>
+      </div>
+
+      <div class="card">
+        <h2>Today's Sales</h2>
+        <button class="secondary" onclick="loadTodaysSales()"><i data-lucide="refresh-cw" class="icon"></i> Refresh</button>
+        <table id="salesTable" style="margin-top:10px;">
+          <thead><tr><th>Time</th><th>Customer</th><th>Mobile</th><th>Bricks</th><th>Total</th><th>Paid</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2><i data-lucide="search" class="icon"></i> Customer Lookup</h2>
+        <label>Search by Name or Mobile Number</label>
+        <input id="customerSearchInput" type="text" placeholder="e.g. Ramesh or 9876543210" oninput="searchCustomers()">
+        <div id="customerSearchResults" style="margin-top:10px;"></div>
+        <div id="customerHistoryOutput" style="margin-top:14px;"></div>
+      </div>
+    </section>
+
+    <section id="sec-adjustments" class="hidden">
+      <div class="card">
+        <h2>Adjust Stock (transfer in, return, damage/loss)</h2>
+        <label>Adjustment Type</label>
+        <select id="adjustKind" onchange="updateAdjustmentForm()">
+          <option value="transfer">Transfer received from another outlet</option>
+          <option value="return">Customer return</option>
+          <option value="damage">Damage or loss</option>
+          <option value="transfer_out">Transfer sent to another outlet</option>
+        </select>
+        <div id="adjustBatchWrap" class="hidden">
+          <label>Affected Batch</label>
+          <select id="adjustBatchId"></select>
+        </div>
+        <label>Number of Bricks</label>
+        <input id="adjustChangeAmount" type="number" step="1" min="1">
+        <label>Note (reason for this adjustment)</label>
+        <input id="adjustNote" type="text" placeholder="e.g. Received from Outlet 2">
+        <button class="primary" onclick="submitStockAdjustment()">Apply Adjustment</button>
+      </div>
+
+      <div class="card">
+        <h2>Adjustment History</h2>
+        <button class="secondary" onclick="loadAdjustmentHistory()"><i data-lucide="refresh-cw" class="icon"></i> Refresh</button>
+        <table id="adjustmentsTable" style="margin-top:10px;">
+          <thead><tr><th>Time</th><th>Change</th><th>Note</th><th>Resulting Stock</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- UTILITY BILLS -->
+    <section id="sec-utility" class="hidden">
+      <div class="card">
+        <h2><i data-lucide="receipt" class="icon"></i> Enter Utility Bill</h2>
+        <div id="savedUtilityBills" aria-live="polite"></div>
+        <label>Billing Month</label>
+        <input id="utilityMonth" type="month" onchange="loadUtilityBills()">
+        <label>Bill Type</label>
+        <select id="utilityType">
+          <option value="Electricity">Electricity</option>
+          <option value="Water">Water</option>
+        </select>
+        <label>Amount (Rs.)</label>
+        <input id="utilityAmount" type="number" step="0.01" min="0.01">
+        <button class="primary" onclick="submitUtilityBill(false)">Save Bill</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bn-items">
+    <button data-section="production"><i data-lucide="hard-hat" class="icon"></i>Production</button>
+    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i>Stock</button>
+    <button data-section="sales"><i data-lucide="shopping-cart" class="icon"></i>Sales</button>
+    <button data-section="adjustments"><i data-lucide="package-minus" class="icon"></i>Adjust</button>
+    <button data-section="utility"><i data-lucide="receipt" class="icon"></i>Utility</button>
+  </div>
+</nav>
+
+<script src="js/api-security1.js?v=security1"></script>
+<script src="js/recovery.js?v=security1"></script>
+<script src="js/pwa.js"></script>
+<script src="js/manager-security1.js?v=security1"></script>
+</body>
+</html>
