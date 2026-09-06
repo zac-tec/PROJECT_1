@@ -1,32 +1,41 @@
 :root {
-  /* Modern slate + indigo palette, warm amber accent (nod to brick warmth) */
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
-  --primary-light: #eef2ff;
-  --accent: #f59e0b;
-  --sidebar-bg: #0f172a;
-  --sidebar-text: #cbd5e1;
-  --sidebar-text-active: #ffffff;
-  --bg: #f1f5f9;
-  --card: #ffffff;
-  --ink: #1e293b;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --ok: #059669;
-  --ok-bg: #d1fae5;
-  --bad: #e11d48;
-  --bad-bg: #ffe4e6;
-  --warn: #d97706;
+  /* Palette: edit this block to retheme the entire redesign. */
+  --black: #000505;
+  --space-indigo: #3b3355;
+  --dusty-grape: #5d5d81;
+  --pale-sky: #bfcde0;
+  --white: #fefcfd;
+
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-body: "DM Sans", "Segoe UI", sans-serif;
+
+  --primary: var(--space-indigo);
+  --primary-dark: var(--black);
+  --primary-light: var(--pale-sky);
+  --accent: var(--dusty-grape);
+  --sidebar-bg: var(--black);
+  --sidebar-text: var(--pale-sky);
+  --sidebar-text-active: var(--white);
+  --bg: var(--pale-sky);
+  --card: var(--white);
+  --ink: var(--black);
+  --muted: var(--dusty-grape);
+  --border: color-mix(in srgb, var(--dusty-grape) 35%, var(--white));
+  --ok: #2f6f62;
+  --ok-bg: #d8ebe5;
+  --bad: #9f3e55;
+  --bad-bg: #f4dce3;
+  --warn: #856c2f;
   --radius: 10px;
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
+  --shadow: 0 1px 3px rgba(0, 5, 5, 0.08), 0 1px 2px rgba(0, 5, 5, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 5, 5, 0.1);
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
@@ -51,7 +60,8 @@ header.topbar {
 header.topbar h1 {
   font-size: 16px;
   margin: 0;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 400;
   display: flex;
   align-items: center;
   gap: 8px;
