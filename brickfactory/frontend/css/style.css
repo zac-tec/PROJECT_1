@@ -5,6 +5,9 @@
   --dusty-grape: #5d5d81;
   --pale-sky: #bfcde0;
   --white: #fefcfd;
+  --signal: #8c7bff;
+  --signal-soft: #e8e4ff;
+  --signal-glow: rgba(140, 123, 255, 0.38);
 
   --font-display: "Archivo Black", "Arial Black", sans-serif;
   --font-body: "DM Sans", "Segoe UI", sans-serif;
@@ -12,11 +15,11 @@
   --primary: var(--space-indigo);
   --primary-dark: var(--black);
   --primary-light: var(--pale-sky);
-  --accent: var(--dusty-grape);
+  --accent: var(--signal);
   --sidebar-bg: var(--black);
   --sidebar-text: var(--pale-sky);
   --sidebar-text-active: var(--white);
-  --bg: var(--pale-sky);
+  --bg: #dce6f2;
   --card: var(--white);
   --ink: var(--black);
   --muted: var(--dusty-grape);
@@ -42,7 +45,22 @@ body {
 }
 
 svg { display: inline-block; vertical-align: middle; }
-.icon { width: 18px; height: 18px; stroke-width: 2; }
+.icon { width: 18px; height: 18px; stroke-width: 2.2; }
+
+.brand-lockup { display: inline-flex; align-items: center; gap: 10px; letter-spacing: .02em; }
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(191, 205, 224, .28);
+  border-radius: 9px;
+  color: var(--signal);
+  background: linear-gradient(145deg, rgba(140, 123, 255, .2), rgba(191, 205, 224, .06));
+  box-shadow: 0 0 18px rgba(140, 123, 255, .18), inset 0 1px rgba(254, 252, 253, .14);
+}
+.brand-mark .icon { width: 17px; height: 17px; }
+.brand-subtitle { color: var(--pale-sky); opacity: .55; font: 600 9px/1 var(--font-body); letter-spacing: .16em; margin-left: 2px; }
 
 /* ---------------- Topbar ---------------- */
 header.topbar {
@@ -64,7 +82,7 @@ header.topbar h1 {
   font-weight: 400;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
 }
 
 header.topbar .who { font-size: 13px; opacity: 0.75; margin-right: 14px; }
@@ -78,9 +96,9 @@ header.topbar button.logout-btn {
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 0 0 1px rgba(191, 205, 224, .1), 0 0 0 rgba(140, 123, 255, 0);
 }
-header.topbar button.logout-btn:hover { background: rgba(255,255,255,0.16); }
+header.topbar button.logout-btn:hover { background: rgba(140, 123, 255, .2); box-shadow: 0 0 18px var(--signal-glow); }
 header.topbar button.logout-btn:active { transform: scale(0.94); }
 
 /* ---------------- PWA install button ---------------- */
@@ -97,7 +115,7 @@ header.topbar button.install-btn {
   transition: background 0.15s ease, transform 0.1s ease;
   animation: installPulse 2.4s ease-in-out infinite;
 }
-header.topbar button.install-btn:hover { background: var(--primary); animation: none; }
+header.topbar button.install-btn:hover { background: var(--primary); animation: none; box-shadow: 0 0 18px var(--signal-glow); }
 header.topbar button.install-btn:active { transform: scale(0.94); }
 @keyframes installPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(79,70,229,0.5); }
@@ -151,9 +169,9 @@ nav.sidebar button {
   margin-bottom: 2px;
   transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
-nav.sidebar button:hover { background: rgba(255,255,255,0.06); color: var(--sidebar-text-active); }
+nav.sidebar button:hover { background: rgba(140, 123, 255, .14); color: var(--sidebar-text-active); box-shadow: 0 0 18px rgba(140, 123, 255, .16); transform: translateX(2px); }
 nav.sidebar button:active { transform: scale(0.98); }
-nav.sidebar button.active { background: var(--primary); color: white; font-weight: 600; }
+nav.sidebar button.active { background: linear-gradient(90deg, var(--primary), var(--dusty-grape)); color: white; font-weight: 600; box-shadow: 0 0 22px rgba(140, 123, 255, .24); }
 
 main.content { flex: 1; padding: 20px 24px 40px; max-width: 920px; }
 
@@ -206,7 +224,7 @@ label { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 4
 
 /* ---------------- Buttons ---------------- */
 button.primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--signal), var(--primary));
   color: white;
   border: none;
   padding: 10px 18px;
@@ -214,13 +232,13 @@ button.primary {
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
-  transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 18px rgba(59, 51, 85, .2), 0 0 0 rgba(140, 123, 255, 0);
 }
-button.primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-md); }
+button.primary:hover { background: linear-gradient(135deg, #a294ff, var(--primary)); box-shadow: 0 10px 24px rgba(59, 51, 85, .28), 0 0 22px var(--signal-glow); transform: translateY(-2px); }
 button.primary:active { transform: scale(0.96); }
 
 button.secondary {
-  background: white;
+  background: rgba(254, 252, 253, .78);
   border: 1.5px solid var(--border);
   color: var(--ink);
   padding: 10px 16px;
@@ -228,9 +246,9 @@ button.secondary {
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 600;
-  transition: border-color 0.15s ease, transform 0.08s ease, background 0.15s ease;
+  box-shadow: 0 4px 14px rgba(59, 51, 85, .08);
 }
-button.secondary:hover { border-color: var(--primary); background: var(--primary-light); }
+button.secondary:hover { border-color: var(--signal); background: var(--signal-soft); box-shadow: 0 0 18px var(--signal-glow); transform: translateY(-2px); }
 button.secondary:active { transform: scale(0.96); }
 
 /* Small icon-only buttons, used for inline editing */
@@ -245,10 +263,10 @@ button.icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: border-color 0.18s ease, color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease, background .18s ease;
   margin-right: 4px;
 }
-button.icon-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+button.icon-btn:hover { border-color: var(--signal); color: var(--signal); background: var(--signal-soft); box-shadow: 0 0 16px var(--signal-glow); transform: translateY(-2px); }
 button.icon-btn:active { transform: scale(0.92); }
 button.icon-btn.save { border-color: var(--ok); color: var(--ok); }
 button.icon-btn.save:hover { background: var(--ok-bg); }
@@ -405,6 +423,7 @@ nav.bottom-nav button:active { transform: scale(0.92); }
 .app-dialog .dialog-actions button { min-width: 112px; }
 button, .icon-btn, [role="button"] { transition: transform 140ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease; }
 button:active, .icon-btn:active, [role="button"]:active { transform: translateY(2px) scale(.97); }
+button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; box-shadow: 0 0 20px var(--signal-glow); }
 @keyframes dialogEnter { from { opacity: 0; transform: translateY(22px) scale(.94) rotateX(5deg); } to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); } }
 @keyframes dialogExit { to { opacity: 0; transform: translateY(12px) scale(.96); } }
 @keyframes backdropEnter { from { opacity: 0; } to { opacity: 1; } }
