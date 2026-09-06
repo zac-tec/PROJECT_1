@@ -9,7 +9,7 @@ a value that already looks like a bcrypt hash).
 Usage:
     python rehash_passwords.py
 
-Run this AFTER migration_rename_password_column.sql, and BEFORE trying
+Run this AFTER migration_password_hash.sql, and BEFORE trying
 to log in again — between those two steps, login will not work.
 """
 

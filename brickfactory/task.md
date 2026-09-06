@@ -10,8 +10,7 @@
 
 ## In progress
 
-
-- No application-source task claimed by this agent. This update only reorganizes the remaining work. Other agents must add their current claim before editing.
+- Database setup verification: document fresh/restore paths, enforce migration order, and add an isolated temporary-database test.
 
 ## Repository reset
 
@@ -45,3 +44,5 @@
 - [ ] Consider a separate report scheduler only if API downtime affects delivery.
 
 Completed frontend recovery/security changes and the verified Pi backend/Git-tracking cleanup have been removed from this task list. Historical details and backups remain available; secret rotation and the review/commit step are still outstanding.
+
+Database setup documentation, an ordered runner, and the isolated test have been added. The test still requires a PostgreSQL role with permission to create/use a disposable database; it has not touched the live Pi database.

@@ -17,6 +17,7 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "brick_factory")
 DB_USER = os.getenv("DB_USER", "sachusamuel")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
@@ -26,11 +27,15 @@ def get_connection():
     (e.g. row["material_name"]) instead of plain tuples — much easier
     to turn into JSON for the API to return.
     """
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        cursor_factory=psycopg2.extras.RealDictCursor,
-    )
+    connection_args = {"cursor_factory": psycopg2.extras.RealDictCursor}
+    if DATABASE_URL:
+        connection_args["dsn"] = DATABASE_URL
+    else:
+        connection_args.update(
+            host=DB_HOST,
+            port=DB_PORT,
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+        )
+    return psycopg2.connect(**connection_args)
