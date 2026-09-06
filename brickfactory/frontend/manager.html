@@ -4,31 +4,43 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Manager — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=security1">
+<link rel="stylesheet" href="css/style.css?v=redesign1">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4f46e5">
+<meta name="theme-color" content="#17191c">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <header class="topbar">
-  <h1><i data-lucide="factory" class="icon"></i> NEO BRICKS</h1>
+  <h1 class="brand-lockup"><span>NEO BRICKS</span></h1>
   <div>
     <span class="who" id="whoami"></span>
-    <button id="installBtn" class="install-btn hidden" title="Install app"><i data-lucide="download" class="icon"></i></button>
-    <button class="logout-btn" onclick="logout()"><i data-lucide="log-out" class="icon"></i></button>
+    <button class="logout-btn" onclick="logout()"><i data-lucide="log-out" class="icon"></i><span class="logout-label">Log out</span></button>
   </div>
 </header>
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <button data-section="production"><i data-lucide="hard-hat" class="icon"></i> Today's Production</button>
-    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i> Raw Materials</button>
-    <button data-section="sales"><i data-lucide="shopping-cart" class="icon"></i> Brick Sales</button>
-    <button data-section="adjustments"><i data-lucide="package-minus" class="icon"></i> Stock Adjustments</button>
-    <button data-section="utility"><i data-lucide="receipt" class="icon"></i> Utility Bills</button>
+    <button data-section="production" title="Today's Production"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
+    <button data-section="stock" title="Raw Materials"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
+    <button data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
+    <button data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
+    <button data-section="utility" title="Utility Bills"><i data-lucide="receipt" class="icon"></i><span>Utility</span></button>
+    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
   </nav>
+
+  <aside class="right-menu" aria-label="Full navigation menu">
+    <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
+    <button data-section="production" onclick="closeRightMenu()"><i data-lucide="hard-hat" class="icon"></i><span>Today's Production</span></button>
+    <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Raw Materials Stock</span></button>
+    <button data-section="sales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
+    <button data-section="adjustments" onclick="closeRightMenu()"><i data-lucide="package-minus" class="icon"></i><span>Stock Adjustments</span></button>
+    <button data-section="utility" onclick="closeRightMenu()"><i data-lucide="receipt" class="icon"></i><span>Utility Bills</span></button>
+  </aside>
 
   <main class="content">
     <div id="msg" class="msg hidden"></div>
@@ -213,17 +225,8 @@
   </main>
 </div>
 
-<nav class="bottom-nav">
-  <div class="bn-items">
-    <button data-section="production"><i data-lucide="hard-hat" class="icon"></i>Production</button>
-    <button data-section="stock"><i data-lucide="warehouse" class="icon"></i>Stock</button>
-    <button data-section="sales"><i data-lucide="shopping-cart" class="icon"></i>Sales</button>
-    <button data-section="adjustments"><i data-lucide="package-minus" class="icon"></i>Adjust</button>
-    <button data-section="utility"><i data-lucide="receipt" class="icon"></i>Utility</button>
-  </div>
-</nav>
-
 <script src="js/api-security1.js?v=security1"></script>
+<script src="js/mock-api.js?v=redesign1"></script>
 <script src="js/recovery.js?v=security1"></script>
 <script src="js/pwa.js"></script>
 <script src="js/manager-security1.js?v=security1"></script>

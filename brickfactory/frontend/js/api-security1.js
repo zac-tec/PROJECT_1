@@ -139,6 +139,43 @@ function closeDrawer() {
   if (sidebar) sidebar.classList.remove("open");
   if (overlay) overlay.classList.remove("open");
 }
+
+function toggleNavLabels() {
+  const nav = document.querySelector("nav.sidebar");
+  const button = nav?.querySelector(".nav-settings");
+  if (!nav) return;
+  const expanded = nav.classList.toggle("nav-labels-open");
+  button?.setAttribute("aria-label", expanded ? "Hide menu labels" : "Show menu labels");
+  button?.setAttribute("title", expanded ? "Hide menu labels" : "Show menu labels");
+}
+
+function toggleRightMenu() {
+  const menu = document.querySelector(".right-menu");
+  const button = document.querySelector(".nav-settings");
+  if (!menu) return;
+  const open = menu.classList.toggle("open");
+  button?.setAttribute("aria-expanded", String(open));
+}
+
+function closeRightMenu() {
+  const menu = document.querySelector(".right-menu");
+  const button = document.querySelector(".nav-settings");
+  menu?.classList.remove("open");
+  button?.setAttribute("aria-expanded", "false");
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeRightMenu();
+});
+
+let lastScrollY = 0;
+window.addEventListener("scroll", () => {
+  const nav = document.querySelector("nav.sidebar");
+  if (!nav) return;
+  const currentY = window.scrollY;
+  nav.classList.toggle("nav-receded", currentY > lastScrollY && currentY > 80);
+  lastScrollY = currentY;
+}, { passive: true });
 // -------------------- Daily Report Sharing (WhatsApp) --------------------
 // Sends the text summary via a wa.me link, pre-filled to the configured
 // client number — the user still taps "Send" themselves (WhatsApp/browsers
@@ -357,7 +394,6 @@ function appDialog(title, message, confirm = false, isError = false) {
     const heading = document.createElement("h2");
     heading.id = "app-dialog-title";
     heading.textContent = title;
-    if (isError) heading.style.color = "var(--bad)";
     const content = document.createElement("p");
     content.id = "app-dialog-message";
     content.textContent = message.replace(/Resend with confirm_overwrite=true to replace it\./g, "");
@@ -368,16 +404,32 @@ function appDialog(title, message, confirm = false, isError = false) {
       cancel.textContent = "Keep existing";
       cancel.className = "secondary";
       cancel.autofocus = true;
-      cancel.onclick = () => dialog.close("cancel");
+      cancel.onclick = () => closeDialog("cancel");
       actions.append(cancel);
     }
     const ok = document.createElement("button");
     ok.textContent = confirm ? "Replace entry" : "OK";
     ok.className = "primary";
-    ok.onclick = () => dialog.close("ok");
+    ok.onclick = () => closeDialog("ok");
     actions.append(ok);
     dialog.append(heading, content, actions);
     document.body.append(dialog);
+    let closing = false;
+    const closeDialog = (value) => {
+      if (closing) return;
+      closing = true;
+      dialog.returnValue = value;
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        dialog.close();
+        return;
+      }
+      dialog.classList.add("is-closing");
+      dialog.addEventListener("animationend", () => dialog.close(), { once: true });
+    };
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) closeDialog("cancel");
+    });
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); closeDialog("cancel"); });
     dialog.addEventListener("close", () => { const accepted = dialog.returnValue === "ok"; dialog.remove(); resolve(accepted); }, {once:true});
     dialog.showModal();
   }));
