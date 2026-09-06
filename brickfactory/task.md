@@ -51,3 +51,5 @@ Database setup documentation, an ordered runner, and the isolated test have been
 ## UI merge status — 2026-09-07
 
 `ui-redesign` was already merged into `main` at `db18bce`. Integration removes demo API code/references, preserves recovery/security behavior, maps old admin sections into Pricing/Orders, and adds a dialog-close fallback. Asset/cache version is `ui-live1`. Focused recovery, stored-XSS, navigation/asset and integration tests passed without live business writes. Current branch and uncommitted frontend were backed up in `/home/vps/app-update-backups/ui-merge-20260907-011606` and branch `backup/ui-merge-20260907-011606`. The redesign worktree is retained. No push performed by this agent.
+
+Manager UI adjustment — 2026-09-07: navbar uses six equal columns; small labels/body notes/buttons/tables use 15px, inputs remain 16px. Manager-only styling; no business logic changed. Backup: /home/vps/app-update-backups/manager-spacing-20260907-012448.

@@ -551,3 +551,26 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 .stock-stage-grid .stat { padding:14px; border:1px solid var(--border); border-radius:10px; }
 .table-scroll { overflow-x:auto; margin-top:14px; }
 @media (max-width:700px) { .stock-stage-grid { grid-template-columns:repeat(2,minmax(120px,1fr)); } }
+
+/* Manager spacing and type scale (scoped so admin retains its layout). */
+.manager-ui { --manager-small-text: 15px; font-size: 16px; }
+.manager-ui nav.sidebar {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+.manager-ui nav.sidebar button {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 4px;
+  justify-content: center;
+  font-size: var(--manager-small-text);
+}
+.manager-ui main.content :is(label, table, small, .label),
+.manager-ui :is(button.primary, button.secondary),
+.manager-ui .right-menu > button:not(.icon-btn) {
+  font-size: var(--manager-small-text);
+}
+.manager-ui main.content p { font-size: var(--manager-small-text) !important; }
+.manager-ui main.content :is(input, select, textarea) { font-size: 16px; }
