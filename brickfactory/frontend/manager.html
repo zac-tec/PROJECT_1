@@ -30,8 +30,17 @@
     <button data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
     <button data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
     <button data-section="utility" title="Utility Bills"><i data-lucide="receipt" class="icon"></i><span>Utility</span></button>
-    <button class="nav-settings" type="button" title="Show menu labels" aria-label="Show menu labels" onclick="toggleNavLabels()"><i data-lucide="settings-2" class="icon"></i></button>
+    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
   </nav>
+
+  <aside class="right-menu" aria-label="Full navigation menu">
+    <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
+    <button data-section="production" onclick="closeRightMenu()"><i data-lucide="hard-hat" class="icon"></i><span>Today's Production</span></button>
+    <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Raw Materials Stock</span></button>
+    <button data-section="sales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
+    <button data-section="adjustments" onclick="closeRightMenu()"><i data-lucide="package-minus" class="icon"></i><span>Stock Adjustments</span></button>
+    <button data-section="utility" onclick="closeRightMenu()"><i data-lucide="receipt" class="icon"></i><span>Utility Bills</span></button>
+  </aside>
 
   <main class="content">
     <div id="msg" class="msg hidden"></div>

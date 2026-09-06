@@ -30,15 +30,28 @@
   <nav class="sidebar" id="sidebar">
     <button data-section="dashboard" title="Dashboard"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span><span id="dashboardBadge" class="hidden"></span></button>
     <button data-section="brickSales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
-    <button data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Prod / Costs</span></button>
+    <button data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
     <button data-section="stock" title="Stock Overview"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
     <button data-section="pricing" title="Rates, Charges, Fixed, Price and Recipe"><i data-lucide="sliders-horizontal" class="icon"></i><span>Pricing</span></button>
     <button data-section="orders" title="Order and Stock Planning"><i data-lucide="package-plus" class="icon"></i><span>Orders</span></button>
     <button data-section="history" title="Rate and Charge History"><i data-lucide="history" class="icon"></i><span>History</span></button>
     <button data-section="profit" title="Profit Calculator"><i data-lucide="trending-up" class="icon"></i><span>Profit</span></button>
     <button data-section="reportsettings" title="Report Settings"><i data-lucide="settings" class="icon"></i><span>Reports</span></button>
-    <button class="nav-settings" type="button" title="Show menu labels" aria-label="Show menu labels" onclick="toggleNavLabels()"><i data-lucide="settings-2" class="icon"></i></button>
+    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
   </nav>
+
+  <aside class="right-menu" aria-label="Full navigation menu">
+    <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
+    <button data-section="dashboard" onclick="closeRightMenu()"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span></button>
+    <button data-section="brickSales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
+    <button data-section="productionCosts" onclick="closeRightMenu()"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
+    <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Stock Overview</span></button>
+    <button data-section="pricing" onclick="closeRightMenu()"><i data-lucide="sliders-horizontal" class="icon"></i><span>Pricing: Rates, Charges, Fixed, Price &amp; Recipe</span></button>
+    <button data-section="orders" onclick="closeRightMenu()"><i data-lucide="package-plus" class="icon"></i><span>Order &amp; Stock Planning</span></button>
+    <button data-section="history" onclick="closeRightMenu()"><i data-lucide="history" class="icon"></i><span>Rate &amp; Charge History</span></button>
+    <button data-section="profit" onclick="closeRightMenu()"><i data-lucide="trending-up" class="icon"></i><span>Profit Calculator</span></button>
+    <button data-section="reportsettings" onclick="closeRightMenu()"><i data-lucide="settings" class="icon"></i><span>Report Settings</span></button>
+  </aside>
 
   <main class="content">
     <div id="msg" class="msg hidden"></div>

@@ -149,6 +149,25 @@ function toggleNavLabels() {
   button?.setAttribute("title", expanded ? "Hide menu labels" : "Show menu labels");
 }
 
+function toggleRightMenu() {
+  const menu = document.querySelector(".right-menu");
+  const button = document.querySelector(".nav-settings");
+  if (!menu) return;
+  const open = menu.classList.toggle("open");
+  button?.setAttribute("aria-expanded", String(open));
+}
+
+function closeRightMenu() {
+  const menu = document.querySelector(".right-menu");
+  const button = document.querySelector(".nav-settings");
+  menu?.classList.remove("open");
+  button?.setAttribute("aria-expanded", "false");
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeRightMenu();
+});
+
 let lastScrollY = 0;
 window.addEventListener("scroll", () => {
   const nav = document.querySelector("nav.sidebar");
