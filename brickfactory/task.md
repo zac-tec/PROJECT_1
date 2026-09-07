@@ -12,6 +12,7 @@
 
 
 
+
 - Database setup verification: document fresh/restore paths, enforce migration order, and add an isolated temporary-database test.
 
 ## Repository reset
@@ -56,3 +57,5 @@ Database setup documentation, an ordered runner, and the isolated test have been
 Manager UI adjustment — 2026-09-07: navbar uses six equal columns; small labels/body notes/buttons/tables use 15px, inputs remain 16px. Manager-only styling; no business logic changed. Backup: /home/vps/app-update-backups/manager-spacing-20260907-012448.
 
 2026-09-07: PWA updated to NEO BRICKS, fullscreen with standalone fallback, monochrome NB icons, Apple home-screen metadata, and cache version pwa-nb2. Installed launch required; OS fullscreen support varies.
+
+2026-09-07: Reporting emails now use NEO BRICKS branding, readable dates, plain-text/HTML bodies and branded PDF filenames. PDF report labels updated. Delivery recipient and schedule remain private database settings, editable in the app.

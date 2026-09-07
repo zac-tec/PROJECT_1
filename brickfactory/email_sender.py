@@ -11,6 +11,8 @@ verify your own domain on resend.com, switch it to your own address in
 
 import os
 import base64
+from datetime import date
+from html import escape
 import resend
 from dotenv import load_dotenv
 
@@ -31,26 +33,33 @@ def send_daily_report_email(recipient_email: str, pdf_bytes: bytes, report_date:
     if not recipient_email:
         raise RuntimeError("No client email address is set. Add one in Delivery Settings first.")
 
+    display_date = date.fromisoformat(report_date).strftime("%d %B %Y")
     average_html = ""
     if production:
         average = production["avg_bricks_per_mix"]
         qualifier = " (estimated)" if production["average_is_estimated"] else ""
-        average_html = f"<p>Average bricks per mix{qualifier}: <strong>{average if average is not None else 'N/A'}</strong></p>"
+        average_html = f"<p>Average bricks per mix{qualifier}: <strong>{escape(str(average)) if average is not None else 'N/A'}</strong></p>"
 
     attachment = {
-        "filename": f"daily_report_{report_date}.pdf",
+        "filename": f"NEO_BRICKS_Daily_Report_{report_date}.pdf",
         "content": base64.b64encode(pdf_bytes).decode("utf-8"),
     }
 
     resend.Emails.send({
-        "from": RESEND_FROM_EMAIL,
+        "from": RESEND_FROM_EMAIL if "<" in RESEND_FROM_EMAIL else f"NEO BRICKS <{RESEND_FROM_EMAIL}>",
         "to": [recipient_email],
-        "subject": f"Daily Report - {report_date}",
+        "subject": f"NEO BRICKS | Daily Operations Report | {display_date}",
+        "text": (
+            f"Dear Team,\n\nPlease find attached the NEO BRICKS daily operations report "
+            f"for {display_date}, covering production, sales and inventory.\n\n"
+            "Regards,\nNEO BRICKS\nAutomated Reporting"
+        ),
         "html": (
-            f"<p>Please find attached today's stock, production, and sales report "
-            f"for <strong>{report_date}</strong>.</p>"
+            "<p>Dear Team,</p>"
+            f"<p>Please find attached the <strong>NEO BRICKS daily operations report</strong> "
+            f"for <strong>{display_date}</strong>, covering production, sales and inventory.</p>"
             f"{average_html}"
-            f"<p style='color:#888;font-size:12px;'>Sent automatically by the Brick Factory Management System.</p>"
+            "<p>Regards,<br><strong>NEO BRICKS</strong><br>Automated Reporting</p>"
         ),
         "attachments": [attachment],
     })
