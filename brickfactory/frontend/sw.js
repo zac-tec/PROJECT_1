@@ -7,7 +7,7 @@
   Bump CACHE_NAME whenever you deploy new frontend files so old clients
   pick up the update instead of serving a stale cached copy.
 */
-const CACHE_NAME = "brickfactory-shell-pwa-nb2";
+const CACHE_NAME = "brickfactory-shell-presence1";
 const SHELL_FILES = [
   "login.html",
   "admin.html",
@@ -19,6 +19,7 @@ const SHELL_FILES = [
   "js/manager-security1.js",
   "js/dashboard-security1.js",
   "manifest.json",
+  "js/presence.js?v=presence1",
   "icons/nb-192-v2.png",
   "icons/nb-512-v2.png",
   "icons/nb-180-v2.png",
@@ -47,6 +48,7 @@ self.addEventListener("activate", (event) => {
 // file if the network is actually unreachable (e.g. brief signal drop).
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  if (new URL(event.request.url).pathname.startsWith("/presence/")) return;
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );

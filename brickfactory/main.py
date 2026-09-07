@@ -25,6 +25,7 @@ from dependencies import get_current_user
 from database import get_connection
 from services import get_stock
 from routers import admin, manager, auth, sales, dashboard, daily_report
+from routers import presence
 import scheduler
 
 app = FastAPI(title="Brick Factory API")
@@ -32,6 +33,7 @@ app = FastAPI(title="Brick Factory API")
 # Browser access is restricted to the configured deployment origins.
 install_http_security(app)
 
+app.include_router(presence.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(manager.router)
