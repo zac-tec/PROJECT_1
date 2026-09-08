@@ -51,7 +51,7 @@ The website includes product information, sourced fly ash brick benefits, a labo
 | systemd | Application process lifecycle |
 | Resend | Outbound report delivery |
 
-The public website source is maintained separately from the application code in this repository. The live links show the deployed experiences; they do not grant access to the client's private workspace.
+The public website source is included in [`website/`](../website/), separately from the operations app in `brickfactory/`. The live links show the deployed experiences; they do not grant access to the client's private workspace.
 
 ## Backup and recovery model
 

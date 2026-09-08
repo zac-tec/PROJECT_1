@@ -60,7 +60,7 @@ flowchart TD
     Service[systemd] --> API
 ```
 
-The public website uses **React, TypeScript and Vite**, exported as static files. The operations frontend uses **HTML, CSS and JavaScript** backed by FastAPI. These are distinct applications; this repository currently contains the operations application source.
+The public website uses **React, TypeScript and Vite**, exported as static files. The operations frontend uses **HTML, CSS and JavaScript** backed by FastAPI. Both applications are included: `brickfactory/` contains the operations app and [`website/`](website/) contains the public website source.
 
 ## Engineering decisions
 
@@ -82,6 +82,7 @@ These describe the delivered deployment, not infrastructure automatically create
 ```text
 .
 ├── README.md
+├── website/                     # Public React/TypeScript website
 ├── docs/
 │   └── PROJECT_SHOWCASE.md       # Delivery story and architecture notes
 └── brickfactory/
@@ -102,6 +103,16 @@ These describe the delivered deployment, not infrastructure automatically create
     ├── tests/                   # Database, HTTP security and presence checks
     └── .env.example             # Configuration template
 ```
+
+## Run the public website
+
+```bash
+cd website
+npm ci
+npm run dev
+```
+
+Use Node.js 22.13 or newer. `npm run build` produces the static website in `website/static-dist/`. See [website/README.md](website/README.md) for editing and publishing instructions.
 
 ## Local backend setup
 
