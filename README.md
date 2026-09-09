@@ -5,7 +5,7 @@
 # NEO BRICKS
 ### Factory Operations Platform & Client Website
 
-A client project bringing production, inventory, sales and daily reporting into one web application for a fly ash brick manufacturer in Palakkad, Kerala.
+A client project bringing production, inventory, sales and daily reporting into one web application for a fly ash brick manufacturer in Palakkad , Kerala.
 
 **Python · FastAPI · PostgreSQL · JavaScript · PWA · Nginx · Linux**
 
