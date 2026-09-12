@@ -25,7 +25,7 @@ from dependencies import get_current_user
 from database import get_connection
 from services import get_stock
 from routers import admin, manager, auth, sales, dashboard, daily_report
-from routers import presence
+from routers import presence, stock_history
 import scheduler
 
 app = FastAPI(title="Brick Factory API")
@@ -34,6 +34,7 @@ app = FastAPI(title="Brick Factory API")
 install_http_security(app)
 
 app.include_router(presence.router)
+app.include_router(stock_history.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(manager.router)
@@ -57,6 +58,7 @@ def _start_background_scheduler():
     connection = get_connection()
     try:
         connection.cursor().execute(Path(__file__).with_name("migration_material_rates.sql").read_text())
+        connection.cursor().execute(Path(__file__).with_name("migration_historical_ledger.sql").read_text())
         connection.commit()
     finally:
         connection.close()

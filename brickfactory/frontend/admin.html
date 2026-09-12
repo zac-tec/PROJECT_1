@@ -309,6 +309,14 @@
       </div>
 
       <div class="card">
+        <h2>Stock history &amp; imported ledgers</h2>
+        <p>Historical quantities are not customer invoices or revenue. Batch ages reconstructed using oldest-stock-first allocation.</p>
+        <label for="historyMonth">Month</label><input id="historyMonth" type="month" value="2026-09">
+        <button class="primary" onclick="loadStockHistory()">Show stock history</button>
+        <div id="stockHistoryOutput" style="overflow:auto;margin-top:16px"></div>
+      </div>
+
+      <div class="card">
         <h2>Monthly Sales Summary</h2>
         <label>Month (leave blank for current month)</label>
         <input id="salesSummaryMonth" type="month" placeholder="2026-07">
@@ -345,5 +353,6 @@
 <script src="js/admin-security1.js?v=ui-live1"></script>
 <script src="js/pwa.js?v=ui-live1"></script>
 <script src="js/presence.js?v=presence1"></script>
+<script src="js/stock-history.js?v=history1"></script>
 </body>
 </html>
