@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=access1">
+<link rel="stylesheet" href="css/style.css?v=layout2">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -40,7 +40,7 @@
     <button data-section="orders" title="Order and Stock Planning"><i data-lucide="package-plus" class="icon"></i><span>Orders</span></button>
     <button data-section="history" title="Rate and Charge History"><i data-lucide="history" class="icon"></i><span>History</span></button>
     <button data-section="profit" title="Profit Calculator"><i data-lucide="trending-up" class="icon"></i><span>Profit</span></button>
-    <button data-section="reportsettings" title="Report Settings"><i data-lucide="settings" class="icon"></i><span>Reports</span></button>
+    <button data-section="reportsettings" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
     <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
   </nav>
 
@@ -54,7 +54,7 @@
     <button data-section="orders" onclick="closeRightMenu()"><i data-lucide="package-plus" class="icon"></i><span>Order &amp; Stock Planning</span></button>
     <button data-section="history" onclick="closeRightMenu()"><i data-lucide="history" class="icon"></i><span>Rate &amp; Charge History</span></button>
     <button data-section="profit" onclick="closeRightMenu()"><i data-lucide="trending-up" class="icon"></i><span>Profit Calculator</span></button>
-    <button data-section="reportsettings" onclick="closeRightMenu()"><i data-lucide="settings" class="icon"></i><span>Report Settings</span></button>
+    <button data-section="reportsettings" onclick="closeRightMenu()"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
   </aside>
 
   <main class="content">
@@ -62,34 +62,21 @@
 
     <!-- DASHBOARD -->
     <section id="sec-dashboard">
+      <div class="card" id="todayActivityCard">
+        <h2><i data-lucide="bell" class="icon"></i> Today's Activity</h2>
+        <button class="secondary" onclick="loadTodayActivity(true)">Refresh Activity</button>
+        <div id="todayActivityOutput"><p style="color:var(--muted);">Loading…</p></div>
+      </div>
       <div class="card"><h2>Monthly production &amp; material use</h2>
       <input id="materialReportMonth" type="month" onchange="loadMonthMaterials()">
-      <div id="monthMaterialsOutput"></div><canvas id="chartMonthActual" height="90"></canvas>
+      <div id="monthMaterialsOutput"></div>
       <p>Historical consumption uses the saved recipe. Historical costs use available dated material rates and current making charges. Unrecorded historical expenses are excluded. Fixed monthly charges are shown separately.</p></div>
-      <div class="card" id="managerAccessCard">
-        <h2>Manager login — admin only</h2>
-        <p>Change the manager login when staff change. Previous login sessions stop working immediately. Business records are preserved.</p>
-        <form id="managerAccessForm" autocomplete="off">
-          <label>Manager account<select id="accessManager" required></select></label>
-          <label>New username<input id="accessUsername" required minlength="3" maxlength="50" pattern="[A-Za-z0-9_.-]+" autocomplete="off"></label>
-          <label>New password<input id="accessPassword" type="password" required minlength="12" autocomplete="new-password"></label>
-          <label>Confirm new password<input id="accessConfirm" type="password" required minlength="12" autocomplete="new-password"></label>
-          <label>Reason for changing access<textarea id="accessReason" required minlength="5" maxlength="500"></textarea></label>
-          <button type="submit" class="primary">Update manager login &amp; sign out old sessions</button>
-        </form>
-        <p id="managerAccessMessage" role="status"></p>
-        <details><summary>Recent access changes</summary><div id="managerAccessAudit"></div></details>
-      </div>
+
       <div class="card" id="activeUsersCard">
         <h2>Active users <span id="activeUsersCount" aria-live="polite">—</span></h2>
         <p style="color:var(--muted)">Accounts seen with the app visible in the last 5 minutes. Includes you; refreshes every minute.</p>
         <button type="button" class="secondary" id="refreshActiveUsers">Refresh users</button>
         <div id="activeUsersOutput" style="overflow-x:auto">Loading active users…</div>
-      </div>
-      <div class="card" id="todayActivityCard">
-        <h2><i data-lucide="bell" class="icon"></i> Today's Activity</h2>
-        <button class="secondary" onclick="loadTodayActivity(true)">Refresh Activity</button>
-        <div id="todayActivityOutput"><p style="color:var(--muted);">Loading…</p></div>
       </div>
 
       <div class="card">
@@ -104,6 +91,10 @@
         </div>
       </div>
 
+      <div class="card">
+        <h2>Selected month: daily production</h2>
+        <canvas id="chartMonthActual" height="90"></canvas>
+      </div>
       <div class="card">
         <h2>Daily Production — Last 30 Days</h2>
         <canvas id="chartDailyProduction" height="90"></canvas>
@@ -142,6 +133,20 @@
     </section>
 
     <section id="sec-reportsettings" class="hidden">
+      <div class="card" id="managerAccessCard">
+        <h2>Manager login — admin only</h2>
+        <p>Change the manager login when staff change. Previous login sessions stop working immediately. Business records are preserved.</p>
+        <form id="managerAccessForm" autocomplete="off">
+          <label>Manager account<select id="accessManager" required></select></label>
+          <label>New username<input id="accessUsername" required minlength="3" maxlength="50" pattern="[A-Za-z0-9_.-]+" autocomplete="off"></label>
+          <label>New password<input id="accessPassword" type="password" required minlength="12" autocomplete="new-password"></label>
+          <label>Confirm new password<input id="accessConfirm" type="password" required minlength="12" autocomplete="new-password"></label>
+          <label>Reason for changing access<textarea id="accessReason" required minlength="5" maxlength="500"></textarea></label>
+          <button type="submit" class="primary">Update manager login &amp; sign out old sessions</button>
+        </form>
+        <p id="managerAccessMessage" role="status"></p>
+        <details><summary>Recent access changes</summary><div id="managerAccessAudit"></div></details>
+      </div>
       <div class="card">
         <h2><i data-lucide="settings" class="icon"></i> Report Settings</h2>
         <p style="font-size:12.5px; color:var(--muted); margin-top:-4px;">
@@ -372,14 +377,14 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=access1"></script>
-<script src="js/recovery.js?v=access1"></script>
-<script src="js/dashboard-security1.js?v=access1"></script>
-<script src="js/admin-security1.js?v=access1"></script>
-<script src="js/pwa.js?v=access1"></script>
+<script src="js/api-security1.js?v=layout2"></script>
+<script src="js/recovery.js?v=layout2"></script>
+<script src="js/dashboard-security1.js?v=layout2"></script>
+<script src="js/admin-security1.js?v=layout2"></script>
+<script src="js/pwa.js?v=layout2"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/historical-entry.js?v=entry5"></script>
-<script src="js/manager-access.js?v=access1"></script>
+<script src="js/manager-access.js?v=layout2"></script>
 </body>
 </html>
