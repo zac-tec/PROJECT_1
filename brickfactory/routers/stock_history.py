@@ -39,6 +39,6 @@ def history(month: str):
                     opening=opening if complete else None,
                     closing=opening+sum(x['quantity'] for x in movements) if complete else None,
                     complete_month_ledger=complete,
-                    note='Imported records are partial source history, not invoices or cost entries. September is a cutover month; use the confirmed 10 September balance. Future months show opening and closing from recorded movements, up to the latest entry.')
+                    note='Imported records are partial source history, not invoices or cost entries. The cutover month combines saved historical quantities and subsequent live movements. Future months show opening and closing from recorded movements, up to the latest entry.')
     finally:
         conn.close()

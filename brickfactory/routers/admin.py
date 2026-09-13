@@ -52,6 +52,9 @@ def production_cost_report(month: str = None):
             FROM production_log p LEFT JOIN production_cost_snapshots c USING(production_date)
             WHERE TO_CHAR(p.production_date,'YYYY-MM')=%s ORDER BY p.production_date""", (target_month,))
         days = cursor.fetchall()
+        from historical_reporting import historical_cost_days
+        days += historical_cost_days(cursor, target_month)
+        days.sort(key=lambda r: str(r['production_date']))
         bricks = sum(r['bricks_made'] for r in days)
         mixes = sum(r['mixes_run'] for r in days)
         missing = any(r['snapshot_source'] is None for r in days)
@@ -69,6 +72,7 @@ def production_cost_report(month: str = None):
             'cost_per_brick': round(total/bricks,2) if bricks and not missing else None,
             'baseline_days': sum(r['snapshot_source']=='migration_baseline' for r in days),
             'missing_costs': missing,
+            'historical_days': sum(r['snapshot_source']=='historical_estimate' for r in days),
             'days': [dict(r, production_date=str(r['production_date'])) for r in days],
         }
     finally:

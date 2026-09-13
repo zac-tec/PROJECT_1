@@ -4,9 +4,7 @@ Every request body shape used by the API, grouped by feature. When you
 add a new endpoint that needs a request body, add its model here —
 keeps main.py and the routers focused on logic, not data shapes.
 
-Rule: quantities (stock, mixes, bricks, labourers) are always int.
-Only rates, charges, and money amounts (misc_expense, utility bills,
-selling price) are allowed to be float.
+Material refill quantities allow decimals; mixes, bricks and labourers remain integers.
 """
 
 from pydantic import BaseModel, Field
@@ -66,10 +64,10 @@ class FixedChargeUpdateRequest(BaseModel):
 # --------------------------- Manager: Stock Refill ---------------------------
 class StockRefillRequest(BaseModel):
     material: str
-    # Whole number in the material's ENTRY unit: tons for Flyash/Sand,
+    # Decimal quantity in the material's ENTRY unit: tons for Flyash/Sand,
     # litres for Chemical, packets for Cement (converted to storage units
     # inside the endpoint, same as add_stock_refill() in the original).
-    amount: int = Field(..., gt=0)
+    amount: float = Field(..., gt=0, le=1000000, allow_inf_nan=False)
 
 
 # --------------------------- Manager: Bricks Per Mix ---------------------------

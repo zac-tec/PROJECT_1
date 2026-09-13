@@ -61,6 +61,7 @@ def _start_background_scheduler():
         connection.cursor().execute(Path(__file__).with_name("migration_material_rates.sql").read_text())
         connection.cursor().execute(Path(__file__).with_name("migration_historical_ledger.sql").read_text())
         connection.cursor().execute(Path(__file__).with_name("migration_historical_session.sql").read_text())
+        connection.cursor().execute(Path(__file__).with_name("migration_decimal_material_stock.sql").read_text())
         connection.commit()
     finally:
         connection.close()

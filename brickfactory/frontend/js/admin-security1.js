@@ -146,13 +146,14 @@ async function loadProductionCosts() {
     output.innerHTML = kvTable(rows);
     const note = document.createElement("p");
     note.textContent = "Cost per brick = (materials + making charges + miscellaneous + monthly overhead) ÷ bricks produced. Estimates change when actual bills are entered." +
+      (d.historical_days ? " Includes historical estimates using saved recipe, available dated rates and current making charges; historical miscellaneous expenses are unknown." : "") +
       (d.baseline_days ? " "+d.baseline_days+" older day(s) use estimated costs captured at migration; original historical rates were not saved." : "");
     output.append(note);
     const table = document.createElement("table");
     table.innerHTML = "<thead><tr><th>Date</th><th>Mixes</th><th>Bricks</th><th>Labour</th><th>Misc.</th><th>Note</th><th>Cost basis</th></tr></thead><tbody></tbody>";
     for(const day of d.days) {
       const tr=document.createElement("tr");
-      for(const value of [day.production_date,day.mixes_run,day.bricks_made,day.labourers_present,money(day.misc_expense),day.misc_note,day.snapshot_source==="recorded" ? "Saved rates" : "Migration estimate"]) {
+      for(const value of [day.production_date,day.mixes_run,day.bricks_made,day.labourers_present,money(day.misc_expense),day.misc_note,day.snapshot_source==="recorded" ? "Saved rates" : day.snapshot_source==="historical_estimate" ? "Historical estimate" : "Migration estimate"]) {
         const td=document.createElement("td"); td.textContent=value; tr.append(td);
       }
       table.querySelector("tbody").append(tr);
@@ -165,7 +166,7 @@ async function loadProductionCosts() {
 async function loadStockOverview() {
   try {
     const d = await apiFetch("/stock-overview");
-    let rows = d.materials.map((m) => `<tr><td>${m.material}</td><td>${m.stock_qty} ${STOCK_UNITS[m.material] || ""}</td><td>${m.qty_per_mix}</td><td>${m.days_left} days</td><td>${money(m.unit_rate)}</td><td>${money(m.asset_value)}</td></tr>`).join("");
+    let rows = d.materials.map((m) => `<tr><td>${m.material}</td><td>${["Flyash", "Sand"].includes(m.material) ? `${Number((m.stock_qty / 1000).toFixed(3))} tonnes (${m.stock_qty} kg)` : `${m.stock_qty} ${STOCK_UNITS[m.material] || ""}`}</td><td>${m.qty_per_mix}</td><td>${m.days_left} days</td><td>${money(m.unit_rate)}</td><td>${money(m.asset_value)}</td></tr>`).join("");
     const summaryTable = kvTable([
       { label: "Run-rate", value: `${d.avg_daily_mixes} mixes/day` },
       { label: "Total Capital Locked", value: money(d.total_capital_value), bold: true },

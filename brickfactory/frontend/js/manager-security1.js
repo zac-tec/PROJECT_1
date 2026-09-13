@@ -112,15 +112,15 @@ async function loadStock() {
   const tbody = document.querySelector("#stockTable tbody");
   tbody.innerHTML = "";
   for (const [material, info] of Object.entries(stock)) {
-    tbody.innerHTML += `<tr><td>${material}</td><td>${info.quantity} ${info.unit}</td></tr>`;
+    tbody.innerHTML += `<tr><td>${material}</td><td>${["Flyash", "Sand"].includes(material) ? `${Number((info.quantity / 1000).toFixed(3))} tonnes (${info.quantity} kg)` : `${info.quantity} ${info.unit}`}</td></tr>`;
   }
 }
 
 // POST /manager/stock/refill body {material, amount} -> {material, added, unit, new_total}
 async function refillStock() {
   const material = document.getElementById("refillMaterial").value;
-  const amount = parseInt(document.getElementById("refillAmount").value, 10);
-  if (!amount || amount <= 0) return showMessage(msgEl, "Enter a valid whole number.", true);
+  const amount = Number(document.getElementById("refillAmount").value);
+  if (!Number.isFinite(amount) || amount <= 0) return showMessage(msgEl, "Enter a positive quantity (decimals allowed).", true);
   try {
     const d = await apiFetch("/manager/stock/refill", { method: "POST", body: { material, amount } });
     showMessage(msgEl, `${material} updated: +${d.added} ${d.unit} (new total: ${d.new_total} ${d.unit})`);

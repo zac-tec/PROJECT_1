@@ -22,6 +22,7 @@ async function loadDashboard(markSeen = true) {
   destroyDashboardCharts();
   await Promise.all([
     loadTodayActivity(markSeen),
+    loadMonthMaterials(),
     loadDailyProductionChart(),
     loadMonthlyTrendChart(),
     loadProfitTrendChart(),
@@ -293,3 +294,19 @@ setInterval(() => {
   const dashboard = document.getElementById("sec-dashboard");
   if (!document.hidden && dashboard && !dashboard.classList.contains("hidden")) loadTodayActivity(false);
 }, 60000);
+
+async function loadMonthMaterials(){
+ const out=document.getElementById('monthMaterialsOutput');
+ try{
+  const input=document.getElementById('materialReportMonth');
+  if(!input.value)input.value=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,7);
+  const d=await apiFetch('/admin/dashboard/month-materials?month='+input.value);
+  out.innerHTML=kvTable([{label:'Month',value:d.month},{label:'Bricks produced',value:d.bricks},{label:'Mixes',value:d.mixes},
+   ...Object.entries(d.materials).map(([k,v])=>({label:k+' consumed',value:['Sand','Flyash'].includes(k)?`${Number((v/1000).toFixed(3))} tonnes (${v} kg)`:`${v} ${k==='Chemical'?'L':'bags'}`})),
+   {label:'Material cost',value:money(d.material_cost)},{label:'Making charges',value:money(d.making_cost)},
+   {label:'Recorded miscellaneous expenses',value:money(d.misc_expenses)},{label:'Full-month fixed / utility charges',value:money(d.overhead.total_overhead)},
+   {label:d.historical_days?'Estimated total cost':'Total cost',value:d.total_cost===null?'Incomplete cost records':money(d.total_cost)}]);
+  if(dashboardCharts.monthActual)dashboardCharts.monthActual.destroy();
+  dashboardCharts.monthActual=new Chart(document.getElementById('chartMonthActual'),{type:'bar',data:{labels:d.days.map(r=>r.production_date),datasets:[{label:'Bricks produced',data:d.days.map(r=>r.bricks_made),backgroundColor:CHART_COLORS.brick}]},options:{responsive:true}});
+ }catch(e){out.textContent=e.message;}
+}

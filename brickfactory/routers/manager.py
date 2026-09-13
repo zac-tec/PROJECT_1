@@ -9,7 +9,7 @@ All routes are grouped under /manager so it's obvious at a glance which
 role a URL belongs to. To add a new manager feature later: add a new
 @router function below, and a request model in schemas.py if needed.
 
-STRICT INTEGER RULE: stock, mixes, bricks, and labourers are always
+INTEGER RULE: mixes, bricks, and labourers are always
 whole numbers. Only misc_amount and utility bill amounts (money) are
 allowed to be decimals.
 """
@@ -57,7 +57,7 @@ def add_stock_refill(body: StockRefillRequest, user: dict = Depends(require_mana
     Same entry-unit conversion as add_stock_refill() in the original:
     Flyash/Sand entered in TONS -> converted to kg (x1000).
     Chemical entered in LITRES, Cement in PACKETS -> no conversion.
-    Result is always a whole number added to current_stock.
+    Decimal material quantities are retained in current_stock.
     """
     conn = get_connection()
     try:
@@ -72,11 +72,15 @@ def add_stock_refill(body: StockRefillRequest, user: dict = Depends(require_mana
         else:
             quantity_received = body.amount
 
+        quantity_received = round(quantity_received, 3)
+        if quantity_received <= 0:
+            raise HTTPException(422, "Quantity is below the supported precision (0.001 storage units).")
+
         cursor.execute(
             "UPDATE materials_inventory SET current_stock = current_stock + %s WHERE material_name = %s RETURNING current_stock",
             (quantity_received, body.material),
         )
-        new_total = cursor.fetchone()["current_stock"]
+        new_total = float(cursor.fetchone()["current_stock"])
         cursor.execute(
             "INSERT INTO factory_activity_events (actor, event_type, details) VALUES (%s, 'material_refill', %s::jsonb)",
             (user["username"], json.dumps({"material": body.material, "added": quantity_received,
@@ -263,7 +267,7 @@ def save_entry(body: ProductionSaveRequest):
 
         context = production_cost_context(cursor, today)
         old_mixes = existing['mixes_run'] if existing else 0
-        material_deltas = {m: round(float(qty) * body.mixes) - round(float(qty) * old_mixes)
+        material_deltas = {m: round(float(qty) * body.mixes, 3) - round(float(qty) * old_mixes, 3)
                            for m, qty in context['recipe'].items()}
         if mixes_delta > 0:
             stock = get_stock(cursor)

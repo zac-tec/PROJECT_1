@@ -42,6 +42,8 @@ async function loadHistoricalEntry(){
  const msg=document.getElementById('historyEntryMessage');
  try{
   const data=await apiFetch('/admin/historical-entry');const s=data.session;historyRevision=s?s.revision:0;historyStatus=s?s.status:'draft';
+  document.getElementById('historicalEntryWorkspace').hidden=historyStatus==='applied';
+  if(historyStatus==='applied')return;
   const p=s?s.payload:{start_date:'2026-08-19',end_date:data.today,opening_bricks:81135,recipe:data.recipe,recipe_note:'Current recipe estimate; verify for the historical period.',days:[],opening_confirmed_cured:true};
   document.getElementById('historyStart').value=p.start_date;document.getElementById('historyEnd').value=p.end_date;document.getElementById('historyOpening').value=p.opening_bricks;document.getElementById('historyOpeningCured').checked=p.opening_confirmed_cured;document.getElementById('historyRecipeNote').value=p.recipe_note;
   const recipes=document.getElementById('historyRecipeFields');recipes.replaceChildren();

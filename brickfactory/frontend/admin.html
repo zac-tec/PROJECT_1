@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=ui-live1">
+<link rel="stylesheet" href="css/style.css?v=materials2">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -62,6 +62,10 @@
 
     <!-- DASHBOARD -->
     <section id="sec-dashboard">
+      <div class="card"><h2>Monthly production &amp; material use</h2>
+      <input id="materialReportMonth" type="month" onchange="loadMonthMaterials()">
+      <div id="monthMaterialsOutput"></div><canvas id="chartMonthActual" height="90"></canvas>
+      <p>Historical consumption uses the saved recipe. Historical costs use available dated material rates and current making charges. Unrecorded historical expenses are excluded. Fixed monthly charges are shown separately.</p></div>
       <div class="card" id="activeUsersCard">
         <h2>Active users <span id="activeUsersCount" aria-live="polite">—</span></h2>
         <p style="color:var(--muted)">Accounts seen with the app visible in the last 5 minutes. Includes you; refreshes every minute.</p>
@@ -308,7 +312,7 @@
         <div class="table-scroll"><table id="adminBrickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
       </div>
 
-      <div class="card" id="historicalEntryWorkspace">
+      <div class="card" id="historicalEntryWorkspace" hidden>
         <h2>One-time historical entry</h2>
         <p>Start with older, fully cured opening stock. Enter one production row per date and as many sales quantities as needed. No customer names or prices are required. Rows are processed in date order; sales use the oldest bricks aged at least 7 days. Fully cured stock found during an audit is added after that day’s sales and before damage. It is not production and consumes no materials. Damage is deducted after that day’s sales, oldest stock first regardless of age; this is an assumed allocation when the damaged batch is unknown.</p>
         <button class="secondary" onclick="loadHistoricalEntry()">Open / reload saved session</button>
@@ -368,13 +372,13 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=ui-live1"></script>
-<script src="js/recovery.js?v=ui-live1"></script>
-<script src="js/dashboard-security1.js?v=ui-live1"></script>
-<script src="js/admin-security1.js?v=ui-live1"></script>
-<script src="js/pwa.js?v=ui-live1"></script>
+<script src="js/api-security1.js?v=materials2"></script>
+<script src="js/recovery.js?v=materials2"></script>
+<script src="js/dashboard-security1.js?v=materials2"></script>
+<script src="js/admin-security1.js?v=materials2"></script>
+<script src="js/pwa.js?v=materials2"></script>
 <script src="js/presence.js?v=presence1"></script>
 <script src="js/stock-history.js?v=history1"></script>
-<script src="js/historical-entry.js?v=entry4"></script>
+<script src="js/historical-entry.js?v=entry5"></script>
 </body>
 </html>

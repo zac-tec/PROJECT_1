@@ -5,10 +5,7 @@ rates, charges, stock, and the bricks-per-mix setting. Same role your
 original shared_data.py played — one place to change a query, instead
 of five different copies scattered across files.
 
-IMPORTANT RULE (per your requirement): everything EXCEPT rates and cost
-values is a whole number — stock, mixes, bricks, labourers. Only rates
-and money amounts are allowed to have decimals. These helpers enforce
-that by rounding to int() wherever a quantity (not a price) is involved.
+Material quantities preserve three decimal places. Bricks and mixes remain whole numbers.
 """
 
 
@@ -34,9 +31,9 @@ def get_charges(cursor) -> dict:
 
 
 def get_stock(cursor) -> dict:
-    """Stock quantities are always whole numbers — returned as int."""
+    """Material stock preserves decimals in kg, bags and litres."""
     cursor.execute("SELECT material_name, current_stock FROM materials_inventory")
-    return {row["material_name"]: int(row["current_stock"]) for row in cursor.fetchall()}
+    return {row["material_name"]: float(row["current_stock"]) for row in cursor.fetchall()}
 
 
 def get_bricks_per_mix(cursor) -> float:
@@ -52,8 +49,7 @@ def apply_stock_change_for_mixes(cursor, mixes_delta: int):
     ADDS stock back — same behavior as apply_stock_change_for_mixes() in
     your original shared_data.py.
 
-    Every amount subtracted is rounded to a whole number BEFORE being sent
-    to the database, since stock must always stay an integer.
+    Material deductions retain three decimal places.
 
     Must be called with a cursor already inside an open transaction —
     the caller is responsible for commit()/rollback().
@@ -62,7 +58,7 @@ def apply_stock_change_for_mixes(cursor, mixes_delta: int):
     recipe_rows = cursor.fetchall()
 
     for row in recipe_rows:
-        change_amount = round(float(row["qty_per_mix"]) * mixes_delta)  # whole number, can be negative
+        change_amount = round(float(row["qty_per_mix"]) * mixes_delta, 3)  # may be negative for a correction
         cursor.execute(
             "UPDATE materials_inventory SET current_stock = current_stock - %s WHERE material_name = %s",
             (change_amount, row["material_name"]),

@@ -142,6 +142,10 @@ def daily_production(days: int = 30):
             (cutoff,),
         )
         rows = cursor.fetchall()
+        from historical_reporting import applied_days
+        existing={str(r['production_date']) for r in rows}
+        rows += [dict(production_date=datetime.date.fromisoformat(d['date']),mixes_run=d['mixes'],bricks_made=d['bricks']) for d in applied_days(cursor)['days'] if d['date'] >= str(cutoff) and d['date'] not in existing]
+        rows.sort(key=lambda r:r['production_date'])
         cursor.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
@@ -168,6 +172,16 @@ def monthly_production_trend(months: int = 6):
             (cutoff,),
         )
         rows = cursor.fetchall()
+        from historical_reporting import applied_days
+        cursor.execute('SELECT production_date FROM production_log WHERE production_date >= %s',(cutoff,))
+        existing={str(r['production_date']) for r in cursor.fetchall()}
+        totals={r['month']:dict(r) for r in rows}
+        for d in applied_days(cursor)['days']:
+            if d['date'] < str(cutoff) or d['date'] in existing:continue
+            month=d['date'][:7]
+            r=totals.setdefault(month,dict(month=month,total_mixes=0,total_bricks=0))
+            r['total_mixes']+=d['mixes'];r['total_bricks']+=d['bricks']
+        rows=[totals[k] for k in sorted(totals)]
         cursor.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
@@ -186,36 +200,12 @@ def monthly_production_trend(months: int = 6):
 # what-if overrides. For the detailed version use Profit Calculator.)
 # ---------------------------------------------------------
 def _estimate_profit_for_month(cursor, target_month: str, default_price: float) -> dict:
-    recipe = get_recipe(cursor)
-    rates = get_rates(cursor)
-    charges = get_charges(cursor)
-    bricks_per_mix = get_bricks_per_mix(cursor)
-    overhead = get_monthly_overhead(cursor, target_month)
-
-    cursor.execute(
-        "SELECT COALESCE(SUM(bricks_made), 0) AS total FROM production_log WHERE TO_CHAR(production_date, 'YYYY-MM') = %s",
-        (target_month,),
-    )
-    total_bricks = int(cursor.fetchone()["total"])
-
-    if total_bricks == 0:
-        return {"month": target_month, "total_bricks": 0, "revenue": 0.0, "expenditure": round(overhead["total_overhead"], 2), "profit": round(-overhead["total_overhead"], 2)}
-
-    material_cost_per_mix = sum(qty * rates.get(mat, 0.0) for mat, qty in recipe.items())
-    material_cost_per_brick = material_cost_per_mix / bricks_per_mix
-    making_charge_per_brick = sum(charges.values())
-
-    revenue = total_bricks * default_price
-    expenditure = (total_bricks * material_cost_per_brick) + (total_bricks * making_charge_per_brick) + overhead["total_overhead"]
-    profit = revenue - expenditure
-
-    return {
-        "month": target_month,
-        "total_bricks": total_bricks,
-        "revenue": round(revenue, 2),
-        "expenditure": round(expenditure, 2),
-        "profit": round(profit, 2),
-    }
+    from routers.admin import production_cost_report
+    r=production_cost_report(target_month)
+    revenue=r['bricks']*default_price
+    expense=r['total_cost']
+    return dict(month=target_month,total_bricks=r['bricks'],revenue=round(revenue,2),
+                expenditure=expense,profit=round(revenue-expense,2) if expense is not None else None)
 
 
 @router.get("/monthly-profit-trend")
@@ -251,39 +241,13 @@ def monthly_profit_trend(months: int = 6):
 # ---------------------------------------------------------
 @router.get("/cost-breakdown")
 def cost_breakdown():
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        recipe = get_recipe(cursor)
-        rates = get_rates(cursor)
-        charges = get_charges(cursor)
-        bricks_per_mix = get_bricks_per_mix(cursor)
-
-        current_month = datetime.date.today().strftime("%Y-%m")
-        overhead = get_monthly_overhead(cursor, current_month)
-        cursor.execute(
-            "SELECT COALESCE(SUM(bricks_made), 0) AS total FROM production_log WHERE TO_CHAR(production_date, 'YYYY-MM') = %s",
-            (current_month,),
-        )
-        bricks_this_month = int(cursor.fetchone()["total"])
-        cursor.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-
-    material_cost_per_mix = sum(qty * rates.get(mat, 0.0) for mat, qty in recipe.items())
-    material_cost_per_brick = material_cost_per_mix / bricks_per_mix
-    making_charge_per_brick = sum(charges.values())
-    overhead_per_brick = (overhead["total_overhead"] / bricks_this_month) if bricks_this_month > 0 else 0.0
-
-    return {
-        "month": current_month,
-        "material_cost_per_brick": round(material_cost_per_brick, 2),
-        "making_charge_per_brick": round(making_charge_per_brick, 2),
-        "overhead_per_brick": round(overhead_per_brick, 2),
-        "total_cost_per_brick": round(material_cost_per_brick + making_charge_per_brick + overhead_per_brick, 2),
-    }
+    from routers.admin import production_cost_report
+    r=production_cost_report()
+    n=r['bricks']
+    return dict(month=r['month'],material_cost_per_brick=round(r['material_cost']/n,2) if n else 0,
+        making_charge_per_brick=round(r['making_cost']/n,2) if n else 0,
+        overhead_per_brick=round(r['overhead']['total_overhead']/n,2) if n else 0,
+        total_cost_per_brick=r['cost_per_brick'])
 
 
 # ---------------------------------------------------------
@@ -301,6 +265,14 @@ def sales_trend(days: int = 30):
             (cutoff,),
         )
         rows = cursor.fetchall()
+        from historical_reporting import applied_days
+        combined={str(r['sale_date']):dict(r) for r in rows}
+        for d in applied_days(cursor)['days']:
+            if d['date'] < str(cutoff):continue
+            r=combined.setdefault(d['date'],dict(sale_date=datetime.date.fromisoformat(d['date']),total_bricks=0,total_revenue=None))
+            r['total_bricks']+=sum(d['sales'])
+            r['total_revenue']=None
+        rows=[combined[k] for k in sorted(combined)]
         cursor.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
@@ -308,7 +280,7 @@ def sales_trend(days: int = 30):
         conn.close()
 
     return {"days": [
-        {"date": r["sale_date"].strftime("%Y-%m-%d"), "bricks_sold": r["total_bricks"], "revenue": float(r["total_revenue"])}
+        {"date": r["sale_date"].strftime("%Y-%m-%d"), "bricks_sold": r["total_bricks"], "revenue": float(r["total_revenue"]) if r["total_revenue"] is not None else None}
         for r in rows
     ]}
 
@@ -406,3 +378,24 @@ def fun_facts():
         "total_bricks_sold_all_time": total_bricks_sold_all_time,
         "pending_customer_dues": round(pending_dues, 2),
     }
+
+@router.get('/month-materials')
+def month_materials(month: str = None):
+    from routers.admin import production_cost_report
+    from historical_reporting import applied_days
+    report=production_cost_report(month)
+    conn=get_connection()
+    try:
+        with conn.cursor() as c:
+            p=applied_days(c)
+            c.execute("SELECT p.production_date,p.mixes_run,s.recipe FROM production_log p LEFT JOIN production_cost_snapshots s USING(production_date) WHERE TO_CHAR(p.production_date,'YYYY-MM')=%s",(report['month'],))
+            live=c.fetchall(); existing={str(r['production_date']) for r in live}
+            usage={k:0.0 for k in p['recipe']}
+            for d in p['days']:
+                if d['date'][:7]==report['month'] and d['date'] not in existing:
+                    for k,q in p['recipe'].items():usage[k]=usage.get(k,0)+q*d['mixes']
+            for d in live:
+                for k,q in (d['recipe'] or {}).items():usage[k]=usage.get(k,0)+float(q)*d['mixes_run']
+            report['materials']={k:round(v,3) for k,v in usage.items()}
+        return report
+    finally:conn.close()
