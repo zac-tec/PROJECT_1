@@ -7,7 +7,7 @@ keeps main.py and the routers focused on logic, not data shapes.
 Material refill quantities allow decimals; mixes, bricks and labourers remain integers.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Literal, Optional
 
 
@@ -47,13 +47,13 @@ class OrderRequest(BaseModel):
 # --------------------------- Admin: Profit Calculator ---------------------------
 class ProfitCalculatorRequest(BaseModel):
     month: Optional[str] = None                 # YYYY-MM, blank = current month
-    selling_price: Optional[float] = None        # blank = use default_cost_per_brick setting (7.50)
-    bricks_sold: Optional[int] = None             # blank = defaults to production total
+    selling_price: float = Field(..., gt=0, allow_inf_nan=False)  # explicitly supplied estimate
+    bricks_sold: Optional[int] = Field(default=None, ge=0)  # optional explicit scenario
     # Optional "what-if" overrides — don't change stored settings, only affect this one calculation
-    rent_override: Optional[float] = None
-    manager_salary_override: Optional[float] = None
-    electricity_default_override: Optional[float] = None
-    water_default_override: Optional[float] = None
+    rent_override: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    manager_salary_override: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    electricity_default_override: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
+    water_default_override: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
 
 
 # --------------------------- Admin: Fixed Monthly Overhead ---------------------------
@@ -120,10 +120,25 @@ class DefaultPriceUpdateRequest(BaseModel):
 
 # --------------------------- Manager: Brick Sales ---------------------------
 class BrickSaleRequest(BaseModel):
+    @field_validator('customer_name', 'customer_mobile', mode='before')
+    @classmethod
+    def required_customer(cls, value):
+        if not isinstance(value,str) or not value.strip():
+            raise ValueError('Enter customer name and phone number.')
+        return value.strip()
+
+    @field_validator('customer_mobile')
+    @classmethod
+    def valid_phone(cls, value):
+        import re
+        if not re.fullmatch(r'[+0-9 ()-]+',value) or not 7 <= len(re.sub(r'\D','',value)) <= 15:
+            raise ValueError('Enter a valid customer phone number (7–15 digits).')
+        return value
+
     customer_name: str = Field(..., min_length=1)
     customer_mobile: str = Field(..., min_length=1)
     bricks_purchased: int = Field(..., gt=0)
-    cost_per_brick: float = Field(..., gt=0)
+    cost_per_brick: float = Field(..., gt=0, allow_inf_nan=False)
     other_charges: float = Field(default=0.0, ge=0)
     amount_paid: float = Field(..., ge=0)
 

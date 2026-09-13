@@ -17,7 +17,7 @@ from batch_stock import factory_today, stock_summary
 from fastapi import APIRouter, HTTPException, Depends
 from dependencies import require_admin
 from database import get_connection
-from services import get_recipe, get_rates, get_charges, get_stock, get_bricks_per_mix, get_outlet_stock, get_monthly_overhead, get_default_brick_price
+from services import get_recipe, get_rates, get_charges, get_stock, get_bricks_per_mix, get_outlet_stock, get_monthly_overhead
 from schemas import (
     RateUpdateRequest, ChargeUpdateRequest, RecipeUpdateRequest,
     OrderRequest, ProfitCalculatorRequest, DefaultPriceUpdateRequest, FixedChargeUpdateRequest,
@@ -643,137 +643,41 @@ def view_production_report(month: str = None):
 # ---------------------------------------------------------
 @router.post("/profit-calculator")
 def calculate_monthly_profit(body: ProfitCalculatorRequest):
+    from historical_reporting import monthly_sales
     target_month = _validate_month(body.month)
-    conn = get_connection()
+    if target_month < '2026-09':raise HTTPException(422,'Business reporting starts in September 2026.')
+    report=production_cost_report(target_month)
+    conn=get_connection()
     try:
-        cursor = conn.cursor()
-        recipe = get_recipe(cursor)
-        rates = get_rates(cursor)
-        charges = get_charges(cursor)  # Labour + Loading + Union only (Salary_Other removed)
-        bricks_per_mix = get_bricks_per_mix(cursor)
-        default_selling_price = get_default_brick_price(cursor)
-
-        overrides = {
-            "rent": body.rent_override,
-            "manager_salary": body.manager_salary_override,
-            "electricity_default": body.electricity_default_override,
-            "water_default": body.water_default_override,
-        }
-        overrides = {k: v for k, v in overrides.items() if v is not None}
-        overhead = get_monthly_overhead(cursor, target_month, overrides, override_beats_actual=True)
-
-        cursor.execute(
-            """SELECT COALESCE(SUM(bricks_made), 0) AS total_bricks, COALESCE(SUM(misc_expense), 0) AS total_misc
-               FROM production_log WHERE TO_CHAR(production_date, 'YYYY-MM') = %s""",
-            (target_month,),
-        )
-        prod_row = cursor.fetchone()
-        total_bricks_produced = int(prod_row["total_bricks"])
-        total_misc_leakages = float(prod_row["total_misc"])
-        cursor.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-
-    selling_price = body.selling_price if body.selling_price is not None else default_selling_price
-    bricks_sold = total_bricks_produced if body.bricks_sold is None else body.bricks_sold
-
-    material_cost_per_mix = sum(qty * rates.get(mat, 0.0) for mat, qty in recipe.items())
-    material_cost_per_brick = material_cost_per_mix / bricks_per_mix
-    making_charge_per_brick = sum(charges.values())
-    base_cost_per_brick = material_cost_per_brick + making_charge_per_brick
-
-    gross_revenue = bricks_sold * selling_price
-
-    result = {
-        "month": target_month,
-        "bricks_sold": bricks_sold,
-        "selling_price": selling_price,
-        "selling_price_was_defaulted": body.selling_price is None,
-        "gross_revenue": round(gross_revenue, 2),
-        "total_misc_leakages": round(total_misc_leakages, 2),
-        "used_live_config_fallback": total_bricks_produced == 0,
-        # Fixed monthly overhead breakdown — shown so the frontend can
-        # display these as editable "what-if" fields for the admin.
-        "overhead": {
-            "rent": overhead["rent"],
-            "manager_salary": overhead["manager_salary"],
-            "electricity": overhead["electricity"],
-            "electricity_is_default": overhead["electricity_is_default"],
-            "water": overhead["water"],
-            "water_is_default": overhead["water_is_default"],
-            "total_overhead": round(overhead["total_overhead"], 2),
-        },
-    }
-
-    if total_bricks_produced == 0:
-        simulated_cost = bricks_sold * base_cost_per_brick
-        total_expenditures = simulated_cost + overhead["total_overhead"] + total_misc_leakages
-        result["cost_of_bricks_sold"] = round(simulated_cost, 2)
-        result["base_cost_per_brick"] = round(base_cost_per_brick, 2)
-    else:
-        total_material_expense = bricks_sold * material_cost_per_brick
-        total_making_expense = bricks_sold * making_charge_per_brick
-        total_expenditures = total_material_expense + total_making_expense + overhead["total_overhead"] + total_misc_leakages
-        result["raw_materials_cost"] = round(total_material_expense, 2)
-        result["material_cost_per_brick"] = round(material_cost_per_brick, 2)
-        result["fixed_making_charges"] = round(total_making_expense, 2)
-        result["making_charge_per_brick"] = round(making_charge_per_brick, 2)
-
-    net_profit = gross_revenue - total_expenditures
-    result["total_expenditures"] = round(total_expenditures, 2)
-    result["net_profit"] = round(net_profit, 2)
-    result["is_profit"] = net_profit >= 0
-    result["profit_margin_pct"] = round((net_profit / gross_revenue) * 100, 2) if gross_revenue > 0 else 0.0
-
-    return result
+        with conn.cursor() as c:
+            sales=monthly_sales(c,target_month)
+            overrides={k:v for k,v in dict(rent=body.rent_override,manager_salary=body.manager_salary_override,
+                electricity_default=body.electricity_default_override,water_default=body.water_default_override).items() if v is not None}
+            if any(v<0 for v in overrides.values()):raise HTTPException(422,'Charges cannot be negative.')
+            overhead=get_monthly_overhead(c,target_month,overrides,override_beats_actual=True)
+    finally:conn.close()
+    bricks=sales['total_bricks_sold'] if body.bricks_sold is None else body.bricks_sold
+    revenue=sales['recorded_revenue']+sales['historical_bricks']*body.selling_price if body.bricks_sold is None else bricks*body.selling_price
+    # Older opening batches have no recorded acquisition/production cost.
+    # Use this month's weighted production unit cost as an explicit COGS estimate.
+    unit=(report['material_cost']+report['making_cost'])/report['bricks'] if report['bricks'] and not report['missing_costs'] else None
+    cogs=bricks*unit if unit is not None else None
+    expense=cogs+overhead['total_overhead']+report['misc_expenses'] if cogs is not None else None
+    profit=revenue-expense if expense is not None else None
+    return dict(month=target_month,**sales,bricks_sold=bricks,selling_price=body.selling_price,
+        scenario=body.bricks_sold is not None,gross_revenue=round(revenue,2),
+        historical_revenue_estimate=round(sales['historical_bricks']*body.selling_price,2),
+        production_bricks=report['bricks'],production_cost=round(report['material_cost']+report['making_cost'],2),
+        estimated_unit_cost=round(unit,4) if unit is not None else None,
+        estimated_cost_of_sales=round(cogs,2) if cogs is not None else None,overhead=overhead,
+        misc_expenses=report['misc_expenses'],total_expenditures=round(expense,2) if expense is not None else None,
+        net_profit=round(profit,2) if profit is not None else None,
+        note='Estimated profit: historical revenue uses your entered average price; new invoice revenue uses actual saved amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
 
 
 # ---------------------------------------------------------
 # Default Brick Sale Price (NEW — supports the Brick Sales feature)
 # ---------------------------------------------------------
-@router.get("/default-brick-price")
-def view_default_brick_price():
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT setting_value FROM settings WHERE setting_key = 'default_cost_per_brick'")
-        row = cursor.fetchone()
-        cursor.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-
-    return {"default_cost_per_brick": float(row["setting_value"]) if row else 7.50}
-
-
-@router.put("/default-brick-price")
-def update_default_brick_price(body: DefaultPriceUpdateRequest):
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT setting_value FROM settings WHERE setting_key = 'default_cost_per_brick'")
-        row = cursor.fetchone()
-        old_value = float(row["setting_value"]) if row else 7.50
-
-        cursor.execute(
-            """INSERT INTO settings (setting_key, setting_value) VALUES ('default_cost_per_brick', %s)
-               ON CONFLICT (setting_key) DO UPDATE SET setting_value = %s""",
-            (body.new_value, body.new_value),
-        )
-        conn.commit()
-        cursor.close()
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-
-    return {"old_value": old_value, "new_value": body.new_value}
-
-
 # ---------------------------------------------------------
 # Brick Sales — Admin View (outlet stock, full transaction list, monthly summary)
 # ---------------------------------------------------------
@@ -830,32 +734,13 @@ def view_all_brick_sales():
 
 @router.get("/brick-sales/monthly-summary")
 def view_monthly_brick_sales_summary(month: str = None):
-    target_month = _validate_month(month)
-    conn = get_connection()
+    from historical_reporting import monthly_sales
+    target_month=_validate_month(month)
+    conn=get_connection()
     try:
-        cursor = conn.cursor()
-        cursor.execute(
-            """SELECT COALESCE(SUM(bricks_purchased), 0) AS total_bricks,
-                      COALESCE(SUM(total_amount), 0) AS total_revenue,
-                      COALESCE(SUM(amount_paid), 0) AS total_collected,
-                      COUNT(*) AS total_sales
-               FROM brick_sales WHERE TO_CHAR(sale_date, 'YYYY-MM') = %s""",
-            (target_month,),
-        )
-        row = cursor.fetchone()
-        cursor.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-
-    return {
-        "month": target_month,
-        "total_bricks_sold": int(row["total_bricks"]),
-        "total_revenue": round(float(row["total_revenue"]), 2),
-        "total_collected": round(float(row["total_collected"]), 2),
-        "total_sales_count": row["total_sales"],
-    }
+        with conn.cursor() as c:r=monthly_sales(c,target_month)
+        return dict(month=target_month,**r,total_revenue=None if r['historical_bricks'] else r['recorded_revenue'],total_collected=r['recorded_collected'])
+    finally:conn.close()
 
 
 # ---------------------------------------------------------

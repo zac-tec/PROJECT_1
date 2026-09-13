@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=materials2">
+<link rel="stylesheet" href="css/style.css?v=sales3">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -100,13 +100,9 @@
         <canvas id="chartMonthlyTrend" height="90"></canvas>
       </div>
 
-      <div class="card">
-        <h2>Monthly Profit Trend</h2>
-        <p style="font-size:12.5px; color:var(--muted); margin-top:-6px;">
-          Uses default selling price, full production as sold — for what-if scenarios use Profit Calculator.
-        </p>
-        <canvas id="chartProfitTrend" height="90"></canvas>
-      </div>
+      <div class="card"><h2>September onwards: business overview</h2>
+      <p>View monthly sales quantities and enter a historical selling price in the Profit Calculator to estimate revenue and profit. New sales use their individually recorded prices. No default brick price is assumed.</p>
+      <div id="monthSalesOverview"></div></div>
 
       <div class="card">
         <h2>Cost Per Brick — Breakdown</h2>
@@ -201,16 +197,6 @@
       </div>
     </div>
 
-    <!-- BRICK SALE PRICE -->
-    <div class="pricing-panel">
-      <div class="card">
-        <h2><i data-lucide="indian-rupee" class="icon"></i> Default Brick Sale Price</h2>
-        <p style="font-size:13px; color:var(--muted);">Used to pre-fill the manager's sale form.</p>
-        <table><thead><tr><th>Charge</th><th style="text-align:right;">Value</th><th></th></tr></thead>
-          <tbody id="salePriceTableBody"></tbody>
-        </table>
-      </div>
-    </div>
     </section>
 
     <section id="sec-history" class="hidden">
@@ -248,12 +234,12 @@
     <!-- PROFIT CALCULATOR -->
     <section id="sec-profit" class="hidden">
       <div class="card">
-        <h2><i data-lucide="trending-up" class="icon"></i> Monthly Profit & Loss Calculator</h2>
+        <h2><i data-lucide="trending-up" class="icon"></i> Monthly Business Overview & Profit Estimate</h2>
         <label>Month (leave blank for current month)</label>
-        <input id="profitMonth" type="month" placeholder="2026-07" oninput="loadOverheadDefaultsForProfit()">
-        <label>Selling Price Per Brick (Rs.) — blank uses the default price</label>
-        <input id="profitSellingPrice" type="number" step="0.01" min="0.01" placeholder="Default: Rs. 7.50">
-        <label>Bricks Sold (blank = match production)</label>
+        <input id="profitMonth" type="month" min="2026-09" oninput="loadOverheadDefaultsForProfit()">
+        <label>Historical selling price per brick (Rs.) — required for estimate</label>
+        <input id="profitSellingPrice" type="number" step="0.01" min="0.01" placeholder="Enter agreed / weighted average price" required>
+        <label>Bricks sold override (optional what-if; blank uses recorded sales)</label>
         <input id="profitBricksSold" type="number" step="1" min="0">
 
         <div style="background:var(--primary-light); border-radius:8px; padding:12px; margin:10px 0;">
@@ -344,7 +330,7 @@
       <div class="card">
         <h2>Monthly Sales Summary</h2>
         <label>Month (leave blank for current month)</label>
-        <input id="salesSummaryMonth" type="month" placeholder="2026-07">
+        <input id="salesSummaryMonth" type="month" min="2026-09">
         <button class="primary" onclick="loadMonthlySalesSummary()">Run Summary</button>
         <div id="salesSummaryOutput" style="margin-top:14px;"></div>
       </div>
@@ -372,11 +358,11 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=materials2"></script>
-<script src="js/recovery.js?v=materials2"></script>
-<script src="js/dashboard-security1.js?v=materials2"></script>
-<script src="js/admin-security1.js?v=materials2"></script>
-<script src="js/pwa.js?v=materials2"></script>
+<script src="js/api-security1.js?v=sales3"></script>
+<script src="js/recovery.js?v=sales3"></script>
+<script src="js/dashboard-security1.js?v=sales3"></script>
+<script src="js/admin-security1.js?v=sales3"></script>
+<script src="js/pwa.js?v=sales3"></script>
 <script src="js/presence.js?v=presence1"></script>
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/historical-entry.js?v=entry5"></script>

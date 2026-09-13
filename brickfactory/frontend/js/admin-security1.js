@@ -108,22 +108,6 @@ async function loadRecipe() {
 }
 
 // -------------------- Default Brick Sale Price (inline edit) --------------------
-async function loadDefaultBrickPrice() {
-  const d = await apiFetch("/default-brick-price");
-  const rows = [{ key: "default_cost_per_brick", label: "Default Cost Per Brick", rawValue: d.default_cost_per_brick }];
-  renderInlineEditTable(
-    document.getElementById("salePriceTableBody"),
-    rows,
-    async (key, newValue) => {
-      const r = await apiFetch("/default-brick-price", { method: "PUT", body: { new_value: newValue } });
-      showMessage(msgEl, `Default price updated: ${money(r.old_value)} → ${money(r.new_value)}`);
-      sessionUI.discard([`inline-salePriceTableBody-${key}`]);
-      await sessionUI.afterSave(loadDefaultBrickPrice);
-    },
-    (v) => money(v)
-  );
-}
-
 async function loadProductionCosts() {
   try {
     const month = document.getElementById("costMonth").value;
@@ -211,78 +195,29 @@ async function loadOverheadDefaultsForProfit() {
 }
 
 async function runProfitCalculator() {
-  const month = document.getElementById("profitMonth").value.trim() || null;
-  const sellingPriceRaw = document.getElementById("profitSellingPrice").value.trim();
-  const sellingPrice = sellingPriceRaw === "" ? null : parseFloat(sellingPriceRaw);
-  const bricksSoldRaw = document.getElementById("profitBricksSold").value.trim();
-  const bricksSold = bricksSoldRaw === "" ? null : parseInt(bricksSoldRaw, 10);
-
-  const readOverride = (id) => {
-    const raw = document.getElementById(id).value.trim();
-    return raw === "" ? null : parseFloat(raw);
-  };
-
-  try {
-    const d = await apiFetch("/profit-calculator", {
-      method: "POST",
-      body: {
-        month,
-        selling_price: sellingPrice,
-        bricks_sold: bricksSold,
-        rent_override: readOverride("profitRentOverride"),
-        manager_salary_override: readOverride("profitSalaryOverride"),
-        electricity_default_override: readOverride("profitElectricityOverride"),
-        water_default_override: readOverride("profitWaterOverride"),
-      },
-    });
-
-    const revenueTable = kvTable([
-      { label: `Gross Revenue (${d.bricks_sold} sold @ ${money(d.selling_price)}${d.selling_price_was_defaulted ? ", default price" : ""})`, value: money(d.gross_revenue), bold: true },
-    ]);
-
-    let expenseRows;
-    if (d.used_live_config_fallback) {
-      expenseRows = [
-        { label: "⚠️ No production entries this month — using live configuration", value: "" },
-        { label: "Cost of Bricks Sold", value: money(d.cost_of_bricks_sold) },
-        { label: "Base Cost Per Brick", value: money(d.base_cost_per_brick) },
-      ];
-    } else {
-      expenseRows = [
-        { label: "Raw Materials Cost", value: money(d.raw_materials_cost) },
-        { label: "Material Cost Per Brick", value: money(d.material_cost_per_brick) },
-        { label: "Fixed Making Charges", value: money(d.fixed_making_charges) },
-        { label: "Making Charge Per Brick", value: money(d.making_charge_per_brick) },
-      ];
-    }
-    const expenseTable = kvTable(expenseRows);
-
-    const oh = d.overhead;
-    const overheadTable = kvTable([
-      { label: "Rent", value: money(oh.rent) },
-      { label: "Manager Salary", value: money(oh.manager_salary) },
-      { label: `Electricity${oh.electricity_is_default ? " (default)" : " (actual)"}`, value: money(oh.electricity) },
-      { label: `Water${oh.water_is_default ? " (default)" : " (actual)"}`, value: money(oh.water) },
-      { label: "Total Monthly Overhead", value: money(oh.total_overhead), bold: true },
-    ]);
-
-    const outcomeColor = d.is_profit ? "var(--ok)" : "var(--bad)";
-    const outcomeTable = kvTable([
-      { label: "Incidental Misc", value: money(d.total_misc_leakages) },
-      { label: "Total Expenditures", value: money(d.total_expenditures), bold: true },
-      { label: d.is_profit ? "Net Projected Profit" : "Net Financial Loss", value: money(d.net_profit), bold: true, color: outcomeColor },
-      { label: "Return Margin", value: `${d.profit_margin_pct}%`, bold: true, color: outcomeColor },
-    ]);
-
-    document.getElementById("profitOutput").innerHTML = `
-      ${revenueTable}
-      <h2 style="margin-top:20px;">Cost Breakdown</h2>
-      ${expenseTable}
-      <h2 style="margin-top:20px;">Monthly Overhead</h2>
-      ${overheadTable}
-      <h2 style="margin-top:20px;">Outcome</h2>
-      ${outcomeTable}`;
-  } catch (e) { showMessage(msgEl, e.message, true); }
+ const out=document.getElementById('profitOutput');out.replaceChildren();
+ const price=Number(document.getElementById('profitSellingPrice').value);
+ if(!Number.isFinite(price)||price<=0){out.textContent='Enter the historical selling price to calculate revenue and estimated profit.';return;}
+ const month=document.getElementById('profitMonth').value||null;
+ const raw=document.getElementById('profitBricksSold').value.trim();
+ const body={month,selling_price:price,bricks_sold:raw===''?null:Number(raw)};
+ for(const [key,id] of [['rent_override','profitRentOverride'],['manager_salary_override','profitSalaryOverride'],['electricity_default_override','profitElectricityOverride'],['water_default_override','profitWaterOverride']]){
+  const v=document.getElementById(id).value.trim();body[key]=v===''?null:Number(v);
+ }
+ try{
+  const d=await apiFetch('/profit-calculator',{method:'POST',body});
+  const amount=v=>v===null?'Unavailable: no production cost basis':money(v);
+  out.innerHTML=kvTable([{label:'Month',value:d.month},{label:d.scenario?'Scenario bricks sold':'Recorded bricks sold',value:d.bricks_sold},
+   {label:'Historical bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
+   {label:'Historical revenue estimate',value:money(d.historical_revenue_estimate)},
+   {label:'Actual new invoice revenue',value:money(d.recorded_revenue)},
+   {label:d.scenario?'Scenario revenue':'Combined revenue (includes estimate)',value:money(d.gross_revenue)},
+   {label:'Estimated cost of sold bricks',value:amount(d.estimated_cost_of_sales)},
+   {label:'Full-month fixed / utility charges',value:money(d.overhead.total_overhead)},
+   {label:'Recorded miscellaneous expenses',value:money(d.misc_expenses)},
+   {label:'Estimated profit / loss',value:amount(d.net_profit),bold:true}]);
+  const note=document.createElement('p');note.textContent=d.note;out.append(note);
+ }catch(e){out.textContent=e.message;}
 }
 
 // -------------------- Order Planning --------------------
@@ -338,8 +273,8 @@ async function loadMonthlySalesSummary() {
       { label: "Month", value: d.month },
       { label: "Total Bricks Sold", value: d.total_bricks_sold.toLocaleString("en-IN"), bold: true },
       { label: "Total Sales Transactions", value: d.total_sales_count },
-      { label: "Total Revenue (billed)", value: money(d.total_revenue) },
-      { label: "Total Collected (actually paid)", value: money(d.total_collected), bold: true },
+      { label: "Total revenue", value: d.total_revenue === null ? "Historical price required — use Profit Calculator" : money(d.total_revenue) },
+      { label: "Collected on new invoices (historical payments unknown)", value: money(d.total_collected), bold: true },
     ]);
   } catch (e) { showMessage(msgEl, e.message, true); }
 }
@@ -456,11 +391,11 @@ async function sendEmailNow() {
 
 onSectionLoad("dashboard", markSeen => loadDashboard(markSeen));
 onSectionLoad("reportsettings", loadDeliverySettings);
-onSectionLoad("pricing", () => Promise.all([loadRates(), loadCharges(), loadFixedCharges(), loadRecipe(), loadDefaultBrickPrice()]));
+onSectionLoad("pricing", () => Promise.all([loadRates(), loadCharges(), loadFixedCharges(), loadRecipe()]));
 onSectionLoad("history", () => Promise.all([loadRateHistory(), loadChargeHistory()]));
 onSectionLoad("productionCosts", loadProductionCosts);
 onSectionLoad("stock", () => Promise.all([loadStockOverview(), loadMaxProducible()]));
-onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); await runProfitCalculator(); });
+onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); document.getElementById("profitOutput").textContent="Enter a historical selling price and press Calculate."; });
 onSectionLoad("orders", loadFunFacts);
 onSectionLoad("brickSales", () => Promise.all([loadAdminOutletStock(), loadMonthlySalesSummary(), loadAllBrickSales()]));
 

@@ -12,7 +12,7 @@ import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from dependencies import require_admin
 from database import get_connection
-from services import get_recipe, get_rates, get_charges, get_bricks_per_mix, get_monthly_overhead, get_default_brick_price
+from services import get_recipe, get_rates, get_charges, get_bricks_per_mix, get_monthly_overhead
 
 router = APIRouter(prefix="/admin/dashboard", tags=["dashboard"], dependencies=[Depends(require_admin)])
 
@@ -199,41 +199,9 @@ def monthly_production_trend(months: int = 6):
 # default selling price, full production treated as sold, no
 # what-if overrides. For the detailed version use Profit Calculator.)
 # ---------------------------------------------------------
-def _estimate_profit_for_month(cursor, target_month: str, default_price: float) -> dict:
-    from routers.admin import production_cost_report
-    r=production_cost_report(target_month)
-    revenue=r['bricks']*default_price
-    expense=r['total_cost']
-    return dict(month=target_month,total_bricks=r['bricks'],revenue=round(revenue,2),
-                expenditure=expense,profit=round(revenue-expense,2) if expense is not None else None)
-
-
-@router.get("/monthly-profit-trend")
+@router.get('/monthly-profit-trend')
 def monthly_profit_trend(months: int = 6):
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        default_price = get_default_brick_price(cursor)
-
-        today = datetime.date.today()
-        target_months = []
-        y, m = today.year, today.month
-        for _ in range(months):
-            target_months.append(f"{y:04d}-{m:02d}")
-            m -= 1
-            if m == 0:
-                m = 12
-                y -= 1
-        target_months.reverse()
-
-        results = [_estimate_profit_for_month(cursor, month, default_price) for month in target_months]
-        cursor.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-
-    return {"months": results}
+    raise HTTPException(422,'Enter a selling price in the monthly profit calculator; no default price is used.')
 
 
 # ---------------------------------------------------------

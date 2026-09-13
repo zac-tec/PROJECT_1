@@ -25,7 +25,6 @@ async function loadDashboard(markSeen = true) {
     loadMonthMaterials(),
     loadDailyProductionChart(),
     loadMonthlyTrendChart(),
-    loadProfitTrendChart(),
     loadCostBreakdownChart(),
     loadStockRunwayChart(),
     loadSalesTrendChart(),
@@ -211,24 +210,6 @@ async function loadMonthlyTrendChart() {
 }
 
 // -------------------- Profit Trend (line) --------------------
-async function loadProfitTrendChart() {
-  try {
-    const d = await apiFetch("/admin/dashboard/monthly-profit-trend?months=6");
-    const labels = d.months.map((r) => r.month);
-    const profit = d.months.map((r) => r.profit);
-    dashboardCharts.profit = new Chart(document.getElementById("chartProfitTrend"), {
-      type: "line",
-      data: { labels, datasets: [{
-        label: "Net Profit (Rs.)", data: profit,
-        borderColor: CHART_COLORS.ok,
-        segment: { borderColor: (ctx) => (ctx.p0.parsed.y < 0 || ctx.p1.parsed.y < 0) ? CHART_COLORS.bad : CHART_COLORS.ok },
-        tension: 0.2,
-      }] },
-      options: { responsive: true, plugins: { legend: { display: false } } },
-    });
-  } catch (e) { showMessage(msgEl, e.message, true); }
-}
-
 // -------------------- Cost Breakdown (pie) --------------------
 async function loadCostBreakdownChart() {
   try {
@@ -301,6 +282,8 @@ async function loadMonthMaterials(){
   const input=document.getElementById('materialReportMonth');
   if(!input.value)input.value=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,7);
   const d=await apiFetch('/admin/dashboard/month-materials?month='+input.value);
+  const sales=await apiFetch('/brick-sales/monthly-summary?month='+input.value);
+  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Historical sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Revenue / profit',value:'Enter historical price in Profit Calculator; new invoices retain actual prices.'}]);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:'Bricks produced',value:d.bricks},{label:'Mixes',value:d.mixes},
    ...Object.entries(d.materials).map(([k,v])=>({label:k+' consumed',value:['Sand','Flyash'].includes(k)?`${Number((v/1000).toFixed(3))} tonnes (${v} kg)`:`${v} ${k==='Chemical'?'L':'bags'}`})),
    {label:'Material cost',value:money(d.material_cost)},{label:'Making charges',value:money(d.making_cost)},

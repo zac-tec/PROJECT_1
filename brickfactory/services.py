@@ -85,12 +85,6 @@ def apply_outlet_stock_change(cursor, bricks_delta: int):
     )
 
 
-def get_default_brick_price(cursor) -> float:
-    cursor.execute("SELECT setting_value FROM settings WHERE setting_key = 'default_cost_per_brick'")
-    row = cursor.fetchone()
-    return float(row["setting_value"]) if row else 7.50
-
-
 # --------------------------- Text Settings (e.g. WhatsApp number) ---------------------------
 # Kept in a separate table from `settings` since that one is NUMERIC-only —
 # a phone number is text, never something to do math on.

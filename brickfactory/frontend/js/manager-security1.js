@@ -241,10 +241,7 @@ function updateAdjustmentForm() {
 
 // GET /manager/sales/default-price -> {default_cost_per_brick}
 async function prefillDefaultPrice() {
-  if (editingSaleId !== null || sessionUI.has("saleCostPerBrick")) return; // don't overwrite a value being edited
-  const d = await apiFetch("/manager/sales/default-price");
-  if (editingSaleId !== null || sessionUI.has("saleCostPerBrick")) return;
-  document.getElementById("saleCostPerBrick").value = d.default_cost_per_brick;
+  // New sales always require an explicitly entered price. Existing drafts/edits retain theirs.
   recalculateSale();
 }
 
@@ -286,6 +283,7 @@ function clearSaleForm() {
   document.getElementById("saleCustomerName").value = "";
   document.getElementById("saleCustomerMobile").value = "";
   document.getElementById("saleBricksPurchased").value = "";
+  document.getElementById("saleCostPerBrick").value = "";
   document.getElementById("saleOtherCharges").value = "0";
   document.getElementById("saleAmountPaid").value = "";
   document.getElementById("saleCalculatedBox").classList.add("hidden");

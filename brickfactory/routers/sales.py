@@ -18,7 +18,7 @@ from batch_stock import lock_stock, stock_summary, allocate_sale, restore_sale, 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import Response
 from database import get_connection
-from services import get_outlet_stock, apply_outlet_stock_change, get_default_brick_price
+from services import get_outlet_stock, apply_outlet_stock_change
 from schemas import BrickSaleRequest, StockAdjustmentRequest
 from pdf_generator import generate_sale_receipt
 from dependencies import require_manager, get_current_user
@@ -45,16 +45,8 @@ def view_outlet_stock():
 
 @router.get("/default-price", dependencies=[Depends(require_manager)])
 def view_default_price():
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        price = get_default_brick_price(cursor)
-        cursor.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
-    finally:
-        conn.close()
-    return {"default_cost_per_brick": price}
+    return {'default_cost_per_brick': None, 'required': True}
+
 
 
 # ---------------------------------------------------------
