@@ -12,6 +12,12 @@ class HistoryTest(unittest.TestCase):
  def test_age_boundaries(self):
   p=self.payload();p['opening_bricks']=0;p['days']=[dict(date=d,mixes=1,bricks=10,sales=[]) for d in ['2026-08-29','2026-09-05','2026-09-06']]
   self.assertEqual(calculate(p,date(2026,9,12))['totals'],dict(curing=10,early_sale=10,fully_cured=10,total=30,saleable=20))
+ def test_audit_damage_flows_into_next_day(self):
+  p=self.payload();p['opening_bricks']=86793;p['days']=[dict(date='2026-08-31',mixes=0,bricks=0,sales=[],damaged=13376),dict(date='2026-09-01',mixes=1,bricks=100,sales=[])]
+  r=calculate(p,date(2026,9,12));self.assertEqual(r['days'][0]['closing'],73417);self.assertEqual(r['days'][1]['opening'],73417)
+ def test_damage_cannot_exceed_stock(self):
+  p=self.payload();p['days']=[dict(date='2026-08-19',mixes=0,bricks=0,sales=[],damaged=101)]
+  with self.assertRaises(ValueError):calculate(p,date(2026,9,12))
  def test_duplicate_dates_rejected(self):
   p=self.payload();p['days']=[dict(date='2026-08-19',mixes=0,bricks=0,sales=[])]*2
   with self.assertRaises(ValueError):calculate(p,date(2026,9,12))

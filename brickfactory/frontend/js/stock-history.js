@@ -8,7 +8,7 @@ async function loadStockHistory() {
     paragraph(data.note);
     data.imports.forEach(i=>paragraph('Confirmed stock at '+i.cutover_date+': '+i.confirmed_closing.toLocaleString()+' bricks. '+i.notes));
     if(data.complete_month_ledger) paragraph('Month opening: '+data.opening.toLocaleString()+' · Closing to latest entry: '+data.closing.toLocaleString());
-    if(data.manual_days?.length){paragraph('Manually entered historical production and sales');table(['Date','Opening','Mixes','Produced','Sales','Closing'],data.manual_days.map(r=>[r.date,r.opening,r.mixes,r.production,r.sales,r.closing]));}
+    if(data.manual_days?.length){paragraph('Manually entered historical production and sales');table(['Date','Opening','Mixes','Produced','Sales','Damaged','Closing'],data.manual_days.map(r=>[r.date,r.opening,r.mixes,r.production,r.sales,r.damaged||0,r.closing]));}
     paragraph('Handwritten stock ledger — as written; repeated dates and differences retained');
     const stock=data.rows.filter(r=>r.page===1||r.page===2);
     table(['Date','Page / row','Opening','Outward / sale','Production','Closing','Notes'],stock.map(r=>[r.entry_date,r.page+' / '+r.row_number,r.data.Opening,r.data.Sale,r.data.Production,r.data.Closing,r.data.Notes]));

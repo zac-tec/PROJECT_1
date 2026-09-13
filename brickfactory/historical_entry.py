@@ -25,9 +25,16 @@ def calculate(payload, today):
                 take=min(left,b['remaining']);b['remaining']-=take;left-=take
                 if not left:break
             if left:raise ValueError(f'{d}: insufficient stock aged at least 7 days. Check opening stock, dates and sales; short by {left} bricks.')
+        damage=row.get('damaged',0)
+        if damage<0:raise ValueError('Damaged quantity cannot be negative.')
+        left=damage
+        for b in batches:
+            take=min(left,b['remaining']);b['remaining']-=take;left-=take
+            if not left:break
+        if left:raise ValueError(f'{d}: damage exceeds remaining stock by {left} bricks.')
         used={k:Decimal(str(v))*mixes for k,v in payload['recipe'].items()}
         for k,v in used.items():consumption[k]+=v
-        days.append(dict(date=d.isoformat(),opening=before,mixes=mixes,production=bricks,sales=sum(sales),sale_entries=len(sales),closing=sum(b['remaining'] for b in batches),materials={k:float(v) for k,v in used.items()}))
+        days.append(dict(date=d.isoformat(),opening=before,mixes=mixes,production=bricks,sales=sum(sales),sale_entries=len(sales),damaged=damage,closing=sum(b['remaining'] for b in batches),materials={k:float(v) for k,v in used.items()}))
     totals=dict(curing=0,early_sale=0,fully_cured=0)
     for b in batches:
         age=(today-date.fromisoformat(b['date'])).days if b['date'] else None
