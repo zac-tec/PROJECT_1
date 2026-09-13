@@ -8,12 +8,23 @@ function historyRow(row={date:'',mixes:0,bricks:0,sales:[]}){
  }
  const td=hnode('td'),btn=hnode('button','Remove');btn.type='button';btn.onclick=()=>tr.remove();td.append(btn);tr.append(td);document.getElementById('historyEntryRows').append(tr);
 }
-function readHistoryDraft(){
- const days=[...document.querySelectorAll('#historyEntryRows tr')].map(tr=>{
-  const i=tr.querySelectorAll('input');const raw=i[3].value.trim();
-  if(raw&&!/^\d+(\s*,\s*\d+)*$/.test(raw))throw Error('Enter separate sales as whole quantities separated by commas. Use 2500, 1000 — not 2,500 for one sale.');
-  return {date:i[0].value,mixes:Number(i[1].value),bricks:Number(i[2].value),sales:raw?raw.split(',').map(Number):[]};
+function parseHistoryRows(rows){
+ return rows.flatMap((values,index)=>{
+  const [date,mix,brick,sale]=values;const raw=sale.trim();
+  if(!date && !Number(mix) && !Number(brick) && (!raw || /^0+(\s*,\s*0+)*$/.test(raw)))return [];
+  if(!date)throw Error(`Row ${index+1}: enter a date or remove this row.`);
+  if(raw&&!/^\d+(\s*,\s*\d+)*$/.test(raw))throw Error(`Row ${index+1}: use whole sale quantities separated by commas, e.g. 2500, 1000. Enter 0 or leave blank for no sales.`);
+  const mixes=Number(mix),bricks=Number(brick);
+  if(!Number.isSafeInteger(mixes)||mixes<0||!Number.isSafeInteger(bricks)||bricks<0)throw Error(`Row ${index+1}: mixes and production must be nonnegative whole numbers.`);
+  return [{date,mixes,bricks,sales:raw?raw.split(',').map(Number).filter(q=>q>0):[]}];
  });
+}
+function historyFeedback(text,error=false){
+ for(const id of ['historyEntryMessage','historyEntryBottomMessage']){const e=document.getElementById(id);if(e){e.textContent=text;e.style.color=error?'#b42318':'';e.setAttribute('role',error?'alert':'status');}}
+}
+function historyFailed(e){document.getElementById('historyEntryPreview').replaceChildren();historyFeedback(e.message||'Unable to complete this operation.',true);}
+function readHistoryDraft(){
+ const days=parseHistoryRows([...document.querySelectorAll('#historyEntryRows tr')].map(tr=>[...tr.querySelectorAll('input')].map(i=>i.value)));
  const recipe={};document.querySelectorAll('[data-history-material]').forEach(i=>recipe[i.dataset.historyMaterial]=Number(i.value));
  return {revision:historyRevision,start_date:document.getElementById('historyStart').value,end_date:document.getElementById('historyEnd').value,opening_bricks:Number(document.getElementById('historyOpening').value),opening_confirmed_cured:document.getElementById('historyOpeningCured').checked,recipe,recipe_note:document.getElementById('historyRecipeNote').value,days};
 }
@@ -39,12 +50,12 @@ async function loadHistoricalEntry(){
   if(p.days.length)historyResult(await apiFetch('/admin/historical-entry/preview',{method:'POST',body:{...p,revision:historyRevision}}));
  }catch(e){msg.textContent=e.message;}
 }
-async function saveHistoricalEntry(){try{const r=await apiFetch('/admin/historical-entry/save',{method:'POST',body:readHistoryDraft()});historyRevision=r.revision;document.getElementById('historyEntryMessage').textContent='Draft saved to database. Live stock has not changed.';}catch(e){document.getElementById('historyEntryMessage').textContent=e.message;}}
-async function previewHistoricalEntry(){try{historyResult(await apiFetch('/admin/historical-entry/preview',{method:'POST',body:readHistoryDraft()}));}catch(e){document.getElementById('historyEntryMessage').textContent=e.message;}}
+async function saveHistoricalEntry(){try{const body=readHistoryDraft();const r=await apiFetch('/admin/historical-entry/save',{method:'POST',body});historyRevision=r.revision;historyFeedback(`Saved ${body.days.length} dated rows to the database. Live stock has not changed.`);document.getElementById('historyEntryPreview').replaceChildren();}catch(e){historyFailed(e);}}
+async function previewHistoricalEntry(){try{historyResult(await apiFetch('/admin/historical-entry/preview',{method:'POST',body:readHistoryDraft()}));}catch(e){historyFailed(e);}}
 async function applyHistoricalEntry(){
  try{
   const body=readHistoryDraft();const result=await apiFetch('/admin/historical-entry/preview',{method:'POST',body});historyResult(result);
   if(!confirm(`Apply this saved historical draft as the starting stock of ${result.totals.total} bricks? It will lock this session. Historical material usage is an estimate and will NOT deduct from current material stock. Customer invoices and financial reports will not be invented.`))return;
   await apiFetch('/admin/historical-entry/apply',{method:'POST',body});await loadHistoricalEntry();
- }catch(e){document.getElementById('historyEntryMessage').textContent=e.message;}
+ }catch(e){historyFailed(e);}
 }
