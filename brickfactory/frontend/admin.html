@@ -308,6 +308,26 @@
         <div class="table-scroll"><table id="adminBrickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
       </div>
 
+      <div class="card" id="historicalEntryWorkspace">
+        <h2>One-time historical entry</h2>
+        <p>Start with older, fully cured opening stock. Enter one production row per date and as many sales quantities as needed. No customer names or prices are required. Rows are processed in date order; sales use the oldest bricks aged at least 7 days.</p>
+        <button class="secondary" onclick="loadHistoricalEntry()">Open / reload saved session</button>
+        <p id="historyEntryMessage">Open the session to begin. Unsaved edits will be replaced if you reload.</p>
+        <div id="historyEntryEditor">
+          <label>First tracked date<input id="historyStart" type="date" value="2026-08-19"></label>
+          <label>History complete through<input id="historyEnd" type="date"></label>
+          <label>Opening bricks before first date<input id="historyOpening" type="number" min="0" step="1" value="81135"></label>
+          <label><input id="historyOpeningCured" type="checkbox"> Opening bricks were already fully cured before tracking began</label>
+          <details><summary>Recipe used for estimated historical consumption</summary><div id="historyRecipeFields"></div><label>Recipe source / explanation<textarea id="historyRecipeNote"></textarea></label><p>Sand remains in kg here. Do not enter CFT in a kg recipe. Past consumption is shown separately; current material balances must be set from actual stock.</p></details>
+          <div class="table-scroll"><table><thead><tr><th>Date</th><th>Mixes</th><th>Bricks produced</th><th>Individual sales, comma-separated</th><th></th></tr></thead><tbody id="historyEntryRows"></tbody></table></div>
+          <button class="secondary" onclick="historyRow()">Add date</button>
+          <button class="primary" onclick="saveHistoricalEntry()">Save draft</button>
+          <button class="secondary" onclick="previewHistoricalEntry()">Preview stock &amp; consumption</button>
+          <button class="primary" onclick="applyHistoricalEntry()">Apply saved history once</button>
+        </div>
+        <div id="historyEntryPreview" style="overflow:auto;margin-top:16px"></div>
+      </div>
+
       <div class="card">
         <h2>Stock history &amp; imported ledgers</h2>
         <p>Historical quantities are not customer invoices or revenue. Batch ages reconstructed using oldest-stock-first allocation.</p>
@@ -354,5 +374,6 @@
 <script src="js/pwa.js?v=ui-live1"></script>
 <script src="js/presence.js?v=presence1"></script>
 <script src="js/stock-history.js?v=history1"></script>
+<script src="js/historical-entry.js?v=entry1"></script>
 </body>
 </html>

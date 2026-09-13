@@ -29,7 +29,8 @@ for migration in \
     migration_cost_history.sql \
     migration_brick_batches.sql \
     migration_activity_events.sql \
-    migration_historical_ledger.sql
+    migration_historical_ledger.sql \
+    migration_historical_session.sql
 do
     psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -f "$APP_DIR/$migration"
 done

@@ -25,8 +25,17 @@ def history(month: str):
             movements=c.fetchall()
             c.execute("SELECT COALESCE(SUM(quantity),0) AS balance FROM brick_batch_movements WHERE (occurred_at AT TIME ZONE 'Asia/Kolkata')::date < %s",(first,))
             opening=c.fetchone()['balance']
+        manual_days=[]
+        from historical_entry import calculate
+        from batch_stock import factory_today
+        with conn.cursor() as c:
+            c.execute("SELECT payload FROM historical_entry_session WHERE id=1 AND status='applied'")
+            session=c.fetchone()
+        if session:
+            manual_days=[r for r in calculate(session['payload'],factory_today())['days'] if str(first)<=r['date']<=str(last)]
         complete=bool(imports) and first>max(x['cutover_date'] for x in imports)
-        return dict(imports=imports,rows=rows,movements=movements,
+        if session:complete=first>datetime.date.fromisoformat(session['payload']['end_date'])
+        return dict(imports=imports,rows=rows,movements=movements,manual_days=manual_days,
                     opening=opening if complete else None,
                     closing=opening+sum(x['quantity'] for x in movements) if complete else None,
                     complete_month_ledger=complete,
