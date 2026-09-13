@@ -2,7 +2,7 @@ let historyRevision=0,historyStatus='draft';
 function hnode(tag,text){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;}
 function historyRow(row={date:'',mixes:0,bricks:0,sales:[]}){
  const tr=hnode('tr');
- for(const [type,value] of [['date',row.date],['number',row.mixes],['number',row.bricks],['text',row.sales.join(', ')],['number',row.damaged||0]]){
+ for(const [type,value] of [['date',row.date],['number',row.mixes],['number',row.bricks],['text',row.sales.join(', ')],['number',row.damaged||0],['number',row.found_cured||0]]){
   const td=hnode('td'),input=document.createElement('input');input.type=type;input.value=value;
   if(type==='number'){input.min='0';input.step='1';}if(type==='text')input.placeholder='2500, 1000, 2500';td.append(input);tr.append(td);
  }
@@ -10,14 +10,15 @@ function historyRow(row={date:'',mixes:0,bricks:0,sales:[]}){
 }
 function parseHistoryRows(rows){
  return rows.flatMap((values,index)=>{
-  const [date,mix,brick,sale,damage='0']=values;const raw=sale.trim();
-  if(!date && !Number(mix) && !Number(brick) && !Number(damage) && (!raw || /^0+(\s*,\s*0+)*$/.test(raw)))return [];
+  const [date,mix,brick,sale,damage='0',found='0']=values;const raw=sale.trim();
+  if(!date && !Number(mix) && !Number(brick) && !Number(damage) && !Number(found) && (!raw || /^0+(\s*,\s*0+)*$/.test(raw)))return [];
   if(!date)throw Error(`Row ${index+1}: enter a date or remove this row.`);
   if(raw&&!/^\d+(\s*,\s*\d+)*$/.test(raw))throw Error(`Row ${index+1}: use whole sale quantities separated by commas, e.g. 2500, 1000. Enter 0 or leave blank for no sales.`);
-  const mixes=Number(mix),bricks=Number(brick),damaged=Number(damage);
+  const mixes=Number(mix),bricks=Number(brick),damaged=Number(damage),found_cured=Number(found);
+  if(!Number.isSafeInteger(found_cured)||found_cured<0)throw Error(`Row ${index+1}: found cured stock must be a nonnegative whole number.`);
   if(!Number.isSafeInteger(damaged)||damaged<0)throw Error(`Row ${index+1}: damaged bricks must be a nonnegative whole number.`);
   if(!Number.isSafeInteger(mixes)||mixes<0||!Number.isSafeInteger(bricks)||bricks<0)throw Error(`Row ${index+1}: mixes and production must be nonnegative whole numbers.`);
-  return [{date,mixes,bricks,damaged,sales:raw?raw.split(',').map(Number).filter(q=>q>0):[]}];
+  return [{date,mixes,bricks,damaged,found_cured,sales:raw?raw.split(',').map(Number).filter(q=>q>0):[]}];
  });
 }
 function historyFeedback(text,error=false){
@@ -34,8 +35,8 @@ function historyResult(data){
  const totals=data.totals;
  out.append(hnode('p',`As of ${data.as_of}: total ${totals.total.toLocaleString()} · under 7 days ${totals.curing.toLocaleString()} · 7–13 days ${totals.early_sale.toLocaleString()} · 14+ days ${totals.fully_cured.toLocaleString()} · saleable ${totals.saleable.toLocaleString()}`));
  out.append(hnode('p','Estimated material consumption: '+Object.entries(data.materials).map(([k,v])=>`${k}: ${v.toLocaleString()} ${k==='Chemical'?'L':k==='Cement'?'bags':'kg'}`).join(' · ')));
- const t=hnode('table'),head=hnode('tr');['Date','Opening','Mixes','Produced','Sales','Damaged','Closing','Estimated material usage'].forEach(v=>head.append(hnode('th',v)));t.append(head);
- data.days.forEach(r=>{const tr=hnode('tr');[r.date,r.opening,r.mixes,r.production,r.sales,r.damaged||0,r.closing,Object.entries(r.materials).map(([k,v])=>k+': '+v).join(' · ')].forEach(v=>tr.append(hnode('td',v)));t.append(tr);});out.append(t);
+ const t=hnode('table'),head=hnode('tr');['Date','Opening','Mixes','Produced','Sales','Found cured','Damaged','Closing','Estimated material usage'].forEach(v=>head.append(hnode('th',v)));t.append(head);
+ data.days.forEach(r=>{const tr=hnode('tr');[r.date,r.opening,r.mixes,r.production,r.sales,r.found_cured||0,r.damaged||0,r.closing,Object.entries(r.materials).map(([k,v])=>k+': '+v).join(' · ')].forEach(v=>tr.append(hnode('td',v)));t.append(tr);});out.append(t);
 }
 async function loadHistoricalEntry(){
  const msg=document.getElementById('historyEntryMessage');

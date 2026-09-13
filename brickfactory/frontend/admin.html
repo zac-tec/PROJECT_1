@@ -310,7 +310,7 @@
 
       <div class="card" id="historicalEntryWorkspace">
         <h2>One-time historical entry</h2>
-        <p>Start with older, fully cured opening stock. Enter one production row per date and as many sales quantities as needed. No customer names or prices are required. Rows are processed in date order; sales use the oldest bricks aged at least 7 days. Damage is deducted after that day’s sales, oldest stock first regardless of age; this is an assumed allocation when the damaged batch is unknown.</p>
+        <p>Start with older, fully cured opening stock. Enter one production row per date and as many sales quantities as needed. No customer names or prices are required. Rows are processed in date order; sales use the oldest bricks aged at least 7 days. Fully cured stock found during an audit is added after that day’s sales and before damage. It is not production and consumes no materials. Damage is deducted after that day’s sales, oldest stock first regardless of age; this is an assumed allocation when the damaged batch is unknown.</p>
         <button class="secondary" onclick="loadHistoricalEntry()">Open / reload saved session</button>
         <p id="historyEntryMessage">Open the session to begin. Unsaved edits will be replaced if you reload.</p>
         <div id="historyEntryEditor">
@@ -319,7 +319,7 @@
           <label>Opening bricks before first date<input id="historyOpening" type="number" min="0" step="1" value="81135"></label>
           <label><input id="historyOpeningCured" type="checkbox"> Opening bricks were already fully cured before tracking began</label>
           <details><summary>Recipe used for estimated historical consumption</summary><div id="historyRecipeFields"></div><label>Recipe source / explanation<textarea id="historyRecipeNote"></textarea></label><p>Sand remains in kg here. Do not enter CFT in a kg recipe. Past consumption is shown separately; current material balances must be set from actual stock.</p></details>
-          <div class="table-scroll"><table><thead><tr><th>Date</th><th>Mixes</th><th>Bricks produced</th><th>Individual sales, comma-separated</th><th>Damaged bricks</th><th></th></tr></thead><tbody id="historyEntryRows"></tbody></table></div>
+          <div class="table-scroll"><table><thead><tr><th>Date</th><th>Mixes</th><th>Bricks produced</th><th>Individual sales, comma-separated</th><th>Damaged bricks</th><th>Found stock — fully cured</th><th></th></tr></thead><tbody id="historyEntryRows"></tbody></table></div>
           <button class="secondary" onclick="historyRow()">Add date</button>
           <button class="primary" onclick="saveHistoricalEntry()">Save draft</button>
           <button class="secondary" onclick="previewHistoricalEntry()">Preview stock &amp; consumption</button>
@@ -375,6 +375,6 @@
 <script src="js/pwa.js?v=ui-live1"></script>
 <script src="js/presence.js?v=presence1"></script>
 <script src="js/stock-history.js?v=history1"></script>
-<script src="js/historical-entry.js?v=entry3"></script>
+<script src="js/historical-entry.js?v=entry4"></script>
 </body>
 </html>

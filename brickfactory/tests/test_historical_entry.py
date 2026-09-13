@@ -18,6 +18,12 @@ class HistoryTest(unittest.TestCase):
  def test_damage_cannot_exceed_stock(self):
   p=self.payload();p['days']=[dict(date='2026-08-19',mixes=0,bricks=0,sales=[],damaged=101)]
   with self.assertRaises(ValueError):calculate(p,date(2026,9,12))
+ def test_found_cured_audit_reconciles_september(self):
+  p=self.payload();p['opening_bricks']=86793;p['days']=[dict(date='2026-08-31',mixes=0,bricks=0,sales=[],found_cured=2756,damaged=13376),dict(date='2026-09-01',mixes=39,bricks=6998,sales=[2500,2500])]
+  r=calculate(p,date(2026,9,12));self.assertEqual(r['days'][0]['closing'],76173);self.assertEqual(r['days'][1]['opening'],76173);self.assertEqual(r['totals']['total'],78171);self.assertEqual(r['materials']['Cement'],39)
+ def test_found_stock_not_available_before_audit(self):
+  p=self.payload();p['opening_bricks']=0;p['days']=[dict(date='2026-08-31',mixes=0,bricks=0,sales=[1],found_cured=10)]
+  with self.assertRaises(ValueError):calculate(p,date(2026,9,12))
  def test_duplicate_dates_rejected(self):
   p=self.payload();p['days']=[dict(date='2026-08-19',mixes=0,bricks=0,sales=[])]*2
   with self.assertRaises(ValueError):calculate(p,date(2026,9,12))

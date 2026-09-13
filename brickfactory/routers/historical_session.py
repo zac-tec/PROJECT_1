@@ -15,6 +15,7 @@ class Day(BaseModel):
     mixes: Whole
     bricks: Whole
     damaged: Whole=0
+    found_cured: Whole=0
     sales: list[Sale]=Field(default_factory=list,max_length=500)
 class Draft(BaseModel):
     revision: int=Field(ge=0)

@@ -25,6 +25,11 @@ def calculate(payload, today):
                 take=min(left,b['remaining']);b['remaining']-=take;left-=take
                 if not left:break
             if left:raise ValueError(f'{d}: insufficient stock aged at least 7 days. Check opening stock, dates and sales; short by {left} bricks.')
+        found=row.get('found_cured',0)
+        if found<0:raise ValueError('Found cured stock cannot be negative.')
+        # Audit stock is discovered after the day’s sales, before damage.
+        batches[0]['initial']+=found
+        batches[0]['remaining']+=found
         damage=row.get('damaged',0)
         if damage<0:raise ValueError('Damaged quantity cannot be negative.')
         left=damage
@@ -34,7 +39,7 @@ def calculate(payload, today):
         if left:raise ValueError(f'{d}: damage exceeds remaining stock by {left} bricks.')
         used={k:Decimal(str(v))*mixes for k,v in payload['recipe'].items()}
         for k,v in used.items():consumption[k]+=v
-        days.append(dict(date=d.isoformat(),opening=before,mixes=mixes,production=bricks,sales=sum(sales),sale_entries=len(sales),damaged=damage,closing=sum(b['remaining'] for b in batches),materials={k:float(v) for k,v in used.items()}))
+        days.append(dict(date=d.isoformat(),opening=before,mixes=mixes,production=bricks,sales=sum(sales),sale_entries=len(sales),damaged=damage,found_cured=found,closing=sum(b['remaining'] for b in batches),materials={k:float(v) for k,v in used.items()}))
     totals=dict(curing=0,early_sale=0,fully_cured=0)
     for b in batches:
         age=(today-date.fromisoformat(b['date'])).days if b['date'] else None
