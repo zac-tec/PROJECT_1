@@ -24,7 +24,7 @@ def login(body: LoginRequest):
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT password_hash, user_role FROM system_users WHERE username = %s",
+            "SELECT password_hash, user_role, session_version FROM system_users WHERE username = %s",
             (body.username,),
         )
         row = cursor.fetchone()
@@ -37,5 +37,5 @@ def login(body: LoginRequest):
     if row is None or not verify_password(body.password, row["password_hash"]):
         raise HTTPException(status_code=401, detail="Incorrect username or password.")
 
-    token = create_access_token(username=body.username, role=row["user_role"])
+    token = create_access_token(username=body.username, role=row["user_role"], session_version=row["session_version"])
     return LoginResponse(access_token=token, username=body.username, role=row["user_role"])

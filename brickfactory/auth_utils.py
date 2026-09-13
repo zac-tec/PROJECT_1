@@ -35,10 +35,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-def create_access_token(username: str, role: str) -> str:
+def create_access_token(username: str, role: str, session_version: int = 0) -> str:
     """Called once at successful login — this IS the wristband."""
     expire_at = datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRE_HOURS)
-    payload = {"username": username, "role": role, "exp": expire_at}
+    payload = {"username": username, "role": role, "session_version": session_version, "exp": expire_at}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 

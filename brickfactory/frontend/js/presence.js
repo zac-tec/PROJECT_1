@@ -13,6 +13,7 @@
       const beat = await fetch("/presence/heartbeat", {
         method: "POST", headers, cache: "no-store", signal: AbortSignal.timeout(10000)
       });
+      if (beat.status===401) { logout(); return; }
       if (!beat.ok) throw new Error("Presence unavailable");
       if (!output) return;
       const result = await fetch("/presence/active", {

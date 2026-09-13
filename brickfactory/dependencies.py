@@ -40,6 +40,15 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired session. Please log in again.",
         )
+    from database import get_connection
+    conn=get_connection()
+    try:
+        with conn.cursor() as c:
+            c.execute('SELECT user_role,session_version FROM system_users WHERE username=%s',(payload['username'],))
+            account=c.fetchone()
+    finally:conn.close()
+    if not account or account['user_role']!=payload['role'] or account['session_version']!=payload.get('session_version',0):
+        raise HTTPException(401,'Your access has changed. Please sign in again.')
     return payload
 
 
