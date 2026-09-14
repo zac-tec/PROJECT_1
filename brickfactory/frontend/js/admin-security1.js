@@ -118,9 +118,10 @@ async function loadProductionCosts() {
       {label:"Bricks produced",value:d.bricks,bold:true}, {label:"Mixes run",value:d.mixes},
       {label:"Average bricks per mix",value:d.average_bricks_per_mix ?? "—"},
       {label:"Materials used",value:money(d.material_cost)},
-      {label:"Making charges (includes labour)",value:money(d.making_cost)},
+      {label:"Making charges subtotal — recorded costs",value:money(d.making_cost)},
+      {label:"Loading",value:money(d.loading_cost)},{label:"Union",value:money(d.union_cost)},
       {label:"Recorded labour hours",value:d.recorded_labour_hours},
-      {label:"Recorded hourly labour cost",value:money(d.recorded_labour_cost)},
+      {label:"Labour cost — recorded hours",value:money(d.recorded_labour_cost)},
       {label:"Average labour / brick (days with hours)",value:d.average_labour_per_brick===null?"Hours needed":money(d.average_labour_per_brick)},
       {label:"Days without labour hours",value:d.labour_missing_days},
       {label:"Miscellaneous expenses",value:money(d.misc_expenses)},
@@ -210,7 +211,7 @@ async function runProfitCalculator() {
  }
  try{
   const d=await apiFetch('/profit-calculator',{method:'POST',body});
-  const amount=v=>v===null?'Unavailable: no production cost basis':money(v);
+  const amount=v=>v===null?'Pending labour hours / cost records':money(v);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:d.scenario?'Scenario bricks sold':'Recorded bricks sold',value:d.bricks_sold},
    {label:'Historical bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
    {label:'Historical revenue estimate',value:money(d.historical_revenue_estimate)},

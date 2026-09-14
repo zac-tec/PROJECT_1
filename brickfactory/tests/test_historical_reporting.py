@@ -2,8 +2,10 @@ import unittest
 from unittest.mock import patch
 from historical_reporting import historical_cost_days, monthly_sales
 class Cursor:
- def execute(self,*args):pass
- def fetchall(self):return [{'production_date':'2026-09-02'}]
+ def execute(self,sql,*args):self.sql=sql
+ def fetchall(self):
+  if 'historical_labour_entries' in self.sql:return []
+  return [{'production_date':'2026-09-02'}]
 class HistoricalReportingTests(unittest.TestCase):
  def test_estimates_use_mixes_and_exclude_live_dates(self):
   payload={'recipe':{'Chemical':0.35},'days':[
@@ -16,7 +18,8 @@ class HistoricalReportingTests(unittest.TestCase):
   self.assertEqual(len(result),1)
   self.assertEqual(result[0]['materials']['Chemical'],1.05)
   self.assertEqual(result[0]['material_cost_total'],2.10)
-  self.assertEqual(result[0]['making_cost_total'],400)
+  self.assertEqual(result[0]['making_cost_total'],0)
+  self.assertIsNone(result[0]['labour_cost_total'])
   self.assertIsNone(result[0]['labourers_present'])
 class SalesReportingTests(unittest.TestCase):
  def test_historical_quantities_do_not_invent_invoice_revenue(self):

@@ -48,7 +48,9 @@ def production_cost_report(month: str = None):
         overhead = get_monthly_overhead(cursor, target_month)
         cursor.execute("""SELECT p.production_date, p.mixes_run, p.bricks_made,
             p.labourers_present, p.misc_expense, p.misc_note,
-            c.material_cost_total, c.making_cost_total, c.snapshot_source,c.labour_hours,c.labour_cost_total
+            c.material_cost_total, c.making_cost_total, c.snapshot_source,c.labour_hours,c.labour_cost_total,
+            ROUND(p.bricks_made*COALESCE((c.making_charges->>'Loading')::numeric,0),2) AS loading_cost,
+            ROUND(p.bricks_made*COALESCE((c.making_charges->>'Union')::numeric,0),2) AS union_cost
             FROM production_log p LEFT JOIN production_cost_snapshots c USING(production_date)
             WHERE TO_CHAR(p.production_date,'YYYY-MM')=%s ORDER BY p.production_date""", (target_month,))
         days = cursor.fetchall()
@@ -57,7 +59,7 @@ def production_cost_report(month: str = None):
         days.sort(key=lambda r: str(r['production_date']))
         bricks = sum(r['bricks_made'] for r in days)
         mixes = sum(r['mixes_run'] for r in days)
-        missing = any(r['snapshot_source'] is None for r in days)
+        missing = any(r['snapshot_source'] is None or r.get('labour_hours') is None for r in days)
         material = sum(float(r['material_cost_total'] or 0) for r in days)
         making = sum(float(r['making_cost_total'] or 0) for r in days)
         misc = sum(float(r['misc_expense']) for r in days)
@@ -67,6 +69,8 @@ def production_cost_report(month: str = None):
             'month': target_month, 'days_worked': len(days), 'bricks': bricks, 'mixes': mixes,
             'average_bricks_per_mix': average_bricks_per_mix(bricks, mixes),
             'material_cost': round(material,2), 'making_cost': round(making,2),
+            'loading_cost': round(sum(float(r.get('loading_cost') or 0) for r in days),2),
+            'union_cost': round(sum(float(r.get('union_cost') or 0) for r in days),2),
             'recorded_labour_hours': round(sum(float(r.get('labour_hours') or 0) for r in days),2),
             'recorded_labour_cost': round(sum(float(r.get('labour_cost_total') or 0) for r in days),2),
             'labour_covered_bricks': sum(r['bricks_made'] for r in days if r.get('labour_hours') is not None),

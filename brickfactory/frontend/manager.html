@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="js/date-display.js?v=groups1"></script>
+<script src="js/date-display.js?v=payroll1"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Manager — NEO BRICKS</title>
@@ -71,12 +71,6 @@
         <input id="mixesInput" type="number" step="1" min="0">
         <label>Number of Bricks Produced Today (leave blank if unknown)</label>
         <input id="bricksInput" type="number" step="1" min="0">
-        <button class="primary" onclick="previewEntry()">Preview</button>
-
-        <div id="previewOutput" class="hidden" style="margin-top:14px;">
-          <div class="card">
-            <h2>Draft Entry (not saved yet)</h2>
-            <div id="previewDetails"></div>
             <h3>Labour hours</h3>
             <p>Group workers who worked the same hours.</p>
             <div id="labourGroupRows"></div>
@@ -86,6 +80,13 @@
             <label>Total workers<input id="labourersInput" type="number" step="1" min="0" readonly></label>
             <label>Total person-hours<input id="labourHoursInput" type="number" step="0.01" min="0" required readonly></label>
             <p id="labourCostPreview" aria-live="polite"></p>
+
+        <button class="primary" onclick="previewEntry()">Preview</button>
+
+        <div id="previewOutput" class="hidden" style="margin-top:14px;">
+          <div class="card">
+            <h2>Draft Entry (not saved yet)</h2>
+            <div id="previewDetails"></div>
             <label>Miscellaneous Charges Amount (leave blank if none)</label>
             <input id="miscAmountInput" type="number" step="0.01" min="0">
             <label>Miscellaneous Charges Note</label>
@@ -237,11 +238,11 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=groups1"></script>
-<script src="js/recovery.js?v=groups1"></script>
-<script src="js/pwa.js?v=groups1"></script>
-<script src="js/labour-groups.js?v=groups1"></script>
-<script src="js/manager-security1.js?v=groups1"></script>
+<script src="js/api-security1.js?v=payroll1"></script>
+<script src="js/recovery.js?v=payroll1"></script>
+<script src="js/pwa.js?v=payroll1"></script>
+<script src="js/labour-groups.js?v=payroll1"></script>
+<script src="js/manager-security1.js?v=payroll1"></script>
 <script src="js/presence.js?v=presence2"></script>
 </body>
 </html>

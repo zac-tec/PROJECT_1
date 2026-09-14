@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="js/date-display.js?v=groups1"></script>
+<script src="js/date-display.js?v=payroll1"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=groups1">
+<link rel="stylesheet" href="css/style.css?v=payroll1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -230,7 +230,12 @@
       </div>
     </section>
 
-    <section id="sec-productionCosts" class="hidden"><div class="card">
+    <section id="sec-productionCosts" class="hidden">
+      <div class="card"><h2>Historical labour hours</h2>
+      <p>Enter total person-hours for each date. Blank means unknown; 0 means no labour. Saving changes labour costs only.</p>
+      <button class="secondary" onclick="loadHistoricalLabour()">Load dates</button>
+      <div id="historicalLabourRows" class="table-scroll"></div>
+      <button class="primary" onclick="saveHistoricalLabour()">Save labour hours</button><p id="historicalLabourMessage" role="status"></p></div><div class="card">
       <h2>Production &amp; Costs</h2>
       <label>Month</label><input id="costMonth" type="month">
       <button class="primary" onclick="loadProductionCosts()">View Month</button>
@@ -378,14 +383,15 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=groups1"></script>
-<script src="js/recovery.js?v=groups1"></script>
-<script src="js/dashboard-security1.js?v=groups1"></script>
-<script src="js/admin-security1.js?v=groups1"></script>
-<script src="js/pwa.js?v=groups1"></script>
+<script src="js/api-security1.js?v=payroll1"></script>
+<script src="js/recovery.js?v=payroll1"></script>
+<script src="js/dashboard-security1.js?v=payroll1"></script>
+<script src="js/admin-security1.js?v=payroll1"></script>
+<script src="js/pwa.js?v=payroll1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/historical-entry.js?v=entry5"></script>
-<script src="js/manager-access.js?v=groups1"></script>
+<script src="js/manager-access.js?v=payroll1"></script>
+<script src="js/historical-labour.js?v=payroll1"></script>
 </body>
 </html>
