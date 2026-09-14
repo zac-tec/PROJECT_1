@@ -67,6 +67,7 @@ async function saveEntry(confirmOverwrite = false) {
   if (!currentPreview) return showMessage(msgEl, "Preview an entry first.", true);
 
   const labourersRaw = document.getElementById("labourersInput").value.trim();
+  let groups;try{groups=readLabourGroups();}catch(e){return showMessage(msgEl,e.message,true);}
   const hoursRaw=document.getElementById("labourHoursInput").value.trim();
   if(hoursRaw===""||!Number.isFinite(Number(hoursRaw))||Number(hoursRaw)<0)return showMessage(msgEl,"Enter total person-hours worked.",true);
 
@@ -78,6 +79,7 @@ async function saveEntry(confirmOverwrite = false) {
     calculated_field: currentPreview.calculated_field,
     labourers: labourersRaw===""?0:parseInt(labourersRaw, 10),
     labour_hours: Number(hoursRaw),
+    labour_groups: groups,
     misc_amount: miscAmountRaw === "" ? 0 : parseFloat(miscAmountRaw),
     misc_note: document.getElementById("miscNoteInput").value,
     confirm_overwrite: confirmOverwrite,
@@ -91,10 +93,11 @@ async function saveEntry(confirmOverwrite = false) {
     document.getElementById("bricksInput").value = "";
     document.getElementById("labourersInput").value = "";
     document.getElementById("labourHoursInput").value = "";
+    resetLabourGroups();
     document.getElementById("miscAmountInput").value = "";
     document.getElementById("miscNoteInput").value = "";
     currentPreview = null;
-    sessionUI.discard(['mixesInput', 'bricksInput', 'labourersInput', 'labourHoursInput', 'miscAmountInput', 'miscNoteInput']);
+    sessionUI.discard(['mixesInput', 'bricksInput', 'labourersInput', 'labourHoursInput', 'labourGroupsDraft', 'labourManualMode', 'miscAmountInput', 'miscNoteInput']);
     await sessionUI.afterSave(checkExistingEntry);
   } catch (e) {
     if (e.message.includes("already exists")) {
@@ -476,7 +479,7 @@ onSectionLoad("utility", loadUtilityBills);
 sessionUI.attach({
   getSaleId: () => editingSaleId,
   setSaleId: id => { editingSaleId = Number.isInteger(id) ? id : null; },
-  afterRestore: () => { recalculateSale(); updateAdjustmentForm(); },
+  afterRestore: () => { restoreLabourGroups(); recalculateSale(); updateAdjustmentForm(); },
 });
 for (const id of ["mixesInput", "bricksInput"]) {
   document.getElementById(id).addEventListener("input", () => {

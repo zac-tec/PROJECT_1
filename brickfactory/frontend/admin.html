@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="js/date-display.js?v=labour1"></script>
+<script src="js/date-display.js?v=groups1"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=labour1">
+<link rel="stylesheet" href="css/style.css?v=groups1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -71,7 +71,7 @@
       <div class="card"><h2>Monthly production &amp; material use</h2>
       <input id="materialReportMonth" type="month" onchange="loadMonthMaterials()">
       <div id="monthMaterialsOutput"></div>
-      <p>Historical consumption uses the saved recipe. Historical costs use dated material rates and the preserved legacy making-charge estimate; historical labour hours are unknown. New labour uses person-hours × ₹81.25. Unrecorded historical expenses are excluded. Fixed monthly charges are shown separately.</p></div>
+      <p>Historical costs are estimates. Recorded labour: ₹81.25 per person-hour. Fixed charges shown separately.</p></div>
 
       <div class="card" id="activeUsersCard">
         <h2>Active users <span id="activeUsersCount" aria-live="polite">—</span></h2>
@@ -107,7 +107,7 @@
       </div>
 
       <div class="card"><h2>September onwards: business overview</h2>
-      <p>View monthly sales quantities and enter a historical selling price in the Profit Calculator to estimate revenue and profit. New sales use their individually recorded prices. No default brick price is assumed.</p>
+      <p>Use Profit Calculator for revenue and estimated profit. Historical sales need an entered price.</p>
       <div id="monthSalesOverview"></div></div>
 
       <div class="card">
@@ -136,7 +136,7 @@
     <section id="sec-reportsettings" class="hidden">
       <div class="card" id="managerAccessCard">
         <h2>Manager login — admin only</h2>
-        <p>Change the manager login when staff change. Previous login sessions stop working immediately. Business records are preserved.</p>
+        <p>Changing the login signs out previous manager sessions.</p>
         <form id="managerAccessForm" autocomplete="off">
           <label>Manager account<select id="accessManager" required></select></label>
           <label>New username<input id="accessUsername" required minlength="3" maxlength="50" pattern="[A-Za-z0-9_.-]+" autocomplete="off"></label>
@@ -184,8 +184,8 @@
     <!-- RATE MANAGEMENT -->
     <div class="pricing-panel">
       <div class="card">
-        <h2><i data-lucide="tags" class="icon"></i> Material Rates</h2><p>Changes apply from today (India time), including today’s saved material cost. Earlier days retain their recorded rates.</p>
-        <p>Rates: Fly ash and Sand per kg; Cement per bag; Chemical per litre of the liquid measured in the recipe. At 0.35 L/mix, chemical cost per mix = 0.35 × the litre price.</p><table id="ratesTable"><thead><tr><th>Material</th><th style="text-align:right;">Current Rate</th><th></th></tr></thead><tbody></tbody></table>
+        <h2><i data-lucide="tags" class="icon"></i> Material Rates</h2><p>Rate changes apply today; earlier recorded costs stay unchanged.</p>
+        <p>Units: Fly ash / Sand — kg; Cement — bag; Chemical — litre.</p><table id="ratesTable"><thead><tr><th>Material</th><th style="text-align:right;">Current Rate</th><th></th></tr></thead><tbody></tbody></table>
       </div>
     </div>
 
@@ -378,14 +378,14 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=labour1"></script>
-<script src="js/recovery.js?v=labour1"></script>
-<script src="js/dashboard-security1.js?v=labour1"></script>
-<script src="js/admin-security1.js?v=labour1"></script>
-<script src="js/pwa.js?v=labour1"></script>
+<script src="js/api-security1.js?v=groups1"></script>
+<script src="js/recovery.js?v=groups1"></script>
+<script src="js/dashboard-security1.js?v=groups1"></script>
+<script src="js/admin-security1.js?v=groups1"></script>
+<script src="js/pwa.js?v=groups1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/historical-entry.js?v=entry5"></script>
-<script src="js/manager-access.js?v=labour1"></script>
+<script src="js/manager-access.js?v=groups1"></script>
 </body>
 </html>

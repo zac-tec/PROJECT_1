@@ -7,7 +7,7 @@ keeps main.py and the routers focused on logic, not data shapes.
 Material refill quantities allow decimals; mixes, bricks and labourers remain integers.
 """
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Literal, Optional
 
 
@@ -81,7 +81,22 @@ class ProductionPreviewRequest(BaseModel):
     bricks_produced: Optional[int] = None
 
 
+class LabourGroup(BaseModel):
+    workers: int = Field(ge=0, le=1000, strict=True)
+    hours: float = Field(ge=0, le=24, allow_inf_nan=False, multiple_of=0.01)
+
 class ProductionSaveRequest(BaseModel):
+    labour_groups: Optional[list[LabourGroup]] = Field(default=None,max_length=100)
+
+    @model_validator(mode='after')
+    def validate_groups(self):
+        from decimal import Decimal
+        if self.labour_groups is not None:
+            hours=sum(Decimal(str(g.hours))*g.workers for g in self.labour_groups)
+            if hours!=Decimal(str(self.labour_hours)) or sum(g.workers for g in self.labour_groups)!=self.labourers:
+                raise ValueError('Labour totals must match the worker/hour rows.')
+        return self
+
     mixes: int = Field(..., ge=0)
     bricks_produced: int = Field(..., ge=0)
     calculated_field: str = "none"

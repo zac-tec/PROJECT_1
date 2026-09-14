@@ -196,7 +196,7 @@ def get_todays_entry():
         cursor = conn.cursor()
         today = datetime.date.today()
         cursor.execute(
-            """SELECT timestamp_entered, mixes_run, bricks_made, labourers_present, labour_hours, misc_expense, misc_note, is_corrected
+            """SELECT timestamp_entered, mixes_run, bricks_made, labourers_present, labour_hours, labour_groups, misc_expense, misc_note, is_corrected
                FROM production_log WHERE production_date = %s""",
             (today,),
         )
@@ -216,6 +216,7 @@ def get_todays_entry():
         "mixes": row["mixes_run"],
         "bricks_produced": row["bricks_made"],
         "labourers": row["labourers_present"],
+        "labour_groups": row["labour_groups"],
         "labour_hours": float(row["labour_hours"]) if row["labour_hours"] is not None else None,
         "labour_cost": labour_cost_for_hours(row["labour_hours"]) if row["labour_hours"] is not None else None,
         "misc_amount": float(row["misc_expense"]),
@@ -310,7 +311,7 @@ def save_entry(body: ProductionSaveRequest):
              body.labourers, body.misc_amount, body.misc_note, "yes" if is_correction else "no"),
         )
 
-        cursor.execute("UPDATE production_log SET labour_hours=%s WHERE production_date=%s",(body.labour_hours,today))
+        cursor.execute("UPDATE production_log SET labour_hours=%s,labour_groups=%s::jsonb WHERE production_date=%s",(body.labour_hours,json.dumps([g.model_dump() for g in body.labour_groups]) if body.labour_groups is not None else None,today))
 
         for material, quantity in material_deltas.items():
             cursor.execute("UPDATE materials_inventory SET current_stock=current_stock-%s WHERE material_name=%s", (quantity, material))
