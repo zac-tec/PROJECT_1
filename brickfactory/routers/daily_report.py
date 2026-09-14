@@ -13,6 +13,7 @@ API, which we deliberately did not build yet (see chat discussion).
 import datetime
 from batch_stock import stock_summary
 from production_metrics import average_bricks_per_mix
+from cost_history import labour_cost_for_hours
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import Response
 from database import get_connection
@@ -34,7 +35,7 @@ def _gather_daily_report_data(cursor, target_date: datetime.date) -> dict:
     finished_bricks = stock_summary(cursor)
 
     cursor.execute(
-        """SELECT mixes_run, bricks_made, labourers_present, misc_expense, misc_note, calculated_field
+        """SELECT mixes_run, bricks_made, labourers_present, labour_hours, misc_expense, misc_note, calculated_field
            FROM production_log WHERE production_date = %s""",
         (target_date,),
     )
@@ -47,6 +48,8 @@ def _gather_daily_report_data(cursor, target_date: datetime.date) -> dict:
             "average_is_estimated": prod_row["calculated_field"] != "none",
             "bricks_produced": prod_row["bricks_made"],
             "labourers": prod_row["labourers_present"],
+            "labour_hours": float(prod_row["labour_hours"]) if prod_row["labour_hours"] is not None else None,
+            "labour_cost": labour_cost_for_hours(prod_row["labour_hours"]) if prod_row["labour_hours"] is not None else None,
             "misc_amount": float(prod_row["misc_expense"]),
             "misc_note": prod_row["misc_note"],
         }
@@ -256,7 +259,7 @@ def daily_report_summary_text(date: str = None):
     finally:
         conn.close()
 
-    lines = [f"*Daily Report — {data['date']}*", ""]
+    lines = [f"*Daily Report — {target_date.strftime('%d-%m-%Y')}*", ""]
 
     lines.append("*Production:*")
     if data["production"]:
@@ -265,7 +268,7 @@ def daily_report_summary_text(date: str = None):
         average = p["avg_bricks_per_mix"]
         qualifier = " (estimated)" if p["average_is_estimated"] else ""
         lines.append(f"Average bricks per mix{qualifier}: {average if average is not None else 'N/A'}")
-        lines.append(f"Labourers: {p['labourers']}")
+        lines.append(f"Labour person-hours: {p['labour_hours'] if p['labour_hours'] is not None else 'Not recorded'}; cost: Rs. {p['labour_cost'] if p['labour_cost'] is not None else 'Hours needed'}")
     else:
         lines.append("No production entry logged today.")
     lines.append("")

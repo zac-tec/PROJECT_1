@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="js/date-display.js?v=labour1"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Manager — NEO BRICKS</title>
@@ -78,6 +79,9 @@
             <div id="previewDetails"></div>
             <label>Number of Labourers Present Today</label>
             <input id="labourersInput" type="number" step="1" min="0">
+            <label>Total labour person-hours (all workers combined)</label>
+            <input id="labourHoursInput" type="number" step="0.01" min="0" required>
+            <p>Example: 4 workers × 8 hours = 32 hours. Labour cost: 32 × ₹81.25 = ₹2,600. Enter 0 only if no labour was used.</p>
             <label>Miscellaneous Charges Amount (leave blank if none)</label>
             <input id="miscAmountInput" type="number" step="0.01" min="0">
             <label>Miscellaneous Charges Note</label>
@@ -229,10 +233,10 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=access1"></script>
-<script src="js/recovery.js?v=access1"></script>
-<script src="js/pwa.js?v=access1"></script>
-<script src="js/manager-security1.js?v=access1"></script>
+<script src="js/api-security1.js?v=labour1"></script>
+<script src="js/recovery.js?v=labour1"></script>
+<script src="js/pwa.js?v=labour1"></script>
+<script src="js/manager-security1.js?v=labour1"></script>
 <script src="js/presence.js?v=presence2"></script>
 </body>
 </html>

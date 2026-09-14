@@ -9,6 +9,7 @@ and a matching chart/card in frontend/js/dashboard.js.
 """
 
 import datetime
+from cost_history import labour_cost_for_hours
 from fastapi import APIRouter, HTTPException, Depends
 from dependencies import require_admin
 from database import get_connection
@@ -29,7 +30,7 @@ def today_activity():
         today = datetime.date.today()
 
         cursor.execute(
-            """SELECT timestamp_entered, mixes_run, bricks_made, labourers_present, misc_expense, misc_note, is_corrected
+            """SELECT timestamp_entered, mixes_run, bricks_made, labourers_present, labour_hours, misc_expense, misc_note, is_corrected
                FROM production_log WHERE production_date = %s""",
             (today,),
         )
@@ -41,6 +42,8 @@ def today_activity():
                 "mixes": prod_row["mixes_run"],
                 "bricks_produced": prod_row["bricks_made"],
                 "labourers": prod_row["labourers_present"],
+                "labour_hours": float(prod_row["labour_hours"]) if prod_row["labour_hours"] is not None else None,
+                "labour_cost": labour_cost_for_hours(prod_row["labour_hours"]) if prod_row["labour_hours"] is not None else None,
                 "misc_amount": float(prod_row["misc_expense"]),
                 "misc_note": prod_row["misc_note"],
                 "is_corrected": prod_row["is_corrected"],

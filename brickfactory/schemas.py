@@ -85,7 +85,8 @@ class ProductionSaveRequest(BaseModel):
     mixes: int = Field(..., ge=0)
     bricks_produced: int = Field(..., ge=0)
     calculated_field: str = "none"
-    labourers: int = Field(..., ge=0)
+    labourers: int = Field(default=0, ge=0)
+    labour_hours: float = Field(..., ge=0, le=10000, allow_inf_nan=False, multiple_of=0.01)
     misc_amount: float = Field(default=0.0, ge=0)
     misc_note: str = ""
     confirm_overwrite: bool = False

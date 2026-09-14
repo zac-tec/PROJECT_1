@@ -19,6 +19,8 @@ async function checkExistingEntry() {
     { label: "Mixes", value: d.mixes },
     { label: "Bricks Produced", value: d.bricks_produced, bold: true },
     { label: "Labourers", value: d.labourers },
+    {label:"Total person-hours",value:d.labour_hours ?? "Not recorded"},
+    {label:"Labour cost",value:d.labour_cost===null?"Hours needed":money(d.labour_cost)},
     { label: "Misc Expense", value: `${money(d.misc_amount)} (${d.misc_note || "—"})` },
   ]);
   card.innerHTML = `
@@ -65,7 +67,8 @@ async function saveEntry(confirmOverwrite = false) {
   if (!currentPreview) return showMessage(msgEl, "Preview an entry first.", true);
 
   const labourersRaw = document.getElementById("labourersInput").value.trim();
-  if (labourersRaw === "") return showMessage(msgEl, "Enter number of labourers.", true);
+  const hoursRaw=document.getElementById("labourHoursInput").value.trim();
+  if(hoursRaw===""||!Number.isFinite(Number(hoursRaw))||Number(hoursRaw)<0)return showMessage(msgEl,"Enter total person-hours worked.",true);
 
   const miscAmountRaw = document.getElementById("miscAmountInput").value.trim();
 
@@ -73,7 +76,8 @@ async function saveEntry(confirmOverwrite = false) {
     mixes: currentPreview.mixes,
     bricks_produced: currentPreview.bricks_produced,
     calculated_field: currentPreview.calculated_field,
-    labourers: parseInt(labourersRaw, 10),
+    labourers: labourersRaw===""?0:parseInt(labourersRaw, 10),
+    labour_hours: Number(hoursRaw),
     misc_amount: miscAmountRaw === "" ? 0 : parseFloat(miscAmountRaw),
     misc_note: document.getElementById("miscNoteInput").value,
     confirm_overwrite: confirmOverwrite,
@@ -86,10 +90,11 @@ async function saveEntry(confirmOverwrite = false) {
     document.getElementById("mixesInput").value = "";
     document.getElementById("bricksInput").value = "";
     document.getElementById("labourersInput").value = "";
+    document.getElementById("labourHoursInput").value = "";
     document.getElementById("miscAmountInput").value = "";
     document.getElementById("miscNoteInput").value = "";
     currentPreview = null;
-    sessionUI.discard(['mixesInput', 'bricksInput', 'labourersInput', 'miscAmountInput', 'miscNoteInput']);
+    sessionUI.discard(['mixesInput', 'bricksInput', 'labourersInput', 'labourHoursInput', 'miscAmountInput', 'miscNoteInput']);
     await sessionUI.afterSave(checkExistingEntry);
   } catch (e) {
     if (e.message.includes("already exists")) {

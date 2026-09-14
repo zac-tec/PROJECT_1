@@ -1,3 +1,8 @@
+from datetime import date as _date
+def display_date(value):
+    try:return _date.fromisoformat(str(value)[:10]).strftime('%d-%m-%Y')
+    except ValueError:return str(value)
+
 """
 PDF RECEIPT GENERATOR
 Builds a clean, printable A5 sale receipt for a customer. Uses fpdf2
@@ -42,7 +47,7 @@ def generate_daily_report(data: dict) -> bytes:
     pdf.ln(6)
 
     pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 8, f"Daily Operations Report - {data['date']}", ln=True, align="C")
+    pdf.cell(0, 8, f"Daily Operations Report - {display_date(data['date'])}", ln=True, align="C")
     pdf.ln(6)
 
     def section_title(text):
@@ -66,7 +71,8 @@ def generate_daily_report(data: dict) -> bytes:
         average = p["avg_bricks_per_mix"]
         qualifier = " (estimated)" if p["average_is_estimated"] else ""
         kv_row(f"Average Bricks per Mix{qualifier}:", average if average is not None else "N/A")
-        kv_row("Labourers Present:", p["labourers"])
+        kv_row("Labour Person-hours:", p.get("labour_hours") if p.get("labour_hours") is not None else "Not recorded")
+        kv_row("Labour Cost (Rs.):", p.get("labour_cost") if p.get("labour_cost") is not None else "Hours needed")
         if p["misc_amount"] > 0:
             kv_row("Misc Expense:", f"Rs. {p['misc_amount']:.2f} ({p['misc_note'] or '-'})")
     else:
@@ -146,7 +152,7 @@ def generate_sale_receipt(sale: dict) -> bytes:
 
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 5, f"Receipt No: SR-{sale['sale_id']:05d}", ln=True)
-    pdf.cell(0, 5, f"Date: {sale['date']}    Time: {sale['time']}", ln=True)
+    pdf.cell(0, 5, f"Date: {display_date(sale['date'])}    Time: {sale['time']}", ln=True)
     pdf.ln(2)
 
     # ---- Customer Info ----

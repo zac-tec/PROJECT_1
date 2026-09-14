@@ -5,6 +5,11 @@ from pathlib import Path
 from services import get_bricks_per_mix, get_charges, get_rates, get_recipe
 
 
+def labour_cost_for_hours(hours, hourly_rate=81.25):
+    from decimal import Decimal, ROUND_HALF_UP
+    return float((Decimal(str(hours))*Decimal(str(hourly_rate))).quantize(Decimal('0.01'),rounding=ROUND_HALF_UP))
+
+
 def initialize_cost_history():
     from database import get_connection
 
@@ -30,14 +35,19 @@ def production_cost_context(cursor, production_date):
                 snapshot_source="recorded")
 
 
-def capture_production_cost(cursor, production_date, mixes, bricks, context):
+def capture_production_cost(cursor, production_date, mixes, bricks, context, labour_hours=None):
     rates = {k: float(v) for k, v in context['rates'].items()}
     recipe = {k: float(v) for k, v in context['recipe'].items()}
     charges = {k: float(v) for k, v in context['making_charges'].items()}
     bricks_per_mix = float(context['bricks_per_mix'])
     source = context['snapshot_source']
     material_per_mix = sum(quantity * rates.get(material, 0) for material, quantity in recipe.items())
+    if labour_hours is not None:
+        charges.pop('Labour',None)
     making_per_brick = sum(charges.values())
+    hourly_rate=float(context.get('labour_hourly_rate') or 81.25)
+    labour_cost=labour_cost_for_hours(labour_hours,hourly_rate) if labour_hours is not None else None
+    making_total=round(bricks*making_per_brick+(labour_cost or 0),2)
     cursor.execute(
         """INSERT INTO production_cost_snapshots
            (production_date, mixes_run, bricks_made, material_cost_total, making_cost_total,
@@ -55,7 +65,10 @@ def capture_production_cost(cursor, production_date, mixes, bricks, context):
              snapshot_source=EXCLUDED.snapshot_source, captured_at=CURRENT_TIMESTAMP""",
         (
             production_date, mixes, bricks, round(mixes * material_per_mix, 2),
-            round(bricks * making_per_brick, 2), material_per_mix, making_per_brick,
+            making_total, material_per_mix, making_per_brick,
             json.dumps(rates), json.dumps(recipe), json.dumps(charges), bricks_per_mix, source,
         ),
     )
+
+    if labour_hours is not None:
+        cursor.execute('UPDATE production_cost_snapshots SET labour_hours=%s,labour_hourly_rate=%s,labour_cost_total=%s WHERE production_date=%s',(labour_hours,hourly_rate,labour_cost,production_date))

@@ -19,7 +19,7 @@ async function loadRates() {
     rows,
     async (key, newValue) => {
       const r = await apiFetch(`/rates/${key}`, { method: "PUT", body: { new_rate: newValue } });
-      showMessage(msgEl, `${key}: ${money(r.new_rate)} scheduled from ${r.effective_from}. Today's rate remains ${money(r.current_rate)}.`);
+      showMessage(msgEl, `${key}: ${money(r.new_rate)} applies from ${r.effective_from}. Today's material costs have been updated; earlier days are unchanged.`);
       sessionUI.discard([`inline-ratesTable-${key}`]);
       await sessionUI.afterSave(loadRates);
       await sessionUI.afterSave(loadRateHistory);
@@ -118,7 +118,11 @@ async function loadProductionCosts() {
       {label:"Bricks produced",value:d.bricks,bold:true}, {label:"Mixes run",value:d.mixes},
       {label:"Average bricks per mix",value:d.average_bricks_per_mix ?? "—"},
       {label:"Materials used",value:money(d.material_cost)},
-      {label:"Making charges",value:money(d.making_cost)},
+      {label:"Making charges (includes labour)",value:money(d.making_cost)},
+      {label:"Recorded labour hours",value:d.recorded_labour_hours},
+      {label:"Recorded hourly labour cost",value:money(d.recorded_labour_cost)},
+      {label:"Average labour / brick (days with hours)",value:d.average_labour_per_brick===null?"Hours needed":money(d.average_labour_per_brick)},
+      {label:"Days without labour hours",value:d.labour_missing_days},
       {label:"Miscellaneous expenses",value:money(d.misc_expenses)},
       {label:"Rent",value:money(oh.rent)}, {label:"Manager salary",value:money(oh.manager_salary)},
       {label:"Electricity ("+(oh.electricity_is_default ? "estimate" : "saved bill")+")",value:money(oh.electricity)},
@@ -130,14 +134,14 @@ async function loadProductionCosts() {
     output.innerHTML = kvTable(rows);
     const note = document.createElement("p");
     note.textContent = "Cost per brick = (materials + making charges + miscellaneous + monthly overhead) ÷ bricks produced. Estimates change when actual bills are entered." +
-      (d.historical_days ? " Includes historical estimates using saved recipe, available dated rates and current making charges; historical miscellaneous expenses are unknown." : "") +
+      (d.historical_days ? " Includes historical estimates using saved recipe, available dated rates and preserved historical making-charge estimates; historical hours and miscellaneous expenses are unknown." : "") +
       (d.baseline_days ? " "+d.baseline_days+" older day(s) use estimated costs captured at migration; original historical rates were not saved." : "");
     output.append(note);
     const table = document.createElement("table");
-    table.innerHTML = "<thead><tr><th>Date</th><th>Mixes</th><th>Bricks</th><th>Labour</th><th>Misc.</th><th>Note</th><th>Cost basis</th></tr></thead><tbody></tbody>";
+    table.innerHTML = "<thead><tr><th>Date</th><th>Mixes</th><th>Bricks</th><th>Labour hours / cost</th><th>Misc.</th><th>Note</th><th>Cost basis</th></tr></thead><tbody></tbody>";
     for(const day of d.days) {
       const tr=document.createElement("tr");
-      for(const value of [day.production_date,day.mixes_run,day.bricks_made,day.labourers_present,money(day.misc_expense),day.misc_note,day.snapshot_source==="recorded" ? "Saved rates" : day.snapshot_source==="historical_estimate" ? "Historical estimate" : "Migration estimate"]) {
+      for(const value of [day.production_date,day.mixes_run,day.bricks_made,day.labour_hours==null?"Hours not recorded":`${day.labour_hours} h / ${money(day.labour_cost_total)}`,money(day.misc_expense),day.misc_note,day.snapshot_source==="recorded" ? "Saved rates" : day.snapshot_source==="historical_estimate" ? "Historical estimate" : "Migration estimate"]) {
         const td=document.createElement("td"); td.textContent=value; tr.append(td);
       }
       table.querySelector("tbody").append(tr);

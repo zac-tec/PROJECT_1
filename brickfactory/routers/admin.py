@@ -48,7 +48,7 @@ def production_cost_report(month: str = None):
         overhead = get_monthly_overhead(cursor, target_month)
         cursor.execute("""SELECT p.production_date, p.mixes_run, p.bricks_made,
             p.labourers_present, p.misc_expense, p.misc_note,
-            c.material_cost_total, c.making_cost_total, c.snapshot_source
+            c.material_cost_total, c.making_cost_total, c.snapshot_source,c.labour_hours,c.labour_cost_total
             FROM production_log p LEFT JOIN production_cost_snapshots c USING(production_date)
             WHERE TO_CHAR(p.production_date,'YYYY-MM')=%s ORDER BY p.production_date""", (target_month,))
         days = cursor.fetchall()
@@ -67,6 +67,11 @@ def production_cost_report(month: str = None):
             'month': target_month, 'days_worked': len(days), 'bricks': bricks, 'mixes': mixes,
             'average_bricks_per_mix': average_bricks_per_mix(bricks, mixes),
             'material_cost': round(material,2), 'making_cost': round(making,2),
+            'recorded_labour_hours': round(sum(float(r.get('labour_hours') or 0) for r in days),2),
+            'recorded_labour_cost': round(sum(float(r.get('labour_cost_total') or 0) for r in days),2),
+            'labour_covered_bricks': sum(r['bricks_made'] for r in days if r.get('labour_hours') is not None),
+            'labour_missing_days': sum(r.get('labour_hours') is None for r in days),
+            'average_labour_per_brick': round(sum(float(r.get('labour_cost_total') or 0) for r in days)/sum(r['bricks_made'] for r in days if r.get('labour_hours') is not None),4) if sum(r['bricks_made'] for r in days if r.get('labour_hours') is not None) else None,
             'misc_expenses': round(misc,2), 'overhead': overhead,
             'total_cost': None if missing else round(total,2),
             'cost_per_brick': round(total/bricks,2) if bricks and not missing else None,
@@ -133,12 +138,14 @@ def update_rate(material: str, body: RateUpdateRequest, user: dict = Depends(req
     conn = get_connection()
     try:
         cursor = conn.cursor()
+        from batch_stock import lock_stock
+        lock_stock(cursor)
         cursor.execute("SELECT 1 FROM materials_inventory WHERE material_name = %s FOR UPDATE", (material,))
         row = cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail=f"Unknown material '{material}'.")
         today = factory_today()
-        effective_from = today + datetime.timedelta(days=1)
+        effective_from = today
         old_rate = get_rates(cursor, today)[material]
         cursor.execute(
             "SELECT unit_rate FROM material_rate_versions WHERE material_name=%s AND effective_from=%s",
@@ -163,6 +170,12 @@ def update_rate(material: str, body: RateUpdateRequest, user: dict = Depends(req
                VALUES (%s, %s, %s, %s, %s, %s)""",
             (today, now, material, replaced_rate, new_rate, effective_from),
         )
+        from cost_history import capture_production_cost
+        cursor.execute('SELECT * FROM production_cost_snapshots WHERE production_date=%s FOR UPDATE',(today,))
+        snapshot=cursor.fetchone()
+        if snapshot:
+            snapshot['rates'][material]=new_rate
+            capture_production_cost(cursor,today,snapshot['mixes_run'],snapshot['bricks_made'],snapshot,snapshot.get('labour_hours'))
         conn.commit()
         cursor.close()
     except HTTPException:
@@ -175,7 +188,7 @@ def update_rate(material: str, body: RateUpdateRequest, user: dict = Depends(req
         conn.close()
 
     return {
-        "material": material, "current_rate": old_rate,
+        "material": material, "current_rate": new_rate,
         "replaced_rate": replaced_rate if pending else None,
         "new_rate": new_rate, "effective_from": str(effective_from),
     }
@@ -363,6 +376,9 @@ def calculate_cost_per_brick():
             (current_month,),
         )
         bricks_produced_this_month = int(cursor.fetchone()["total"])
+        cursor.execute("SELECT SUM(labour_cost_total) AS cost,SUM(bricks_made) AS bricks FROM production_cost_snapshots WHERE TO_CHAR(production_date,'YYYY-MM')=%s AND labour_hours IS NOT NULL",(current_month,))
+        labour=cursor.fetchone()
+        if labour['bricks']:charges['Labour (recorded hours average)']=float(labour['cost'])/int(labour['bricks'])
         cursor.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
@@ -417,6 +433,7 @@ def calculate_cost_per_brick():
             "note": overhead_note,
         },
         "final_cost_per_brick": round(final_brick_cost, 2),
+        "labour_note": "Labour uses recorded hourly cost / covered production; if no hours exist, this planning cost excludes labour.",
     }
 
 
@@ -672,7 +689,7 @@ def calculate_monthly_profit(body: ProfitCalculatorRequest):
         estimated_cost_of_sales=round(cogs,2) if cogs is not None else None,overhead=overhead,
         misc_expenses=report['misc_expenses'],total_expenditures=round(expense,2) if expense is not None else None,
         net_profit=round(profit,2) if profit is not None else None,
-        note='Estimated profit: historical revenue uses your entered average price; new invoice revenue uses actual saved amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
+        note='Estimated profit: historical revenue uses your entered average price; new invoice revenue uses actual saved amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
 
 
 # ---------------------------------------------------------

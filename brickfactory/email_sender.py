@@ -33,7 +33,7 @@ def send_daily_report_email(recipient_email: str, pdf_bytes: bytes, report_date:
     if not recipient_email:
         raise RuntimeError("No client email address is set. Add one in Delivery Settings first.")
 
-    display_date = date.fromisoformat(report_date).strftime("%d %B %Y")
+    display_date = date.fromisoformat(report_date).strftime("%d-%m-%Y")
     average_html = ""
     if production:
         average = production["avg_bricks_per_mix"]
