@@ -120,10 +120,10 @@ async function loadProductionCosts() {
       {label:"Materials used",value:money(d.material_cost)},
       {label:"Making charges subtotal — recorded costs",value:money(d.making_cost)},
       {label:"Loading",value:money(d.loading_cost)},{label:"Union",value:money(d.union_cost)},
-      {label:"Recorded labour hours",value:d.recorded_labour_hours},
+      {label:"Recorded working hours",value:d.recorded_labour_hours},
       {label:"Labour cost — recorded hours",value:money(d.recorded_labour_cost)},
       {label:"Average labour / brick (days with hours)",value:d.average_labour_per_brick===null?"Hours needed":money(d.average_labour_per_brick)},
-      {label:"Days without labour hours",value:d.labour_missing_days},
+      {label:"Days without working hours",value:d.labour_missing_days},
       {label:"Miscellaneous expenses",value:money(d.misc_expenses)},
       {label:"Rent",value:money(oh.rent)}, {label:"Manager salary",value:money(oh.manager_salary)},
       {label:"Electricity ("+(oh.electricity_is_default ? "estimate" : "saved bill")+")",value:money(oh.electricity)},
@@ -135,14 +135,14 @@ async function loadProductionCosts() {
     output.innerHTML = kvTable(rows);
     const note = document.createElement("p");
     note.textContent = "Cost per brick = (materials + making charges + miscellaneous + monthly overhead) ÷ bricks produced. Estimates change when actual bills are entered." +
-      (d.historical_days ? " Includes historical estimates using saved recipe, available dated rates and preserved historical making-charge estimates; historical hours and miscellaneous expenses are unknown." : "") +
+      (d.historical_days ? " Material consumption uses the saved recipe. Unrecorded miscellaneous expenses are excluded." : "") +
       (d.baseline_days ? " "+d.baseline_days+" older day(s) use estimated costs captured at migration; original historical rates were not saved." : "");
     output.append(note);
     const table = document.createElement("table");
-    table.innerHTML = "<thead><tr><th>Date</th><th>Mixes</th><th>Bricks</th><th>Labour hours / cost</th><th>Misc.</th><th>Note</th><th>Cost basis</th></tr></thead><tbody></tbody>";
+    table.innerHTML = "<thead><tr><th>Date</th><th>Mixes</th><th>Bricks</th><th>Working hours / cost</th><th>Misc.</th><th>Note</th><th>Cost basis</th></tr></thead><tbody></tbody>";
     for(const day of d.days) {
       const tr=document.createElement("tr");
-      for(const value of [day.production_date,day.mixes_run,day.bricks_made,day.labour_hours==null?"Hours not recorded":`${day.labour_hours} h / ${money(day.labour_cost_total)}`,money(day.misc_expense),day.misc_note,day.snapshot_source==="recorded" ? "Saved rates" : day.snapshot_source==="historical_estimate" ? "Historical estimate" : "Migration estimate"]) {
+      for(const value of [day.production_date,day.mixes_run,day.bricks_made,day.labour_hours==null?"Hours not recorded":`${day.labour_hours} h / ${money(day.labour_cost_total)}`,money(day.misc_expense),day.misc_note,day.snapshot_source==="recorded" ? "Saved rates" : day.snapshot_source==="historical_estimate" ? "Imported record" : "Migration estimate"]) {
         const td=document.createElement("td"); td.textContent=value; tr.append(td);
       }
       table.querySelector("tbody").append(tr);
@@ -202,7 +202,7 @@ async function loadOverheadDefaultsForProfit() {
 async function runProfitCalculator() {
  const out=document.getElementById('profitOutput');out.replaceChildren();
  const price=Number(document.getElementById('profitSellingPrice').value);
- if(!Number.isFinite(price)||price<=0){out.textContent='Enter the historical selling price to calculate revenue and estimated profit.';return;}
+ if(!Number.isFinite(price)||price<=0){out.textContent='Enter the price for unpriced sales to calculate revenue and estimated profit.';return;}
  const month=document.getElementById('profitMonth').value||null;
  const raw=document.getElementById('profitBricksSold').value.trim();
  const body={month,selling_price:price,bricks_sold:raw===''?null:Number(raw)};
@@ -211,10 +211,10 @@ async function runProfitCalculator() {
  }
  try{
   const d=await apiFetch('/profit-calculator',{method:'POST',body});
-  const amount=v=>v===null?'Pending labour hours / cost records':money(v);
+  const amount=v=>v===null?'Pending working hours / cost records':money(v);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:d.scenario?'Scenario bricks sold':'Recorded bricks sold',value:d.bricks_sold},
-   {label:'Historical bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
-   {label:'Historical revenue estimate',value:money(d.historical_revenue_estimate)},
+   {label:'Unpriced bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
+   {label:'Revenue estimate for unpriced sales',value:money(d.historical_revenue_estimate)},
    {label:'Actual new invoice revenue',value:money(d.recorded_revenue)},
    {label:d.scenario?'Scenario revenue':'Combined revenue (includes estimate)',value:money(d.gross_revenue)},
    {label:'Estimated cost of sold bricks',value:amount(d.estimated_cost_of_sales)},
@@ -278,8 +278,8 @@ async function loadMonthlySalesSummary() {
       { label: "Month", value: d.month },
       { label: "Total Bricks Sold", value: d.total_bricks_sold.toLocaleString("en-IN"), bold: true },
       { label: "Total Sales Transactions", value: d.total_sales_count },
-      { label: "Total revenue", value: d.total_revenue === null ? "Historical price required — use Profit Calculator" : money(d.total_revenue) },
-      { label: "Collected on new invoices (historical payments unknown)", value: money(d.total_collected), bold: true },
+      { label: "Total revenue", value: d.total_revenue === null ? "Price required — use Profit Calculator" : money(d.total_revenue) },
+      { label: "Collected on new invoices (older payment details unavailable)", value: money(d.total_collected), bold: true },
     ]);
   } catch (e) { showMessage(msgEl, e.message, true); }
 }
@@ -400,7 +400,7 @@ onSectionLoad("pricing", () => Promise.all([loadRates(), loadCharges(), loadFixe
 onSectionLoad("history", () => Promise.all([loadRateHistory(), loadChargeHistory()]));
 onSectionLoad("productionCosts", loadProductionCosts);
 onSectionLoad("stock", () => Promise.all([loadStockOverview(), loadMaxProducible()]));
-onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); document.getElementById("profitOutput").textContent="Enter a historical selling price and press Calculate."; });
+onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); document.getElementById("profitOutput").textContent="Enter a price for unpriced sales and press Calculate."; });
 onSectionLoad("orders", loadFunFacts);
 onSectionLoad("brickSales", () => Promise.all([loadAdminOutletStock(), loadMonthlySalesSummary(), loadAllBrickSales()]));
 

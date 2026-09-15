@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="js/date-display.js?v=payroll1"></script>
+<script src="js/date-display.js?v=activity2"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Manager — NEO BRICKS</title>
@@ -71,14 +71,14 @@
         <input id="mixesInput" type="number" step="1" min="0">
         <label>Number of Bricks Produced Today (leave blank if unknown)</label>
         <input id="bricksInput" type="number" step="1" min="0">
-            <h3>Labour hours</h3>
+            <h3>Working hours</h3>
             <p>Group workers who worked the same hours.</p>
             <div id="labourGroupRows"></div>
             <button type="button" class="secondary" onclick="addLabourGroup()">Add worker group</button>
             <label><input id="labourManualMode" type="checkbox" style="width:auto" onchange="setLabourMode()"> Enter totals directly instead</label>
             <input id="labourGroupsDraft" type="hidden">
             <label>Total workers<input id="labourersInput" type="number" step="1" min="0" readonly></label>
-            <label>Total person-hours<input id="labourHoursInput" type="number" step="0.01" min="0" required readonly></label>
+            <label>Total working hours<input id="labourHoursInput" type="number" step="0.01" min="0" required readonly></label>
             <p id="labourCostPreview" aria-live="polite"></p>
 
         <button class="primary" onclick="previewEntry()">Preview</button>
@@ -238,11 +238,11 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=payroll1"></script>
-<script src="js/recovery.js?v=payroll1"></script>
-<script src="js/pwa.js?v=payroll1"></script>
-<script src="js/labour-groups.js?v=payroll1"></script>
-<script src="js/manager-security1.js?v=payroll1"></script>
+<script src="js/api-security1.js?v=activity2"></script>
+<script src="js/recovery.js?v=activity2"></script>
+<script src="js/pwa.js?v=activity2"></script>
+<script src="js/labour-groups.js?v=activity2"></script>
+<script src="js/manager-security1.js?v=activity2"></script>
 <script src="js/presence.js?v=presence2"></script>
 </body>
 </html>

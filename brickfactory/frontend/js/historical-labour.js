@@ -1,7 +1,7 @@
 async function loadHistoricalLabour(){
  const out=document.getElementById('historicalLabourRows');
  try{const d=await apiFetch('/admin/historical-labour');const table=document.createElement('table');
- table.innerHTML='<thead><tr><th>Date</th><th>Bricks produced</th><th>Total person-hours</th></tr></thead><tbody></tbody>';
+ table.innerHTML='<thead><tr><th>Date</th><th>Bricks produced</th><th>Total working hours</th></tr></thead><tbody></tbody>';
  for(const day of d.days){const tr=document.createElement('tr');
  for(const value of [displayDate(day.date),day.bricks]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
  const td=document.createElement('td'),input=document.createElement('input');input.type='number';input.min='0';input.step='0.01';input.placeholder='Unknown';input.value=day.hours??'';input.dataset.date=day.date;input.dataset.revision=day.revision;input.dataset.original=input.value;td.append(input);tr.append(td);table.querySelector('tbody').append(tr);}

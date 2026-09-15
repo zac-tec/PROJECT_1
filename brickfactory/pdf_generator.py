@@ -63,7 +63,7 @@ def generate_daily_report(data: dict) -> bytes:
         pdf.cell(0, 6, str(value), ln=True)
 
     # ---- Production ----
-    section_title("Today's Production")
+    section_title("Production & Working Hours")
     if data["production"]:
         p = data["production"]
         kv_row("Mixes Run:", p["mixes"])
@@ -71,23 +71,24 @@ def generate_daily_report(data: dict) -> bytes:
         average = p["avg_bricks_per_mix"]
         qualifier = " (estimated)" if p["average_is_estimated"] else ""
         kv_row(f"Average Bricks per Mix{qualifier}:", average if average is not None else "N/A")
-        kv_row("Labour Person-hours:", p.get("labour_hours") if p.get("labour_hours") is not None else "Not recorded")
-        kv_row("Labour Cost (Rs.):", p.get("labour_cost") if p.get("labour_cost") is not None else "Hours needed")
-        if p["misc_amount"] > 0:
+        kv_row("Working Hours:", p.get("labour_hours") if p.get("labour_hours") is not None else "Not recorded")
+        kv_row("Labour Cost (Rs.):", p.get("labour_cost") if p.get("labour_cost") is not None else "Not recorded")
+        kv_row("Labour Cost per Brick (Rs.):", p.get("labour_cost_per_brick") if p.get("labour_cost_per_brick") is not None else "N/A")
+        if p["misc_amount"] is not None and p["misc_amount"] > 0:
             kv_row("Misc Expense:", f"Rs. {p['misc_amount']:.2f} ({p['misc_note'] or '-'})")
     else:
         pdf.set_font("Helvetica", "I", 10)
-        pdf.cell(0, 6, "No production entry logged today.", ln=True)
+        pdf.cell(0, 6, "No production entry recorded for this date.", ln=True)
     pdf.ln(4)
 
     # ---- Raw Material Stock ----
-    section_title("Raw Material Stock")
+    section_title("Raw Material Stock (as of " + display_date(data.get("stock_as_of",data["date"])) + ")")
     for material, info in data["stock"].items():
         kv_row(f"{material}:", f"{info['qty']} {info['unit']}")
     pdf.ln(4)
 
     # ---- Outlet Stock ----
-    section_title("Finished Brick Stock")
+    section_title("Finished Brick Stock (as of " + display_date(data.get("stock_as_of",data["date"])) + ")")
     finished = data.get("finished_bricks")
     if finished:
         kv_row("Total Bricks:", finished["total_bricks"])
@@ -100,16 +101,16 @@ def generate_daily_report(data: dict) -> bytes:
     pdf.ln(4)
 
     # ---- Sales ----
-    section_title("Today's Sales")
+    section_title("Sales")
     s = data["sales"]
     if s["count"] > 0:
         kv_row("Sales Made:", s["count"])
         kv_row("Bricks Sold:", s["total_bricks"])
-        kv_row("Revenue Billed:", f"Rs. {s['total_revenue']:.2f}")
-        kv_row("Amount Collected:", f"Rs. {s['total_paid']:.2f}")
+        kv_row("Revenue Billed:", f"Rs. {s['total_revenue']:.2f}" if s['total_revenue'] is not None else 'Not recorded')
+        kv_row("Amount Collected:", f"Rs. {s['total_paid']:.2f}" if s['total_paid'] is not None else 'Not recorded')
     else:
         pdf.set_font("Helvetica", "I", 10)
-        pdf.cell(0, 6, "No sales recorded today.", ln=True)
+        pdf.cell(0, 6, "No sales recorded for this date.", ln=True)
 
     pdf.ln(10)
     pdf.set_font("Helvetica", "I", 8)

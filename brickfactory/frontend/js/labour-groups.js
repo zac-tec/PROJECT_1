@@ -26,7 +26,7 @@ function updateLabourTotals(){
   }catch(_){document.getElementById('labourersInput').value='';document.getElementById('labourHoursInput').value='';}
  }
  const hours=document.getElementById('labourHoursInput').value;
- document.getElementById('labourCostPreview').textContent=hours===''?'Complete the rows to calculate labour cost.':`${Number(hours)} person-hours × ₹81.25 = ₹${(Math.round((Number(hours)*81.25+Number.EPSILON)*100)/100).toFixed(2)}`;
+ document.getElementById('labourCostPreview').textContent=hours===''?'Complete the rows to calculate labour cost.':`${Number(hours)} working hours × ₹81.25 = ₹${(Math.round((Number(hours)*81.25+Number.EPSILON)*100)/100).toFixed(2)}`;
  const draft=document.getElementById('labourGroupsDraft');draft.value=JSON.stringify({manual,rows});draft.dispatchEvent(new Event('input',{bubbles:true}));
 }
 function setLabourMode(){

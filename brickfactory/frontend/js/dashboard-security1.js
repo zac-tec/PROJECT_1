@@ -37,12 +37,12 @@ async function loadDashboard(markSeen = true) {
 // opening the app doesn't instantly clear the notification badge before
 // the admin has actually noticed it — only an explicit click on the
 // Dashboard tab (or manual refresh while already there) clears it.
-async function loadTodayActivity(markSeen = true) {
+async function loadTodayActivity(markSeen = true, selectedDate = null) {
   try {
-    const d = await apiFetch("/admin/dashboard/today-activity");
-    const out = document.getElementById("todayActivityOutput");
+    const d = await apiFetch(selectedDate ? "/admin/dashboard/activity?date="+encodeURIComponent(selectedDate) : "/admin/dashboard/today-activity");
+    const out = document.getElementById(selectedDate ? "datedActivityOutput" : "todayActivityOutput");
 
-    let sections = [];
+    let sections = [`<p><strong>${displayDate(d.date)}</strong></p>`];
 
     // Production
     if (d.production) {
@@ -50,18 +50,20 @@ async function loadTodayActivity(markSeen = true) {
       sections.push(`
         <h2 style="margin-top:16px;">🏭 Production</h2>
         ${kvTable([
-          { label: "Saved At", value: formatTime12(p.timestamp) },
+          { label: "Saved At", value: p.timestamp ? formatTime12(p.timestamp) : "Not recorded" },
           { label: "Mixes", value: p.mixes },
+          {label:"Average bricks per mix",value:p.avg_bricks_per_mix ?? "N/A"},
+          {label:"Labour cost per brick",value:p.labour_cost_per_brick===null?"N/A":`₹${p.labour_cost_per_brick.toFixed(4)}`},
           { label: "Bricks Produced", value: p.bricks_produced, bold: true },
-          { label: "Labourers", value: p.labourers },
-          {label:"Labour person-hours",value:p.labour_hours ?? "Not recorded"},
+          { label: "Labourers", value: p.labourers ?? "Not recorded" },
+          {label:"Working hours",value:p.labour_hours ?? "Not recorded"},
           {label:"Labour cost (₹81.25/hour)",value:p.labour_cost===null?"Hours needed":money(p.labour_cost)},
-          { label: "Misc Expense", value: `${money(p.misc_amount)} (${p.misc_note || "—"})` },
+          { label: "Misc Expense", value: p.misc_amount===null?"Not recorded":`${money(p.misc_amount)} (${p.misc_note || "—"})` },
         ])}
         ${p.is_corrected === "yes" ? '<p style="color:var(--muted);"><em>Corrected today.</em></p>' : ""}
       `);
     } else {
-      sections.push(`<h2 style="margin-top:16px;">🏭 Production</h2><p style="color:var(--muted);">No production entry logged yet today.</p>`);
+      sections.push(`<h2 style="margin-top:16px;">🏭 Production</h2><p style="color:var(--muted);">No production entry recorded for this date.</p>`);
     }
 
     // Sales
@@ -71,14 +73,18 @@ async function loadTodayActivity(markSeen = true) {
         ${kvTable([
           { label: "Sales Made", value: d.sales.count },
           { label: "Bricks Sold", value: d.sales.total_bricks },
-          { label: "Revenue Billed", value: money(d.sales.total_revenue) },
-          { label: "Amount Collected", value: money(d.sales.total_paid), bold: true },
+          { label: "Revenue Billed", value: d.sales.total_revenue===null?"Not recorded":money(d.sales.total_revenue) },
+          { label: "Amount Collected", value: d.sales.total_paid===null?"Not recorded":money(d.sales.total_paid), bold: true },
         ])}
       `);
     } else {
-      sections.push(`<h2 style="margin-top:16px;">🧱 Brick Sales</h2><p style="color:var(--muted);">No sales recorded yet today.</p>`);
+      sections.push(`<h2 style="margin-top:16px;">🧱 Brick Sales</h2><p style="color:var(--muted);">No sales recorded for this date.</p>`);
     }
 
+    if(d.sale_entries?.length){
+      const rows=d.sale_entries.map(r=>`<tr><td>${textHTML(r.time?formatTime12(r.time):'—')}</td><td>${textHTML(r.customer||'Not recorded')}</td><td>${textHTML(r.phone||'—')}</td><td>${r.bricks}</td><td>${r.price===null?'Not recorded':money(r.price)}</td><td>${r.amount===null?'Not recorded':money(r.amount)}</td></tr>`).join('');
+      sections.push(`<div class="table-scroll"><table><thead><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Bricks</th><th>Price</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+    }
     // Stock adjustments
     if (d.stock_adjustments.length > 0) {
       const rows = d.stock_adjustments.map((a) => {
@@ -124,19 +130,20 @@ async function loadTodayActivity(markSeen = true) {
       const detail = event.details;
       line.textContent = event.type === "material_refill"
         ? `${formatTime12(event.time)} · ${event.actor} received ${detail.added} ${detail.unit} ${detail.material}. Stock after receipt: ${detail.new_total} ${detail.unit}.`
+        : event.type === 'material_stock_estimate' ? `${formatTime12(event.time)} · ${detail.material}: stock corrected to ${detail.new_stock}.`
         : `${formatTime12(event.time)} · ${event.actor} ${detail.previous_amount === null ? "saved" : "updated"} ${detail.bill_type} for ${detail.month}: ${money(detail.amount)}${detail.previous_amount === null ? "" : ` (previously ${money(detail.previous_amount)})`}.`;
       out.append(line);
     }
     if (!(d.updated_bills || []).length && !(d.operational_events || []).length) {
       const empty = document.createElement("p");
-      empty.textContent = "No utility bills or raw-material receipts recorded today.";
+      empty.textContent = "No bills or material receipts recorded for this date.";
       out.append(empty);
     }
 
     // Mark today's activity as "seen" now that the admin has actually
     // opened the Dashboard — clears the sidebar badge.
-    if (markSeen) localStorage.setItem(`activitySeen-${d.date}`, String(d.activity_count));
-    updateDashboardBadge(d.activity_count, d.date);
+    if (!selectedDate && markSeen) localStorage.setItem(`activitySeen-${d.date}`, String(d.activity_count));
+    if(!selectedDate)updateDashboardBadge(d.activity_count, d.date);
   } catch (e) { showMessage(msgEl, e.message, true); }
 }
 
@@ -285,18 +292,30 @@ async function loadMonthMaterials(){
   if(!input.value)input.value=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,7);
   const d=await apiFetch('/admin/dashboard/month-materials?month='+input.value);
   const sales=await apiFetch('/brick-sales/monthly-summary?month='+input.value);
-  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Historical sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Revenue / profit',value:'Enter historical price in Profit Calculator; new invoices retain actual prices.'}]);
+  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Unpriced sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Revenue / profit',value:'Enter price for unpriced sales in Profit Calculator; new invoices retain actual prices.'}]);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:'Bricks produced',value:d.bricks},{label:'Mixes',value:d.mixes},
    ...Object.entries(d.materials).map(([k,v])=>({label:k+' consumed',value:['Sand','Flyash'].includes(k)?`${Number((v/1000).toFixed(3))} tonnes (${v} kg)`:`${v} ${k==='Chemical'?'L':'bags'}`})),
    {label:'Material cost',value:money(d.material_cost)},{label:'Making charges subtotal — recorded costs',value:money(d.making_cost)},
    {label:'Loading',value:money(d.loading_cost)},{label:'Union',value:money(d.union_cost)},
-   {label:'Recorded labour person-hours',value:d.recorded_labour_hours},
+   {label:'Recorded working hours',value:d.recorded_labour_hours},
    {label:'Labour cost — recorded hours',value:money(d.recorded_labour_cost)},
    {label:'Average labour / brick (days with hours)',value:d.average_labour_per_brick===null?'Hours needed':money(d.average_labour_per_brick)},
    {label:'Production days without recorded hours',value:d.labour_missing_days},
    {label:'Recorded miscellaneous expenses',value:money(d.misc_expenses)},{label:'Full-month fixed / utility charges',value:money(d.overhead.total_overhead)},
-   {label:d.historical_days?'Estimated total cost':'Total cost',value:d.total_cost===null?'Pending missing labour hours / costs':money(d.total_cost)}]);
+   {label:d.historical_days?'Estimated total cost':'Total cost',value:d.total_cost===null?'Pending missing working hours / costs':money(d.total_cost)}]);
   if(dashboardCharts.monthActual)dashboardCharts.monthActual.destroy();
   dashboardCharts.monthActual=new Chart(document.getElementById('chartMonthActual'),{type:'bar',data:{labels:d.days.map(r=>displayDate(r.production_date)),datasets:[{label:'Bricks produced',data:d.days.map(r=>r.bricks_made),backgroundColor:CHART_COLORS.brick}]},options:{responsive:true}});
  }catch(e){out.textContent=e.message;}
 }
+
+function loadSelectedActivity(){
+ const input=document.getElementById('activityDate');
+ if(!input.value)return;
+ return loadTodayActivity(false,input.value);
+}
+onSectionLoad('activity',()=>{
+ const input=document.getElementById('activityDate');
+ input.max=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Kolkata'});
+ if(!input.value)input.value=input.max;
+ return loadSelectedActivity();
+});

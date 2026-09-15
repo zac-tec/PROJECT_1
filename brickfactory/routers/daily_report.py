@@ -34,44 +34,17 @@ def _gather_daily_report_data(cursor, target_date: datetime.date) -> dict:
 
     finished_bricks = stock_summary(cursor)
 
-    cursor.execute(
-        """SELECT mixes_run, bricks_made, labourers_present, labour_hours, misc_expense, misc_note, calculated_field
-           FROM production_log WHERE production_date = %s""",
-        (target_date,),
-    )
-    prod_row = cursor.fetchone()
-    production = None
-    if prod_row is not None:
-        production = {
-            "mixes": prod_row["mixes_run"],
-            "avg_bricks_per_mix": average_bricks_per_mix(prod_row["bricks_made"], prod_row["mixes_run"]),
-            "average_is_estimated": prod_row["calculated_field"] != "none",
-            "bricks_produced": prod_row["bricks_made"],
-            "labourers": prod_row["labourers_present"],
-            "labour_hours": float(prod_row["labour_hours"]) if prod_row["labour_hours"] is not None else None,
-            "labour_cost": labour_cost_for_hours(prod_row["labour_hours"]) if prod_row["labour_hours"] is not None else None,
-            "misc_amount": float(prod_row["misc_expense"]),
-            "misc_note": prod_row["misc_note"],
-        }
-
-    cursor.execute(
-        """SELECT COUNT(*) AS count, COALESCE(SUM(bricks_purchased), 0) AS total_bricks,
-                  COALESCE(SUM(total_amount), 0) AS total_revenue, COALESCE(SUM(amount_paid), 0) AS total_paid
-           FROM brick_sales WHERE sale_date = %s""",
-        (target_date,),
-    )
-    sales_row = cursor.fetchone()
-    sales = {
-        "count": sales_row["count"],
-        "total_bricks": sales_row["total_bricks"],
-        "total_revenue": round(float(sales_row["total_revenue"]), 2),
-        "total_paid": round(float(sales_row["total_paid"]), 2),
-    }
+    from routers.dashboard import activity_for_date
+    daily=activity_for_date(target_date)
+    production=daily['production']
+    if production:production['average_is_estimated']=False
+    sales=daily['sales']
 
     return {
         "date": target_date.strftime("%Y-%m-%d"),
         "production": production,
         "stock": stock_display,
+        "stock_as_of": str(__import__("batch_stock").factory_today()),
         "outlet_stock": finished_bricks["total_bricks"],
         "finished_bricks": finished_bricks,
         "sales": sales,
@@ -268,7 +241,8 @@ def daily_report_summary_text(date: str = None):
         average = p["avg_bricks_per_mix"]
         qualifier = " (estimated)" if p["average_is_estimated"] else ""
         lines.append(f"Average bricks per mix{qualifier}: {average if average is not None else 'N/A'}")
-        lines.append(f"Labour person-hours: {p['labour_hours'] if p['labour_hours'] is not None else 'Not recorded'}; cost: Rs. {p['labour_cost'] if p['labour_cost'] is not None else 'Hours needed'}")
+        lines.append(f"Working hours: {p['labour_hours'] if p['labour_hours'] is not None else 'Not recorded'}; cost: Rs. {p['labour_cost'] if p['labour_cost'] is not None else 'Hours needed'}")
+        lines.append(f"Labour cost per brick: Rs. {p['labour_cost_per_brick'] if p['labour_cost_per_brick'] is not None else 'N/A'}")
     else:
         lines.append("No production entry logged today.")
     lines.append("")
@@ -284,10 +258,10 @@ def daily_report_summary_text(date: str = None):
     lines.append(f"Under 7 days: {finished['curing']} | Early-sale eligible (7-13 days): {finished['early_sale']} | Fully cured (14+ days): {finished['fully_cured']}")
     lines.append("")
 
-    lines.append("*Sales Today:*")
+    lines.append("*Sales:*")
     s = data["sales"]
     if s["count"] > 0:
-        lines.append(f"{s['count']} sale(s), {s['total_bricks']} bricks, Rs. {s['total_revenue']:.2f} billed, Rs. {s['total_paid']:.2f} collected")
+        lines.append(f"{s['count']} sale(s), {s['total_bricks']} bricks, Rs. {s['total_revenue'] if s['total_revenue'] is not None else 'Not recorded'} billed, Rs. {s['total_paid'] if s['total_paid'] is not None else 'Not recorded'} collected")
     else:
         lines.append("No sales recorded today.")
 

@@ -19,7 +19,7 @@ async function checkExistingEntry() {
     { label: "Mixes", value: d.mixes },
     { label: "Bricks Produced", value: d.bricks_produced, bold: true },
     { label: "Labourers", value: d.labourers },
-    {label:"Total person-hours",value:d.labour_hours ?? "Not recorded"},
+    {label:"Total working hours",value:d.labour_hours ?? "Not recorded"},
     {label:"Labour cost",value:d.labour_cost===null?"Hours needed":money(d.labour_cost)},
     { label: "Misc Expense", value: `${money(d.misc_amount)} (${d.misc_note || "—"})` },
   ]);

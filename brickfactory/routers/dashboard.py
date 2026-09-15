@@ -24,10 +24,20 @@ router = APIRouter(prefix="/admin/dashboard", tags=["dashboard"], dependencies=[
 # ---------------------------------------------------------
 @router.get("/today-activity")
 def today_activity():
+    from batch_stock import factory_today
+    return activity_for_date(factory_today())
+
+@router.get('/activity')
+def dated_activity(date: datetime.date):
+    from batch_stock import factory_today
+    if date>factory_today():raise HTTPException(422,'Choose today or an earlier date.')
+    return activity_for_date(date)
+
+def activity_for_date(target_date):
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        today = datetime.date.today()
+        today = target_date
 
         cursor.execute(
             """SELECT timestamp_entered, mixes_run, bricks_made, labourers_present, labour_hours, misc_expense, misc_note, is_corrected
@@ -62,6 +72,25 @@ def today_activity():
             "total_revenue": round(float(sales_row["total_revenue"]), 2),
             "total_paid": round(float(sales_row["total_paid"]), 2),
         }
+
+        from historical_reporting import applied_days
+        from production_metrics import daily_averages
+        history=next((d for d in applied_days(cursor)['days'] if d['date']==str(today)),None)
+        cursor.execute('SELECT labour_hours FROM historical_labour_entries WHERE entry_date=%s',(today,))
+        hours_row=cursor.fetchone()
+        if production is None and (history or hours_row):
+            history=history or dict(mixes=0,bricks=0,sales=[])
+            hours=float(hours_row['labour_hours']) if hours_row else None
+            production=dict(timestamp=None,mixes=history['mixes'],bricks_produced=history['bricks'],labourers=None,labour_hours=hours,
+                labour_cost=labour_cost_for_hours(hours) if hours is not None else None,misc_amount=None,misc_note='Not recorded',is_corrected='no')
+        if production:production.update(daily_averages(production['bricks_produced'],production['mixes'],production['labour_hours']))
+        cursor.execute('SELECT sale_id,sale_timestamp,customer_name,customer_mobile,bricks_purchased,cost_per_brick,total_amount,amount_paid FROM brick_sales WHERE sale_date=%s ORDER BY sale_timestamp,sale_id',(today,))
+        sale_entries=[dict(sale_id=r['sale_id'],time=str(r['sale_timestamp']),customer=r['customer_name'],phone=r['customer_mobile'],bricks=r['bricks_purchased'],price=float(r['cost_per_brick']),amount=float(r['total_amount']),paid=float(r['amount_paid'])) for r in cursor.fetchall()]
+        if history:
+            for q in history['sales']:sale_entries.append(dict(sale_id=None,time=None,customer=None,phone=None,bricks=q,price=None,amount=None,paid=None))
+            if history['sales']:
+                sales['count']+=len(history['sales']);sales['total_bricks']+=sum(history['sales'])
+                sales['total_revenue']=None;sales['total_paid']=None
 
         cursor.execute(
             """SELECT adjustment_timestamp, change_amount, note, resulting_stock
@@ -121,6 +150,7 @@ def today_activity():
         "date": today.strftime("%Y-%m-%d"),
         "operational_events": operational_events,
         "updated_bills": updated_bills,
+        "sale_entries": sale_entries,
         "production": production,
         "sales": sales,
         "stock_adjustments": stock_adjustments,

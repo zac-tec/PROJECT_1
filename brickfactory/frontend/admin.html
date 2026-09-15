@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="js/date-display.js?v=payroll1"></script>
+<script src="js/date-display.js?v=activity2"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=payroll1">
+<link rel="stylesheet" href="css/style.css?v=activity2">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -34,6 +34,7 @@
 <div class="layout">
   <nav class="sidebar" id="sidebar">
     <button data-section="dashboard" title="Dashboard"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span><span id="dashboardBadge" class="hidden"></span></button>
+    <button data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Daily Activity</span></button>
     <button data-section="brickSales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
     <button data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
     <button data-section="stock" title="Stock Overview"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
@@ -48,6 +49,7 @@
   <aside class="right-menu" aria-label="Full navigation menu">
     <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
     <button data-section="dashboard" onclick="closeRightMenu()"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span></button>
+    <button data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Daily Activity</span></button>
     <button data-section="brickSales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
     <button data-section="productionCosts" onclick="closeRightMenu()"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
     <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Stock Overview</span></button>
@@ -71,7 +73,7 @@
       <div class="card"><h2>Monthly production &amp; material use</h2>
       <input id="materialReportMonth" type="month" onchange="loadMonthMaterials()">
       <div id="monthMaterialsOutput"></div>
-      <p>Historical costs are estimates. Recorded labour: ₹81.25 per person-hour. Fixed charges shown separately.</p></div>
+      <p>Working hours × ₹81.25. Loading, Union and fixed charges are shown separately.</p></div>
 
       <div class="card" id="activeUsersCard">
         <h2>Active users <span id="activeUsersCount" aria-live="polite">—</span></h2>
@@ -107,7 +109,7 @@
       </div>
 
       <div class="card"><h2>September onwards: business overview</h2>
-      <p>Use Profit Calculator for revenue and estimated profit. Historical sales need an entered price.</p>
+      <p>View sales totals and calculate estimated profit.</p>
       <div id="monthSalesOverview"></div></div>
 
       <div class="card">
@@ -179,6 +181,10 @@
       </div>
 
     </section>
+    <section id="sec-activity" class="hidden"><div class="card"><h2>Activity by date</h2>
+      <label>Select date<input id="activityDate" type="date" lang="en-GB"></label>
+      <button class="primary" onclick="loadSelectedActivity()">View activity</button>
+      <div id="datedActivityOutput"></div></div></section>
     <!-- PRICING SESSION -->
     <section id="sec-pricing" class="hidden pricing-session">
     <!-- RATE MANAGEMENT -->
@@ -231,11 +237,7 @@
     </section>
 
     <section id="sec-productionCosts" class="hidden">
-      <div class="card"><h2>Historical labour hours</h2>
-      <p>Enter total person-hours for each date. Blank means unknown; 0 means no labour. Saving changes labour costs only.</p>
-      <button class="secondary" onclick="loadHistoricalLabour()">Load dates</button>
-      <div id="historicalLabourRows" class="table-scroll"></div>
-      <button class="primary" onclick="saveHistoricalLabour()">Save labour hours</button><p id="historicalLabourMessage" role="status"></p></div><div class="card">
+      <div class="card">
       <h2>Production &amp; Costs</h2>
       <label>Month</label><input id="costMonth" type="month">
       <button class="primary" onclick="loadProductionCosts()">View Month</button>
@@ -262,7 +264,7 @@
         <h2><i data-lucide="trending-up" class="icon"></i> Monthly Business Overview & Profit Estimate</h2>
         <label>Month (leave blank for current month)</label>
         <input id="profitMonth" type="month" min="2026-09" oninput="loadOverheadDefaultsForProfit()">
-        <label>Historical selling price per brick (Rs.) — required for estimate</label>
+        <label>Selling price for unpriced sales (Rs.)</label>
         <input id="profitSellingPrice" type="number" step="0.01" min="0.01" placeholder="Enter agreed / weighted average price" required>
         <label>Bricks sold override (optional what-if; blank uses recorded sales)</label>
         <input id="profitBricksSold" type="number" step="1" min="0">
@@ -323,30 +325,11 @@
         <div class="table-scroll"><table id="adminBrickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
       </div>
 
-      <div class="card" id="historicalEntryWorkspace" hidden>
-        <h2>One-time historical entry</h2>
-        <p>Start with older, fully cured opening stock. Enter one production row per date and as many sales quantities as needed. No customer names or prices are required. Rows are processed in date order; sales use the oldest bricks aged at least 7 days. Fully cured stock found during an audit is added after that day’s sales and before damage. It is not production and consumes no materials. Damage is deducted after that day’s sales, oldest stock first regardless of age; this is an assumed allocation when the damaged batch is unknown.</p>
-        <button class="secondary" onclick="loadHistoricalEntry()">Open / reload saved session</button>
-        <p id="historyEntryMessage">Open the session to begin. Unsaved edits will be replaced if you reload.</p>
-        <div id="historyEntryEditor">
-          <label>First tracked date<input id="historyStart" type="date" lang="en-GB" value="2026-08-19"></label>
-          <label>History complete through<input id="historyEnd" type="date" lang="en-GB"></label>
-          <label>Opening bricks before first date<input id="historyOpening" type="number" min="0" step="1" value="81135"></label>
-          <label><input id="historyOpeningCured" type="checkbox"> Opening bricks were already fully cured before tracking began</label>
-          <details><summary>Recipe used for estimated historical consumption</summary><div id="historyRecipeFields"></div><label>Recipe source / explanation<textarea id="historyRecipeNote"></textarea></label><p>Sand remains in kg here. Do not enter CFT in a kg recipe. Past consumption is shown separately; current material balances must be set from actual stock.</p></details>
-          <div class="table-scroll"><table><thead><tr><th>Date</th><th>Mixes</th><th>Bricks produced</th><th>Individual sales, comma-separated</th><th>Damaged bricks</th><th>Found stock — fully cured</th><th></th></tr></thead><tbody id="historyEntryRows"></tbody></table></div>
-          <button class="secondary" onclick="historyRow()">Add date</button>
-          <button class="primary" onclick="saveHistoricalEntry()">Save draft</button>
-          <button class="secondary" onclick="previewHistoricalEntry()">Preview stock &amp; consumption</button>
-          <button class="primary" onclick="applyHistoricalEntry()">Apply saved history once</button>
-        </div>
-        <p id="historyEntryBottomMessage" aria-live="polite"></p>
-        <div id="historyEntryPreview" style="overflow:auto;margin-top:16px"></div>
-      </div>
+
 
       <div class="card">
         <h2>Stock history &amp; imported ledgers</h2>
-        <p>Historical quantities are not customer invoices or revenue. Batch ages reconstructed using oldest-stock-first allocation.</p>
+        <p>Stock movements and daily balances.</p>
         <label for="historyMonth">Month</label><input id="historyMonth" type="month" value="2026-09">
         <button class="primary" onclick="loadStockHistory()">Show stock history</button>
         <div id="stockHistoryOutput" style="overflow:auto;margin-top:16px"></div>
@@ -383,15 +366,13 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=payroll1"></script>
-<script src="js/recovery.js?v=payroll1"></script>
-<script src="js/dashboard-security1.js?v=payroll1"></script>
-<script src="js/admin-security1.js?v=payroll1"></script>
-<script src="js/pwa.js?v=payroll1"></script>
+<script src="js/api-security1.js?v=activity2"></script>
+<script src="js/recovery.js?v=activity2"></script>
+<script src="js/dashboard-security1.js?v=activity2"></script>
+<script src="js/admin-security1.js?v=activity2"></script>
+<script src="js/pwa.js?v=activity2"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/stock-history.js?v=history1"></script>
-<script src="js/historical-entry.js?v=entry5"></script>
-<script src="js/manager-access.js?v=payroll1"></script>
-<script src="js/historical-labour.js?v=payroll1"></script>
+<script src="js/manager-access.js?v=activity2"></script>
 </body>
 </html>
