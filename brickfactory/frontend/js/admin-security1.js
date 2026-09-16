@@ -188,6 +188,9 @@ async function loadOverheadDefaultsForProfit() {
   const month = document.getElementById("profitMonth").value.trim() || null;
   try {
     const d = await apiFetch(`/reports/overhead${month ? `?month=${month}` : ""}`);
+    const sales = await apiFetch('/brick-sales/monthly-summary' + (month ? '?month=' + month : ''));
+    document.getElementById('profitSellingPrice').value = sales.historical_unit_price ?? '';
+    document.getElementById('profitOutput').textContent = sales.historical_unit_price !== null ? `Confirmed historical price: ${money(sales.historical_unit_price)}/brick. No GST added. Press Calculate.` : 'Enter a price for unpriced sales and press Calculate.';
     sessionUI.savedValue("profitRentOverride", d.rent);
     sessionUI.savedValue("profitSalaryOverride", d.manager_salary);
     sessionUI.savedValue("profitElectricityOverride", d.electricity);
@@ -213,10 +216,10 @@ async function runProfitCalculator() {
   const d=await apiFetch('/profit-calculator',{method:'POST',body});
   const amount=v=>v===null?'Pending working hours / cost records':money(v);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:d.scenario?'Scenario bricks sold':'Recorded bricks sold',value:d.bricks_sold},
-   {label:'Unpriced bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
-   {label:'Revenue estimate for unpriced sales',value:money(d.historical_revenue_estimate)},
+   {label:'Historical bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
+   {label:'Historical sales revenue (no GST added)',value:money(d.historical_revenue_estimate)},
    {label:'Actual new invoice revenue',value:money(d.recorded_revenue)},
-   {label:d.scenario?'Scenario revenue':'Combined revenue (includes estimate)',value:money(d.gross_revenue)},
+   {label:d.scenario?'Scenario revenue':'Combined revenue',value:money(d.gross_revenue)},
    {label:'Estimated cost of sold bricks',value:amount(d.estimated_cost_of_sales)},
    {label:'Full-month fixed / utility charges',value:money(d.overhead.total_overhead)},
    {label:'Recorded miscellaneous expenses',value:money(d.misc_expenses)},
@@ -400,7 +403,7 @@ onSectionLoad("pricing", () => Promise.all([loadRates(), loadCharges(), loadFixe
 onSectionLoad("history", () => Promise.all([loadRateHistory(), loadChargeHistory()]));
 onSectionLoad("productionCosts", loadProductionCosts);
 onSectionLoad("stock", () => Promise.all([loadStockOverview(), loadMaxProducible()]));
-onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); document.getElementById("profitOutput").textContent="Enter a price for unpriced sales and press Calculate."; });
+onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); });
 onSectionLoad("orders", loadFunFacts);
 onSectionLoad("brickSales", () => Promise.all([loadAdminOutletStock(), loadMonthlySalesSummary(), loadAllBrickSales()]));
 

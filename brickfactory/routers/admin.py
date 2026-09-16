@@ -678,22 +678,23 @@ def calculate_monthly_profit(body: ProfitCalculatorRequest):
             overhead=get_monthly_overhead(c,target_month,overrides,override_beats_actual=True)
     finally:conn.close()
     bricks=sales['total_bricks_sold'] if body.bricks_sold is None else body.bricks_sold
-    revenue=sales['recorded_revenue']+sales['historical_bricks']*body.selling_price if body.bricks_sold is None else bricks*body.selling_price
+    historical_price=sales['historical_unit_price'] if sales['historical_unit_price'] is not None else body.selling_price
+    revenue=sales['recorded_revenue']+sales['historical_bricks']*historical_price if body.bricks_sold is None else bricks*body.selling_price
     # Older opening batches have no recorded acquisition/production cost.
     # Use this month's weighted production unit cost as an explicit COGS estimate.
     unit=(report['material_cost']+report['making_cost'])/report['bricks'] if report['bricks'] and not report['missing_costs'] else None
     cogs=bricks*unit if unit is not None else None
     expense=cogs+overhead['total_overhead']+report['misc_expenses'] if cogs is not None else None
     profit=revenue-expense if expense is not None else None
-    return dict(month=target_month,**sales,bricks_sold=bricks,selling_price=body.selling_price,
+    return dict(month=target_month,**sales,bricks_sold=bricks,selling_price=body.selling_price if body.bricks_sold is not None else historical_price,
         scenario=body.bricks_sold is not None,gross_revenue=round(revenue,2),
-        historical_revenue_estimate=round(sales['historical_bricks']*body.selling_price,2),
+        historical_revenue_estimate=round(sales['historical_bricks']*historical_price,2),
         production_bricks=report['bricks'],production_cost=round(report['material_cost']+report['making_cost'],2),
         estimated_unit_cost=round(unit,4) if unit is not None else None,
         estimated_cost_of_sales=round(cogs,2) if cogs is not None else None,overhead=overhead,
         misc_expenses=report['misc_expenses'],total_expenditures=round(expense,2) if expense is not None else None,
         net_profit=round(profit,2) if profit is not None else None,
-        note='Estimated profit: historical revenue uses your entered average price; new invoice revenue uses actual saved amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
+        note='Estimated profit: historical revenue uses the confirmed price where available, otherwise your entered average price. No GST is added to these calculations; new invoice revenue uses actual saved amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
 
 
 # ---------------------------------------------------------
@@ -760,7 +761,7 @@ def view_monthly_brick_sales_summary(month: str = None):
     conn=get_connection()
     try:
         with conn.cursor() as c:r=monthly_sales(c,target_month)
-        return dict(month=target_month,**r,total_revenue=None if r['historical_bricks'] else r['recorded_revenue'],total_collected=r['recorded_collected'])
+        return dict(month=target_month,**r,total_revenue=(r['recorded_revenue']+r['historical_revenue']) if r['historical_revenue'] is not None else (None if r['historical_bricks'] else r['recorded_revenue']),total_collected=r['recorded_collected'])
     finally:conn.close()
 
 

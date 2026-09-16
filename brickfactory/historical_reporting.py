@@ -1,6 +1,6 @@
 """Read-only applied history; never deduct stock again."""
 from datetime import date
-from services import get_rates, get_charges
+from services import get_rates, get_charges, get_text_setting
 
 def applied_days(cursor):
     cursor.execute("SELECT payload FROM historical_entry_session WHERE id=1 AND status='applied'")
@@ -42,6 +42,8 @@ def monthly_sales(cursor, month):
     count=sum(len(d['sales']) for d in days)
     cursor.execute("SELECT COALESCE(SUM(bricks_purchased),0) AS bricks, COALESCE(SUM(total_amount),0) AS revenue, COALESCE(SUM(amount_paid),0) AS collected, COUNT(*) AS count FROM brick_sales WHERE TO_CHAR(sale_date,'YYYY-MM')=%s",(month,))
     r=cursor.fetchone()
-    return dict(historical_bricks=historical,recorded_bricks=int(r['bricks']),total_bricks_sold=historical+int(r['bricks']),
+    saved_price=get_text_setting(cursor,'historical_sales_price_'+month,'')
+    price=float(saved_price) if saved_price else None
+    return dict(historical_unit_price=price, historical_revenue=round(historical*price,2) if price is not None else None, historical_bricks=historical,recorded_bricks=int(r['bricks']),total_bricks_sold=historical+int(r['bricks']),
         recorded_revenue=float(r['revenue']),recorded_collected=float(r['collected']),
         total_sales_count=count+int(r['count']),historical_sales_count=count)

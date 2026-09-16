@@ -292,7 +292,7 @@ async function loadMonthMaterials(){
   if(!input.value)input.value=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,7);
   const d=await apiFetch('/admin/dashboard/month-materials?month='+input.value);
   const sales=await apiFetch('/brick-sales/monthly-summary?month='+input.value);
-  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Unpriced sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Revenue / profit',value:'Enter price for unpriced sales in Profit Calculator; new invoices retain actual prices.'}]);
+  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Historical sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Historical unit price',value:sales.historical_unit_price===null?'Not set':money(sales.historical_unit_price)+' (no GST added)'},{label:'Combined sales revenue',value:sales.total_revenue===null?'Price needed':money(sales.total_revenue)}]);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:'Bricks produced',value:d.bricks},{label:'Mixes',value:d.mixes},
    ...Object.entries(d.materials).map(([k,v])=>({label:k+' consumed',value:['Sand','Flyash'].includes(k)?`${Number((v/1000).toFixed(3))} tonnes (${v} kg)`:`${v} ${k==='Chemical'?'L':'bags'}`})),
    {label:'Material cost',value:money(d.material_cost)},{label:'Making charges subtotal — recorded costs',value:money(d.making_cost)},
