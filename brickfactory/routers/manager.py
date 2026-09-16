@@ -16,6 +16,7 @@ allowed to be decimals.
 
 import datetime
 import json
+from production_entry_policy import validate_entry_date
 from batch_stock import lock_stock, production_change, factory_today
 from cost_history import capture_production_cost, production_cost_context
 from production_metrics import average_bricks_per_mix
@@ -164,8 +165,12 @@ def preview_today_entry(body: ProductionPreviewRequest):
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        bricks_per_mix = get_bricks_per_mix(cursor)
+        target = validate_entry_date(cursor, body.production_date)
+        context = production_cost_context(cursor, target)
+        bricks_per_mix = float(context["bricks_per_mix"])
         cursor.close()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
@@ -184,17 +189,17 @@ def preview_today_entry(body: ProductionPreviewRequest):
         bricks_produced = body.bricks_produced
         calculated_field = "none"
 
-    return {"mixes": mixes, "bricks_produced": bricks_produced, "calculated_field": calculated_field,
+    return {"production_date": target, "mixes": mixes, "bricks_produced": bricks_produced, "calculated_field": calculated_field,
             "avg_bricks_per_mix": average_bricks_per_mix(bricks_produced, mixes)}
 
 
 @router.get("/production/today")
-def get_todays_entry():
+def get_todays_entry(date: datetime.date | None = None):
     """Lets the frontend check if today already has a saved entry before showing the form."""
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        today = datetime.date.today()
+        today = validate_entry_date(cursor, date)
         cursor.execute(
             """SELECT timestamp_entered, mixes_run, bricks_made, labourers_present, labour_hours, labour_groups, misc_expense, misc_note, is_corrected
                FROM production_log WHERE production_date = %s""",
@@ -202,6 +207,8 @@ def get_todays_entry():
         )
         row = cursor.fetchone()
         cursor.close()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
@@ -226,7 +233,7 @@ def get_todays_entry():
 
 
 @router.post("/production/save")
-def save_entry(body: ProductionSaveRequest):
+def save_entry(body: ProductionSaveRequest, user=Depends(require_manager)):
     """
     Mirrors save_entry() from manager_features.py exactly:
       1. Look for an existing row for today.
@@ -244,7 +251,7 @@ def save_entry(body: ProductionSaveRequest):
     try:
         cursor = conn.cursor()
         lock_stock(cursor)
-        today = factory_today()
+        today = validate_entry_date(cursor, body.production_date)
         now_time = datetime.datetime.now().time()
 
         cursor.execute(
@@ -317,6 +324,8 @@ def save_entry(body: ProductionSaveRequest):
             cursor.execute("UPDATE materials_inventory SET current_stock=current_stock-%s WHERE material_name=%s", (quantity, material))
         production_change(cursor, today, bricks_delta)
         capture_production_cost(cursor, today, body.mixes, body.bricks_produced, context,body.labour_hours)
+        cursor.execute('INSERT INTO production_submission_audit(production_date,entered_by,entry_data) VALUES(%s,%s,%s::jsonb)',
+                       (today,user['username'],body.model_dump_json()))
 
         conn.commit()
         cursor.close()
@@ -330,7 +339,7 @@ def save_entry(body: ProductionSaveRequest):
         conn.close()
 
     return {
-        "message": f"Entry saved for {today}.",
+        "message": f"Entry saved for {today.strftime('%d-%m-%Y')}.",
         "mixes_delta_applied": mixes_delta,
         "bricks_delta_applied": bricks_delta,
         "is_correction": is_correction,

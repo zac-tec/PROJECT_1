@@ -86,7 +86,13 @@ def production_change(cursor, date, delta):
             raise HTTPException(409, 'This correction would remove bricks already sold or adjusted. Correct those records first.')
         batch_id = row['batch_id']
         cursor.execute('UPDATE brick_batches SET initial_quantity=initial_quantity+%s, remaining_quantity=remaining_quantity+%s WHERE batch_id=%s', (delta,delta,batch_id))
-    movement(cursor,batch_id,delta,'production correction or entry')
+    if date < factory_today():
+        recorded = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        effective = datetime.datetime.combine(date, datetime.time(23,59), tzinfo=ZoneInfo('Asia/Kolkata'))
+        cursor.execute('INSERT INTO brick_batch_movements(batch_id,quantity,reason,occurred_at) VALUES(%s,%s,%s,%s)',
+                       (batch_id,delta,f'Backdated production entry/correction; recorded at {recorded}',effective))
+    else:
+        movement(cursor,batch_id,delta,'production correction or entry')
     sync_total(cursor)
 
 

@@ -8,10 +8,21 @@ let editingSaleId = null;   // null = creating a new sale, otherwise editing thi
 // -------------------- Today's Existing Entry --------------------
 // GET /manager/production/today -> {exists: bool, ...}
 async function checkExistingEntry() {
-  const d = await apiFetch("/manager/production/today");
+  const input = document.getElementById('productionDate');
+  const window = await apiFetch('/production-entry/settings');
+  input.min = window.earliest_date; input.max = window.today;
+  if (!input.value) input.value = window.today;
+  document.getElementById('productionDateHelp').textContent = `Admin allowance: ${window.backdate_days} previous day(s). Available: ${window.earliest_date.split('-').reverse().join('-')} to ${window.today.split('-').reverse().join('-')}.`;
+  if (input.value < input.min || input.value > input.max) {
+    document.getElementById('existingEntryCard').textContent = 'This date is outside the current allowance. Select an available date.';
+    return;
+  }
+  const selectedDate = input.value;
+  const d = await apiFetch('/manager/production/today?date=' + encodeURIComponent(selectedDate));
+  if (input.value !== selectedDate) return;
   const card = document.getElementById("existingEntryCard");
   if (!d.exists) {
-    card.innerHTML = "<h2>Today's Saved Entry</h2><p style=\"color:var(--muted);\">No entry saved yet for today.</p>";
+    card.innerHTML = "<h2>Selected Date’s Saved Entry</h2><p style=\"color:var(--muted);\">No entry saved for this date.</p>";
     return;
   }
   const table = kvTable([
@@ -24,7 +35,7 @@ async function checkExistingEntry() {
     { label: "Misc Expense", value: `${money(d.misc_amount)} (${d.misc_note || "—"})` },
   ]);
   card.innerHTML = `
-    <h2>Today's Saved Entry</h2>
+    <h2>Selected Date’s Saved Entry</h2>
     ${table}
     ${d.is_corrected === "yes" ? "<p style=\"color:var(--muted);\"><em>This entry has been corrected.</em></p>" : ""}
   `;
@@ -37,6 +48,7 @@ async function previewEntry() {
   const bricksRaw = document.getElementById("bricksInput").value.trim();
 
   const body = {
+    production_date: document.getElementById('productionDate').value,
     mixes: mixesRaw === "" ? null : parseInt(mixesRaw, 10),
     bricks_produced: bricksRaw === "" ? null : parseInt(bricksRaw, 10),
   };
@@ -44,9 +56,11 @@ async function previewEntry() {
   try {
     const d = await apiFetch("/manager/production/preview", { method: "POST", body });
     if (mixesRaw !== document.getElementById("mixesInput").value.trim() || bricksRaw !== document.getElementById("bricksInput").value.trim()) return;
+    if (body.production_date !== document.getElementById('productionDate').value) return;
     currentPreview = d;
 
     const table = kvTable([
+      { label: "Production date", value: d.production_date.split("-").reverse().join("-") },
       { label: "Mixes", value: d.mixes, bold: true },
       { label: "Bricks Produced", value: d.bricks_produced, bold: true },
       { label: d.calculated_field === "none" ? "Average Bricks per Mix" : "Average Bricks per Mix (estimated)",
@@ -74,6 +88,7 @@ async function saveEntry(confirmOverwrite = false) {
   const miscAmountRaw = document.getElementById("miscAmountInput").value.trim();
 
   const body = {
+    production_date: currentPreview.production_date,
     mixes: currentPreview.mixes,
     bricks_produced: currentPreview.bricks_produced,
     calculated_field: currentPreview.calculated_field,
@@ -481,12 +496,15 @@ sessionUI.attach({
   setSaleId: id => { editingSaleId = Number.isInteger(id) ? id : null; },
   afterRestore: () => { restoreLabourGroups(); recalculateSale(); updateAdjustmentForm(); },
 });
-for (const id of ["mixesInput", "bricksInput"]) {
+for (const id of ["mixesInput", "bricksInput", "productionDate"]) {
   document.getElementById(id).addEventListener("input", () => {
     currentPreview = null;
     document.getElementById("previewOutput").classList.add("hidden");
   });
 }
+document.getElementById('productionDate').addEventListener('change', () => {
+  checkExistingEntry().catch(e => showMessage(msgEl, e.message, true));
+});
 (async function init() {
   try { refreshIcons(); await initSectionNav("production"); }
   catch (e) { showMessage(msgEl, e.message, true); }

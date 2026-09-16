@@ -9,6 +9,7 @@ Material refill quantities allow decimals; mixes, bricks and labourers remain in
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Literal, Optional
+from datetime import date
 
 
 # --------------------------- Auth ---------------------------
@@ -77,6 +78,7 @@ class BricksPerMixUpdateRequest(BaseModel):
 
 # --------------------------- Manager: Production Entry ---------------------------
 class ProductionPreviewRequest(BaseModel):
+    production_date: Optional[date] = None
     mixes: Optional[int] = None
     bricks_produced: Optional[int] = None
 
@@ -86,6 +88,7 @@ class LabourGroup(BaseModel):
     hours: float = Field(ge=0, le=24, allow_inf_nan=False, multiple_of=0.01)
 
 class ProductionSaveRequest(BaseModel):
+    production_date: Optional[date] = None
     labour_groups: Optional[list[LabourGroup]] = Field(default=None,max_length=100)
 
     @model_validator(mode='after')

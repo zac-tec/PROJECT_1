@@ -60,6 +60,7 @@
 <button type="button" data-push-enable>Enable notifications</button>
 <button type="button" data-push-disable hidden>Disable notifications</button></div></section>
     <section id="sec-production">
+      <div class="card"><label for="productionDate">Production date</label><input id="productionDate" type="date"><p id="productionDateHelp"></p></div>
       <div class="card" id="existingEntryCard"></div>
 
       <div class="card">
@@ -74,10 +75,10 @@
       </div>
 
       <div class="card">
-        <h2><i data-lucide="clipboard-list" class="icon"></i> Enter Today's Production Data</h2>
-        <label>Number of Mixes Today (leave blank if unknown)</label>
+        <h2><i data-lucide="clipboard-list" class="icon"></i> Enter Production Data</h2>
+        <label>Number of Mixes (leave blank if unknown)</label>
         <input id="mixesInput" type="number" step="1" min="0">
-        <label>Number of Bricks Produced Today (leave blank if unknown)</label>
+        <label>Number of Bricks Produced (leave blank if unknown)</label>
         <input id="bricksInput" type="number" step="1" min="0">
             <h3>Working hours</h3>
             <p>Group workers who worked the same hours.</p>
@@ -250,8 +251,9 @@
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/labour-groups.js?v=activity2"></script>
-<script src="js/manager-security1.js?v=activity2"></script>
+<script src="js/manager-security1.js?v=dates1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/notifications.js?v=push1"></script>
+<script src="js/production-settings.js?v=dates1"></script>
 </body>
 </html>
