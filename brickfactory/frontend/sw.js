@@ -7,9 +7,10 @@
   Bump CACHE_NAME whenever you deploy new frontend files so old clients
   pick up the update instead of serving a stale cached copy.
 */
-const CACHE_NAME = "brickfactory-shell-activity2";
+const CACHE_NAME = "brickfactory-shell-push1";
 const SHELL_FILES = [
   "login.html",
+  "js/notifications.js?v=push1",
   "js/date-display.js?v=activity2",
   "admin.html",
   "manager.html",
@@ -55,4 +56,24 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
+});
+
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  let data;
+  try { data = event.data.json(); } catch (_) { return; }
+  event.waitUntil(self.registration.showNotification(data.title || 'NEO BRICKS', {
+    body: data.body || '', icon: 'icons/nb-192-v2.png',
+    tag: data.tag || 'neo-bricks', data: {url: data.url},
+  }));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const route = event.notification.data?.url === '/admin.html' ? '/admin.html' : '/manager.html';
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
+    const existing = windows.find(client => new URL(client.url).pathname === route);
+    if (existing) return existing.focus();
+    return self.clients.openWindow(route);
+  })());
 });

@@ -135,7 +135,12 @@
       </div>
     </section>
 
-    <section id="sec-reportsettings" class="hidden">
+    <section id="sec-reportsettings" class="hidden"><div class="card" id="pushSettings"><h2>App notifications</h2>
+<p>Monday–Saturday: manager reminders at 8 PM and 10 PM; admin alert at 10 PM if production is missing. All times IST. No reminders after 10 PM or on Sundays.</p>
+<p>Saving production stops reminders. Sales can still be entered on Sundays. Closing the app keeps notifications enabled; signing out disables them on this device.</p>
+<p data-push-status role="status">Checking this device…</p>
+<button type="button" data-push-enable>Enable notifications</button>
+<button type="button" data-push-disable hidden>Disable notifications</button></div>
       <div class="card" id="managerAccessCard">
         <h2>Manager login — admin only</h2>
         <p>Changing the login signs out previous manager sessions.</p>
@@ -366,7 +371,7 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=activity2"></script>
+<script src="js/api-security1.js?v=push1"></script>
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/dashboard-security1.js?v=activity2"></script>
 <script src="js/admin-security1.js?v=activity2"></script>
@@ -374,5 +379,6 @@
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/manager-access.js?v=activity2"></script>
+<script src="js/notifications.js?v=push1"></script>
 </body>
 </html>

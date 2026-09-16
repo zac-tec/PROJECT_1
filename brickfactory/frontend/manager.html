@@ -34,6 +34,7 @@
     <button data-section="stock" title="Raw Materials"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
     <button data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
     <button data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
+    <button data-section="notifications" onclick="closeRightMenu()" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
     <button data-section="utility" title="Utility Bills"><i data-lucide="receipt" class="icon"></i><span>Utility</span></button>
     <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
   </nav>
@@ -44,6 +45,7 @@
     <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Raw Materials Stock</span></button>
     <button data-section="sales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
     <button data-section="adjustments" onclick="closeRightMenu()"><i data-lucide="package-minus" class="icon"></i><span>Stock Adjustments</span></button>
+    <button data-section="notifications" onclick="closeRightMenu()" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
     <button data-section="utility" onclick="closeRightMenu()"><i data-lucide="receipt" class="icon"></i><span>Utility Bills</span></button>
   </aside>
 
@@ -51,6 +53,12 @@
     <div id="msg" class="msg hidden"></div>
 
     <!-- PRODUCTION ENTRY -->
+    <section id="sec-notifications" class="hidden"><div class="card" id="pushSettings"><h2>App notifications</h2>
+<p>Monday–Saturday: manager reminders at 8 PM and 10 PM; admin alert at 10 PM if production is missing. All times IST. No reminders after 10 PM or on Sundays.</p>
+<p>Saving production stops reminders. Sales can still be entered on Sundays. Closing the app keeps notifications enabled; signing out disables them on this device.</p>
+<p data-push-status role="status">Checking this device…</p>
+<button type="button" data-push-enable>Enable notifications</button>
+<button type="button" data-push-disable hidden>Disable notifications</button></div></section>
     <section id="sec-production">
       <div class="card" id="existingEntryCard"></div>
 
@@ -238,11 +246,12 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=activity2"></script>
+<script src="js/api-security1.js?v=push1"></script>
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/labour-groups.js?v=activity2"></script>
 <script src="js/manager-security1.js?v=activity2"></script>
 <script src="js/presence.js?v=presence2"></script>
+<script src="js/notifications.js?v=push1"></script>
 </body>
 </html>

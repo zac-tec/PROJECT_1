@@ -83,6 +83,12 @@ def start_scheduler():
 
     hour, minute = _parse_time(time_str)
     scheduler.add_job(_run_scheduled_report, CronTrigger(hour=hour, minute=minute), id=JOB_ID, replace_existing=True)
+    from push_notifications import run_production_reminders
+    for slot in (20, 22):
+        scheduler.add_job(run_production_reminders,
+            CronTrigger(day_of_week="mon-sat", hour=slot, minute=0, timezone="Asia/Kolkata"),
+            args=[slot], id=f"production_reminder_{slot}", replace_existing=True,
+            misfire_grace_time=30, coalesce=True, max_instances=1)
     scheduler.start()
     print(f"[scheduler] Daily report job scheduled for {hour:02d}:{minute:02d} every day.")
 

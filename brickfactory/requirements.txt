@@ -7,3 +7,5 @@ resend
 apscheduler
 bcrypt
 PyJWT
+
+pywebpush==2.1.2

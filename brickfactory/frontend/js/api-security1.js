@@ -9,7 +9,11 @@ function getRole() {
   return sessionStorage.getItem("role");
 }
 
-function logout() {
+async function logout() {
+  if (window.disableDeviceNotifications) {
+    try { await window.disableDeviceNotifications(); }
+    catch (_) { alert("Could not disable device notifications. Check your connection and try signing out again."); return; }
+  }
   if (typeof sessionUI !== "undefined") sessionUI.forget();
   sessionStorage.clear();
   window.location.href = "login.html";
