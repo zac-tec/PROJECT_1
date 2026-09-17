@@ -17,7 +17,10 @@ def lock_account(c,customer_id):
     return row
 
 def resolve_customer(c,name,phone,customer_id=None):
-    if customer_id:return lock_account(c,customer_id)
+    if customer_id:
+        account=lock_account(c,customer_id)
+        if account.get('archived'):raise HTTPException(409,'This customer is archived. Ask the admin to restore the account first.')
+        return account
     name=(name or '').strip();phone=(phone or '').strip();key=phone_key(phone)
     if not name and not phone:raise HTTPException(422,'Enter a customer name or phone number.')
     # Serialize account creation, preventing duplicate name-only records on retries.
@@ -26,7 +29,7 @@ def resolve_customer(c,name,phone,customer_id=None):
     else:c.execute('SELECT customer_id FROM customer_accounts WHERE lower(trim(name))=lower(%s)',(name,))
     rows=c.fetchall()
     if len(rows)>1:raise HTTPException(409,'Several customers have that name. Select the correct existing account.')
-    if rows:return lock_account(c,rows[0]['customer_id'])
+    if rows:return resolve_customer(c,name,phone,rows[0]['customer_id'])
     c.execute('INSERT INTO customer_accounts(name,phone,phone_key) VALUES(%s,%s,%s) RETURNING *',(name,phone,key))
     return c.fetchone()
 

@@ -1,0 +1,8 @@
+ALTER TABLE customer_accounts ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT '';
+ALTER TABLE customer_accounts ADD COLUMN IF NOT EXISTS notes TEXT NOT NULL DEFAULT '';
+ALTER TABLE customer_accounts ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false;
+CREATE TABLE IF NOT EXISTS customer_account_audit (
+ id BIGSERIAL PRIMARY KEY, customer_id BIGINT NOT NULL,
+ action TEXT NOT NULL, recorded_by TEXT NOT NULL,
+ recorded_at TIMESTAMPTZ NOT NULL DEFAULT now(), previous_record JSONB NOT NULL
+);

@@ -15,3 +15,9 @@ Migration runs once for each unlinked existing invoice. It creates/reuses custom
 Mutations lock the account and allocate in a database transaction. Payment submissions have UUID retry keys; repeated submissions do not collect twice. New sales also use retry keys. The old “mark this invoice paid” API is disabled; use account-level payment recording.
 
 Migrations: `migration_customer_accounts.sql` and `customer_accounts.migrate_accounts()` at startup. Tests: `python -m unittest discover -s tests -p test_customer_allocations.py`. Rollback integration covers migration conservation, both requested FIFO scenarios, credit, refund limits, reversals, reconciliation, retry safety and unchanged revenue/stock after payments.
+
+## Customer-book controls
+
+The selected account includes a purchase/brick/billed/applied-payment overview, contacts, address/notes, invoice receipts and a newest-first ledger. Search and owing/credit/settled filters are available; date/type filters affect the displayed ledger rows, not the full-account balance. Print/save statement opens a printable copy of the complete ledger, including correction history.
+
+“Remove entry” reverses the financial effect of an incorrect non-sale entry and recomputes FIFO allocations. It retains the original and correction; it does not delete a sale or restore brick stock. Zero-value entries do not need removal. “Delete unused customer” is available only for an account with no invoices or ledger records. Accounts with history can be archived only at zero balance, then viewed/restored using “Include archived customers”. An archived account cannot accept a new sale or money mutation. Profile changes and archive/restore/delete actions are audited. Original invoice identity snapshots are preserved when editing the current customer profile.

@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=accounts1">
+<link rel="stylesheet" href="css/style.css?v=book2">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -352,6 +352,8 @@
 <section id="sec-customerAccounts" class="hidden">
 <div class="card"><h2>Customer Accounts</h2><p>Red: customer owes the factory · Green: settled · Blue: factory owes customer.</p>
 <label>Find customer<input id="accountSearch" placeholder="Name or phone"></label><button id="accountRefresh">Refresh accounts</button>
+<label>Show accounts<select id="accountFilter"><option value="all">All active customers</option><option value="owing">Customers who owe money</option><option value="credit">Customers with credit</option><option value="settled">Settled accounts</option></select></label>
+<label><input id="accountArchived" type="checkbox" style="width:auto"> Include archived customers</label>
 <div id="accountList" class="table-scroll"></div></div>
 <div class="card"><h3>Add customer</h3><p>Enter a name or phone number; both are not required.</p>
 <label>Name<input id="newAccountName" maxlength="100"></label><label>Phone<input id="newAccountPhone" maxlength="30"></label>
@@ -390,6 +392,6 @@
 <script src="js/manager-access.js?v=activity2"></script>
 <script src="js/notifications.js?v=push1"></script>
 <script src="js/production-settings.js?v=dates1"></script>
-<script src="js/customer-accounts.js?v=accounts1"></script>
+<script src="js/customer-accounts.js?v=book2"></script>
 </body>
 </html>
