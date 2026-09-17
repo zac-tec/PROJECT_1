@@ -26,7 +26,7 @@ from database import get_connection
 from services import get_stock
 from routers import admin, manager, auth, sales, dashboard, daily_report
 from routers import presence, stock_history, historical_session, manager_access, historical_labour
-from routers import push, production_settings
+from routers import push, production_settings, sale_payments
 import scheduler
 
 app = FastAPI(title="Brick Factory API")
@@ -34,6 +34,7 @@ app = FastAPI(title="Brick Factory API")
 # Browser access is restricted to the configured deployment origins.
 install_http_security(app)
 
+app.include_router(sale_payments.router)
 app.include_router(production_settings.router)
 app.include_router(push.router)
 app.include_router(presence.router)
@@ -73,6 +74,8 @@ def _start_background_scheduler():
         connection.cursor().execute(Path(__file__).with_name("migration_historical_labour.sql").read_text())
         connection.cursor().execute(Path(__file__).with_name("migration_push_notifications.sql").read_text())
         connection.cursor().execute(Path(__file__).with_name("migration_production_entry.sql").read_text())
+        connection.cursor().execute(Path(__file__).with_name("migration_sale_payments.sql").read_text())
+        connection.cursor().execute(Path(__file__).with_name("migration_sales_gst.sql").read_text())
         connection.commit()
     finally:
         connection.close()

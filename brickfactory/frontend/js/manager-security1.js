@@ -285,7 +285,9 @@ function recalculateSale() {
   }
 
   const amountDue = bricks * costPerBrick;
-  const totalAmount = amountDue + otherCharges;
+  const totalAmount = Math.round((amountDue + otherCharges)*100)/100;
+  const netAmount = Math.round(totalAmount/1.12*100)/100;
+  document.getElementById('saleGstBreakdown').textContent = `Base price: ${money(costPerBrick/1.12)}/brick · Before GST: ${money(netAmount)} · GST included (12%): ${money(totalAmount-netAmount)}`;
 
   document.getElementById("saleAmountDue").textContent = money(amountDue);
   document.getElementById("saleTotalAmount").textContent = money(totalAmount);

@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Manager — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=manager-spacing1">
+<link rel="stylesheet" href="css/style.css?v=gst1?v=manager-spacing1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -159,12 +159,13 @@
         <input id="saleCustomerMobile" type="text" placeholder="10-digit mobile number">
         <label>Number of Bricks Purchased</label>
         <input id="saleBricksPurchased" type="number" step="1" min="1" oninput="recalculateSale()">
-        <label>Cost Per Brick (Rs.)</label>
+        <label>Price Per Brick (Rs., including 12% GST)</label>
         <input id="saleCostPerBrick" type="number" step="0.01" min="0.01" oninput="recalculateSale()">
-        <label>Other Charges (Rs., optional)</label>
+        <label>Other Charges (Rs., including 12% GST if charged)</label>
         <input id="saleOtherCharges" type="number" step="0.01" min="0" value="0" oninput="recalculateSale()">
 
         <div id="saleCalculatedBox" class="hidden" style="background:var(--primary-light); border-radius:8px; padding:12px; margin-bottom:14px;">
+          <p id="saleGstBreakdown" style="margin:4px 0;"></p>
           <p style="margin:4px 0;">Amount Due: <strong id="saleAmountDue">—</strong></p>
           <p style="margin:4px 0;">Total Amount (incl. other charges): <strong id="saleTotalAmount">—</strong></p>
         </div>
@@ -251,7 +252,7 @@
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/labour-groups.js?v=activity2"></script>
-<script src="js/manager-security1.js?v=dates1"></script>
+<script src="js/manager-security1.js?v=gst1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/notifications.js?v=push1"></script>
 <script src="js/production-settings.js?v=dates1"></script>

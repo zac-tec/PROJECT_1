@@ -261,7 +261,7 @@ def sales_trend(days: int = 30):
         cursor = conn.cursor()
         cutoff = datetime.date.today() - datetime.timedelta(days=days - 1)
         cursor.execute(
-            """SELECT sale_date, SUM(bricks_purchased) AS total_bricks, SUM(total_amount) AS total_revenue
+            """SELECT sale_date, SUM(bricks_purchased) AS total_bricks, SUM(COALESCE(taxable_amount,total_amount)) AS total_revenue
                FROM brick_sales WHERE sale_date >= %s GROUP BY sale_date ORDER BY sale_date""",
             (cutoff,),
         )
@@ -272,7 +272,11 @@ def sales_trend(days: int = 30):
             if d['date'] < str(cutoff):continue
             r=combined.setdefault(d['date'],dict(sale_date=datetime.date.fromisoformat(d['date']),total_bricks=0,total_revenue=None))
             r['total_bricks']+=sum(d['sales'])
-            r['total_revenue']=None
+            from services import get_text_setting
+            from sales_tax import breakdown
+            price=get_text_setting(cursor,'historical_sales_price_'+d['date'][:7],'')
+            rate=get_text_setting(cursor,'historical_sales_gst_'+d['date'][:7],'0')
+            r['total_revenue']=(float(r['total_revenue'] or 0)+sum(float(breakdown(q,price,gst_rate=rate)['taxable_amount']) for q in d['sales'])) if price else None
         rows=[combined[k] for k in sorted(combined)]
         cursor.close()
     except Exception as e:

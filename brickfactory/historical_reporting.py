@@ -40,10 +40,17 @@ def monthly_sales(cursor, month):
     days=[d for d in p['days'] if d['date'][:7]==month]
     historical=sum(sum(d['sales']) for d in days)
     count=sum(len(d['sales']) for d in days)
-    cursor.execute("SELECT COALESCE(SUM(bricks_purchased),0) AS bricks, COALESCE(SUM(total_amount),0) AS revenue, COALESCE(SUM(amount_paid),0) AS collected, COUNT(*) AS count FROM brick_sales WHERE TO_CHAR(sale_date,'YYYY-MM')=%s",(month,))
+    cursor.execute("SELECT COALESCE(SUM(bricks_purchased),0) AS bricks, COALESCE(SUM(COALESCE(taxable_amount,total_amount)),0) AS revenue, COALESCE(SUM(total_amount),0) AS billed, COALESCE(SUM(gst_amount),0) AS gst, COALESCE(SUM(amount_paid),0) AS collected, COUNT(*) AS count FROM brick_sales WHERE TO_CHAR(sale_date,'YYYY-MM')=%s",(month,))
     r=cursor.fetchone()
     saved_price=get_text_setting(cursor,'historical_sales_price_'+month,'')
     price=float(saved_price) if saved_price else None
-    return dict(historical_unit_price=price, historical_revenue=round(historical*price,2) if price is not None else None, historical_bricks=historical,recorded_bricks=int(r['bricks']),total_bricks_sold=historical+int(r['bricks']),
-        recorded_revenue=float(r['revenue']),recorded_collected=float(r['collected']),
+    gst_rate=float(get_text_setting(cursor,'historical_sales_gst_'+month,'0'))
+    from sales_tax import breakdown
+    taxes=[breakdown(q,price,gst_rate=gst_rate) for d in days for q in d['sales']] if price is not None else []
+    net_price=price/(1+gst_rate/100) if price is not None else None
+    hist_net=float(sum(t['taxable_amount'] for t in taxes)) if price is not None else None
+    hist_gross=float(sum(t['total_amount'] for t in taxes)) if price is not None else None
+    hist_gst=float(sum(t['gst_amount'] for t in taxes)) if price is not None else None
+    return dict(historical_unit_price=price, historical_base_price=net_price, historical_gst_rate=gst_rate, historical_billed=hist_gross,historical_gst=hist_gst, historical_revenue=hist_net, historical_bricks=historical,recorded_bricks=int(r['bricks']),total_bricks_sold=historical+int(r['bricks']),
+        recorded_revenue=float(r['revenue']),recorded_billed=float(r['billed']),recorded_gst=float(r['gst']),recorded_collected=float(r['collected']),
         total_sales_count=count+int(r['count']),historical_sales_count=count)

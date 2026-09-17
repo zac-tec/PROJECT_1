@@ -574,3 +574,6 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 }
 .manager-ui main.content p { font-size: var(--manager-small-text) !important; }
 .manager-ui main.content :is(input, select, textarea) { font-size: 16px; }
+
+.financial-positive, .financial-positive td { color: #15753b; font-weight: 700; }
+.financial-negative, .financial-negative td { color: #b42318; font-weight: 700; }

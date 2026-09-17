@@ -14,6 +14,7 @@ To add a new brick-sales-related feature later: add a function here.
 """
 
 import datetime
+from sales_tax import breakdown
 from batch_stock import lock_stock, stock_summary, allocate_sale, restore_sale, adjust_batches, factory_today
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import Response
@@ -60,7 +61,7 @@ def view_todays_sales():
         today = datetime.date.today()
         cursor.execute(
             """SELECT sale_id, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
-                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited
+                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount
                FROM brick_sales WHERE sale_date = %s ORDER BY sale_timestamp""",
             (today,),
         )
@@ -84,6 +85,9 @@ def view_todays_sales():
             "total_amount": float(r["total_amount"]),
             "amount_paid": float(r["amount_paid"]),
             "is_edited": r["is_edited"],
+            "gst_rate": float(r["gst_rate"]) if r["gst_rate"] is not None else None,
+            "taxable_amount": float(r["taxable_amount"]) if r["taxable_amount"] is not None else None,
+            "gst_amount": float(r["gst_amount"]) if r["gst_amount"] is not None else None,
         }
         for r in rows
     ]}
@@ -105,8 +109,8 @@ def create_sale(body: BrickSaleRequest):
         lock_stock(cursor)
         current_stock = get_outlet_stock(cursor)
 
-        amount_due = round(body.bricks_purchased * body.cost_per_brick, 2)
-        total_amount = round(amount_due + body.other_charges, 2)
+        tax = breakdown(body.bricks_purchased,body.cost_per_brick,body.other_charges)
+        amount_due, total_amount = tax["amount_due"], tax["total_amount"]
 
         today = factory_today()
         now_time = datetime.datetime.now().time()
@@ -122,6 +126,8 @@ def create_sale(body: BrickSaleRequest):
         )
         sale_id = cursor.fetchone()["sale_id"]
 
+        cursor.execute('UPDATE brick_sales SET gst_rate=%s,taxable_amount=%s,gst_amount=%s WHERE sale_id=%s',
+                       (tax['gst_rate'],tax['taxable_amount'],tax['gst_amount'],sale_id))
         allocate_sale(cursor, sale_id, body.bricks_purchased)
 
         conn.commit()
@@ -153,7 +159,7 @@ def update_sale(sale_id: int, body: BrickSaleRequest):
         cursor = conn.cursor()
         lock_stock(cursor)
 
-        cursor.execute("SELECT sale_date, bricks_purchased FROM brick_sales WHERE sale_id = %s", (sale_id,))
+        cursor.execute("SELECT sale_date, bricks_purchased FROM brick_sales WHERE sale_id = %s FOR UPDATE", (sale_id,))
         row = cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Sale not found.")
@@ -162,10 +168,14 @@ def update_sale(sale_id: int, body: BrickSaleRequest):
         if row["sale_date"] != today:
             raise HTTPException(status_code=403, detail="Only today's sales can be edited.")
 
+        cursor.execute('SELECT 1 FROM sale_payment_audit WHERE sale_id=%s LIMIT 1',(sale_id,))
+        if cursor.fetchone():
+            raise HTTPException(409, 'The admin has settled this invoice. Contact the admin before changing it.')
+
         restore_sale(cursor, sale_id)
 
-        amount_due = round(body.bricks_purchased * body.cost_per_brick, 2)
-        total_amount = round(amount_due + body.other_charges, 2)
+        tax = breakdown(body.bricks_purchased,body.cost_per_brick,body.other_charges)
+        amount_due, total_amount = tax["amount_due"], tax["total_amount"]
 
         cursor.execute(
             """UPDATE brick_sales SET
@@ -178,6 +188,8 @@ def update_sale(sale_id: int, body: BrickSaleRequest):
              body.amount_paid, sale_id),
         )
 
+        cursor.execute('UPDATE brick_sales SET gst_rate=%s,taxable_amount=%s,gst_amount=%s WHERE sale_id=%s',
+                       (tax['gst_rate'],tax['taxable_amount'],tax['gst_amount'],sale_id))
         allocate_sale(cursor, sale_id, body.bricks_purchased)
 
         conn.commit()
@@ -277,7 +289,7 @@ def get_sale_receipt(sale_id: int):
         cursor = conn.cursor()
         cursor.execute(
             """SELECT sale_id, sale_date, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
-                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited
+                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount
                FROM brick_sales WHERE sale_id = %s""",
             (sale_id,),
         )
@@ -304,6 +316,9 @@ def get_sale_receipt(sale_id: int):
         "total_amount": float(row["total_amount"]),
         "amount_paid": float(row["amount_paid"]),
         "is_edited": row["is_edited"],
+        "gst_rate": float(row["gst_rate"]) if row["gst_rate"] is not None else None,
+        "taxable_amount": float(row["taxable_amount"]) if row["taxable_amount"] is not None else None,
+        "gst_amount": float(row["gst_amount"]) if row["gst_amount"] is not None else None,
     }
 
     pdf_bytes = generate_sale_receipt(sale)
@@ -375,7 +390,7 @@ def customer_history(mobile: str):
         cursor = conn.cursor()
         cursor.execute(
             """SELECT sale_id, sale_date, sale_timestamp, customer_name, bricks_purchased,
-                      cost_per_brick, total_amount, amount_paid, is_edited
+                      cost_per_brick, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount
                FROM brick_sales WHERE customer_mobile = %s
                ORDER BY sale_date DESC, sale_timestamp DESC""",
             (mobile,),
@@ -413,6 +428,9 @@ def customer_history(mobile: str):
                 "amount_paid": float(r["amount_paid"]),
                 "balance_due": round(float(r["total_amount"]) - float(r["amount_paid"]), 2),
                 "is_edited": r["is_edited"],
+            "gst_rate": float(r["gst_rate"]) if r["gst_rate"] is not None else None,
+            "taxable_amount": float(r["taxable_amount"]) if r["taxable_amount"] is not None else None,
+            "gst_amount": float(r["gst_amount"]) if r["gst_amount"] is not None else None,
             }
             for r in rows
         ],

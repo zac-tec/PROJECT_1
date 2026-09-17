@@ -183,6 +183,7 @@ async function loadFunFacts() {
     document.getElementById("fact-crew").textContent = d.avg_crew_size;
     document.getElementById("fact-sold").textContent = d.total_bricks_sold_all_time.toLocaleString("en-IN");
     document.getElementById("fact-pending").textContent = money(d.pending_customer_dues);
+    document.getElementById("fact-pending").style.color = d.pending_customer_dues>0 ? "#b42318" : "#15753b";
     if (d.best_day.date) {
       document.getElementById("fact-bestday").textContent =
         `🏅 Best day yet: ${d.best_day.date} — ${d.best_day.mixes} mixes, ${d.best_day.bricks.toLocaleString("en-IN")} bricks`;
@@ -292,7 +293,7 @@ async function loadMonthMaterials(){
   if(!input.value)input.value=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,7);
   const d=await apiFetch('/admin/dashboard/month-materials?month='+input.value);
   const sales=await apiFetch('/brick-sales/monthly-summary?month='+input.value);
-  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Historical sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Historical unit price',value:sales.historical_unit_price===null?'Not set':money(sales.historical_unit_price)+' (no GST added)'},{label:'Combined sales revenue',value:sales.total_revenue===null?'Price needed':money(sales.total_revenue)}]);
+  document.getElementById('monthSalesOverview').innerHTML=kvTable([{label:'Month',value:input.value},{label:'Total bricks sold',value:sales.total_bricks_sold},{label:'Historical sales quantities',value:sales.historical_bricks},{label:'New invoice quantities',value:sales.recorded_bricks},{label:'Historical unit price',value:sales.historical_unit_price===null?'Not set':money(sales.historical_unit_price)+' (including '+sales.historical_gst_rate+'% GST)'},{label:'Sales revenue excluding GST',value:sales.total_revenue===null?'Price needed':money(sales.total_revenue)}]);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:'Bricks produced',value:d.bricks},{label:'Mixes',value:d.mixes},
    ...Object.entries(d.materials).map(([k,v])=>({label:k+' consumed',value:['Sand','Flyash'].includes(k)?`${Number((v/1000).toFixed(3))} tonnes (${v} kg)`:`${v} ${k==='Chemical'?'L':'bags'}`})),
    {label:'Material cost',value:money(d.material_cost)},{label:'Making charges subtotal — recorded costs',value:money(d.making_cost)},

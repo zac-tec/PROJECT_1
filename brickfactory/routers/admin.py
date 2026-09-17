@@ -678,8 +678,9 @@ def calculate_monthly_profit(body: ProfitCalculatorRequest):
             overhead=get_monthly_overhead(c,target_month,overrides,override_beats_actual=True)
     finally:conn.close()
     bricks=sales['total_bricks_sold'] if body.bricks_sold is None else body.bricks_sold
-    historical_price=sales['historical_unit_price'] if sales['historical_unit_price'] is not None else body.selling_price
-    revenue=sales['recorded_revenue']+sales['historical_bricks']*historical_price if body.bricks_sold is None else bricks*body.selling_price
+    historical_price=sales['historical_base_price'] if sales['historical_base_price'] is not None else body.selling_price/1.12
+    historical_net=sales['historical_revenue'] if sales['historical_revenue'] is not None else round(sales['historical_bricks']*historical_price,2)
+    revenue=sales['recorded_revenue']+historical_net if body.bricks_sold is None else round(bricks*body.selling_price/1.12,2)
     # Older opening batches have no recorded acquisition/production cost.
     # Use this month's weighted production unit cost as an explicit COGS estimate.
     unit=(report['material_cost']+report['making_cost'])/report['bricks'] if report['bricks'] and not report['missing_costs'] else None
@@ -688,13 +689,13 @@ def calculate_monthly_profit(body: ProfitCalculatorRequest):
     profit=revenue-expense if expense is not None else None
     return dict(month=target_month,**sales,bricks_sold=bricks,selling_price=body.selling_price if body.bricks_sold is not None else historical_price,
         scenario=body.bricks_sold is not None,gross_revenue=round(revenue,2),
-        historical_revenue_estimate=round(sales['historical_bricks']*historical_price,2),
+        historical_revenue_estimate=historical_net,
         production_bricks=report['bricks'],production_cost=round(report['material_cost']+report['making_cost'],2),
         estimated_unit_cost=round(unit,4) if unit is not None else None,
         estimated_cost_of_sales=round(cogs,2) if cogs is not None else None,overhead=overhead,
         misc_expenses=report['misc_expenses'],total_expenditures=round(expense,2) if expense is not None else None,
         net_profit=round(profit,2) if profit is not None else None,
-        note='Estimated profit: historical revenue uses the confirmed price where available, otherwise your entered average price. No GST is added to these calculations; new invoice revenue uses actual saved amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
+        note='Estimated profit: Revenue excludes GST. Entered sale prices include 12% GST; historical revenue uses the confirmed price where available. New invoice revenue uses saved taxable amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
 
 
 # ---------------------------------------------------------
@@ -725,7 +726,7 @@ def view_all_brick_sales():
         cursor = conn.cursor()
         cursor.execute(
             """SELECT sale_id, sale_date, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
-                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited
+                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount
                FROM brick_sales ORDER BY sale_date DESC, sale_timestamp DESC"""
         )
         rows = cursor.fetchall()
@@ -749,6 +750,8 @@ def view_all_brick_sales():
             "total_amount": float(r["total_amount"]),
             "amount_paid": float(r["amount_paid"]),
             "is_edited": r["is_edited"],
+            "gst_amount": float(r["gst_amount"]) if r["gst_amount"] is not None else None,
+            "taxable_amount": float(r["taxable_amount"]) if r["taxable_amount"] is not None else None,
         }
         for r in rows
     ]}

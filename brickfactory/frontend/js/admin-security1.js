@@ -190,7 +190,7 @@ async function loadOverheadDefaultsForProfit() {
     const d = await apiFetch(`/reports/overhead${month ? `?month=${month}` : ""}`);
     const sales = await apiFetch('/brick-sales/monthly-summary' + (month ? '?month=' + month : ''));
     document.getElementById('profitSellingPrice').value = sales.historical_unit_price ?? '';
-    document.getElementById('profitOutput').textContent = sales.historical_unit_price !== null ? `Confirmed historical price: ${money(sales.historical_unit_price)}/brick. No GST added. Press Calculate.` : 'Enter a price for unpriced sales and press Calculate.';
+    document.getElementById('profitOutput').textContent = sales.historical_unit_price !== null ? `Confirmed historical price: ${money(sales.historical_unit_price)}/brick including ${sales.historical_gst_rate}% GST; base ${money(sales.historical_base_price)}. Press Calculate.` : 'Enter a price for unpriced sales and press Calculate.';
     sessionUI.savedValue("profitRentOverride", d.rent);
     sessionUI.savedValue("profitSalaryOverride", d.manager_salary);
     sessionUI.savedValue("profitElectricityOverride", d.electricity);
@@ -217,13 +217,14 @@ async function runProfitCalculator() {
   const amount=v=>v===null?'Pending working hours / cost records':money(v);
   out.innerHTML=kvTable([{label:'Month',value:d.month},{label:d.scenario?'Scenario bricks sold':'Recorded bricks sold',value:d.bricks_sold},
    {label:'Historical bricks sold',value:d.historical_bricks},{label:'New invoice bricks sold',value:d.recorded_bricks},
-   {label:'Historical sales revenue (no GST added)',value:money(d.historical_revenue_estimate)},
-   {label:'Actual new invoice revenue',value:money(d.recorded_revenue)},
-   {label:d.scenario?'Scenario revenue':'Combined revenue',value:money(d.gross_revenue)},
+   {label:'Historical sales revenue (excluding GST)',value:money(d.historical_revenue_estimate)},
+   {label:'New invoice revenue (excluding GST)',value:money(d.recorded_revenue)},
+   {label:d.scenario?'Scenario revenue':'Combined revenue (excluding GST)',value:money(d.gross_revenue)},
    {label:'Estimated cost of sold bricks',value:amount(d.estimated_cost_of_sales)},
    {label:'Full-month fixed / utility charges',value:money(d.overhead.total_overhead)},
    {label:'Recorded miscellaneous expenses',value:money(d.misc_expenses)},
-   {label:'Estimated profit / loss',value:amount(d.net_profit),bold:true}]);
+   {label:d.net_profit===null?'Estimated profit / loss':d.net_profit<0?'Estimated loss':d.net_profit>0?'Estimated profit':'Break-even',value:d.net_profit===null?amount(null):money(Math.abs(d.net_profit)),bold:true}]);
+  const resultRow=out.querySelector('tr:last-child');if(resultRow && d.net_profit!==null)resultRow.classList.add(d.net_profit<0?'financial-negative':'financial-positive');
   const note=document.createElement('p');note.textContent=d.note;out.append(note);
  }catch(e){out.textContent=e.message;}
 }
@@ -281,7 +282,9 @@ async function loadMonthlySalesSummary() {
       { label: "Month", value: d.month },
       { label: "Total Bricks Sold", value: d.total_bricks_sold.toLocaleString("en-IN"), bold: true },
       { label: "Total Sales Transactions", value: d.total_sales_count },
-      { label: "Total revenue", value: d.total_revenue === null ? "Price required — use Profit Calculator" : money(d.total_revenue) },
+      { label: "Sales revenue (excluding GST)", value: d.total_revenue === null ? "Price required — use Profit Calculator" : money(d.total_revenue) },
+      { label: "GST on new invoices", value: money(d.recorded_gst) },
+      { label: "Historical GST", value: d.historical_gst===null ? 'Not recorded' : money(d.historical_gst) },
       { label: "Collected on new invoices (older payment details unavailable)", value: money(d.total_collected), bold: true },
     ]);
   } catch (e) { showMessage(msgEl, e.message, true); }
@@ -293,8 +296,20 @@ async function loadAllBrickSales() {
     const tbody = document.querySelector("#allSalesTable tbody");
   tbody.replaceChildren();
   for (const s of d.sales) {
-    textRow(tbody, [s.date, formatTime12(s.time), s.customer_name + (s.is_edited === "yes" ? " (edited)" : ""), s.customer_mobile, s.bricks_purchased, money(s.total_amount), money(s.amount_paid)],
+    textRow(tbody, [s.date, formatTime12(s.time), s.customer_name + (s.is_edited === "yes" ? " (edited)" : ""), s.customer_mobile, s.bricks_purchased, money(s.total_amount), money(s.amount_paid), Math.max(0,s.total_amount-s.amount_paid)>0 ? "Outstanding: " + money(s.total_amount-s.amount_paid) : "Fully paid"],
       [["Print Receipt", "printer", () => openReceipt(s.sale_id)]]);
+    const row=tbody.lastElementChild;
+    row.children[7].classList.add(s.amount_paid>=s.total_amount ? 'financial-positive' : 'financial-negative');
+    if(s.amount_paid<s.total_amount){
+      const button=document.createElement('button');button.textContent='Mark paid';
+      button.addEventListener('click',async()=>{
+        if(!await confirmAction(`Confirm receipt of the remaining ${money(s.total_amount-s.amount_paid)} from ${s.customer_name}?`))return;
+        try{
+          await apiFetch(`/admin/sales/${s.sale_id}/mark-paid`,{method:'POST',body:{expected_total:s.total_amount,expected_paid:s.amount_paid}});
+          await loadAllBrickSales();await loadMonthlySalesSummary();
+        }catch(e){showMessage(msgEl,e.message,true);}
+      });row.lastElementChild.append(button);
+    }
   }
   refreshIcons();
   } catch (e) { showMessage(msgEl, e.message, true); }

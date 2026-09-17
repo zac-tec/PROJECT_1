@@ -172,7 +172,7 @@ def generate_sale_receipt(sale: dict) -> bytes:
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(col_widths[0], 7, "Description", border=1, fill=True)
     pdf.cell(col_widths[1], 7, "Qty", border=1, align="C", fill=True)
-    pdf.cell(col_widths[2], 7, "Rate", border=1, align="R", fill=True)
+    pdf.cell(col_widths[2], 7, "Rate incl. GST", border=1, align="R", fill=True)
     pdf.cell(col_widths[3], 7, "Amount", border=1, align="R", fill=True, ln=True)
 
     pdf.set_font("Helvetica", "", 9)
@@ -191,6 +191,14 @@ def generate_sale_receipt(sale: dict) -> bytes:
     pdf.cell(sum(col_widths[:3]), 7, "Total", border=1, align="R")
     pdf.cell(col_widths[3], 7, f"Rs. {sale['total_amount']:.2f}", border=1, align="R", ln=True)
     pdf.ln(4)
+
+    if sale.get('gst_rate') is not None:
+        pdf.set_font('Helvetica', '', 9)
+        base_rate=sale['cost_per_brick']/(1+sale['gst_rate']/100)
+        pdf.cell(0, 5, f"Base price per brick: Rs. {base_rate:.4f}", ln=True)
+        pdf.cell(0, 5, f"Taxable value: Rs. {sale['taxable_amount']:.2f}", ln=True)
+        pdf.cell(0, 5, f"GST included ({sale['gst_rate']:g}%): Rs. {sale['gst_amount']:.2f}", ln=True)
+        pdf.ln(2)
 
     # ---- Payment Summary ----
     balance_due = round(sale["total_amount"] - sale["amount_paid"], 2)
