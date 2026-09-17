@@ -139,27 +139,22 @@ class DefaultPriceUpdateRequest(BaseModel):
 
 # --------------------------- Manager: Brick Sales ---------------------------
 class BrickSaleRequest(BaseModel):
-    @field_validator('customer_name', 'customer_mobile', mode='before')
-    @classmethod
-    def required_customer(cls, value):
-        if not isinstance(value,str) or not value.strip():
-            raise ValueError('Enter customer name and phone number.')
-        return value.strip()
-
-    @field_validator('customer_mobile')
-    @classmethod
-    def valid_phone(cls, value):
-        import re
-        if not re.fullmatch(r'[+0-9 ()-]+',value) or not 7 <= len(re.sub(r'\D','',value)) <= 15:
-            raise ValueError('Enter a valid customer phone number (7–15 digits).')
-        return value
-
-    customer_name: str = Field(..., min_length=1)
-    customer_mobile: str = Field(..., min_length=1)
+    customer_id: Optional[int] = Field(default=None,gt=0)
+    request_id: Optional[str] = None
+    customer_name: str = Field(default='',max_length=100)
+    customer_mobile: str = Field(default='',max_length=30)
+    @model_validator(mode='after')
+    def identity(self):
+        if not self.customer_id and not self.customer_name.strip() and not self.customer_mobile.strip():
+            raise ValueError('Enter a customer name or phone number, or select an existing customer.')
+        if self.request_id:
+            from uuid import UUID
+            self.request_id=str(UUID(self.request_id))
+        return self
     bricks_purchased: int = Field(..., gt=0)
     cost_per_brick: float = Field(..., gt=0, allow_inf_nan=False)
-    other_charges: float = Field(default=0.0, ge=0)
-    amount_paid: float = Field(..., ge=0)
+    other_charges: float = Field(default=0.0, ge=0,allow_inf_nan=False)
+    amount_paid: float = Field(..., ge=0,allow_inf_nan=False)
 
 
 class StockAdjustmentRequest(BaseModel):

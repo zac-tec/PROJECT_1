@@ -314,6 +314,7 @@ function clearSaleForm() {
   document.getElementById("saleCalculatedBox").classList.add("hidden");
   document.getElementById("saleSubmitBtn").classList.add("hidden");
   editingSaleId = null;
+  if(window.resetSaleAccount)window.resetSaleAccount();
   prefillDefaultPrice().catch(e => showMessage(msgEl, e.message, true));
 }
 
@@ -326,11 +327,11 @@ async function submitSale() {
   const other_charges = parseFloat(document.getElementById("saleOtherCharges").value) || 0;
   const amount_paid = parseFloat(document.getElementById("saleAmountPaid").value);
 
-  if (!customer_name || !customer_mobile) {
-    return showMessage(msgEl, "Enter the customer's name and mobile number.", true);
+  if (!document.getElementById("saleCustomerAccount").value && !customer_name && !customer_mobile) {
+    return showMessage(msgEl, "Enter the customer's name or phone number, or select an existing account.", true);
   }
 
-  const body = { customer_name, customer_mobile, bricks_purchased, cost_per_brick, other_charges, amount_paid };
+  const body = { customer_id:Number(document.getElementById("saleCustomerAccount").value)||null,request_id:window.saleAccountRequestId(),customer_name, customer_mobile, bricks_purchased, cost_per_brick, other_charges, amount_paid };
 
   try {
     if (editingSaleId !== null) {
@@ -341,7 +342,7 @@ async function submitSale() {
       showMessage(msgEl, "Sale recorded.");
     }
     clearSaleForm();
-    await sessionUI.afterSave(() => Promise.all([loadOutletStock(), loadTodaysSales()]));
+    await sessionUI.afterSave(() => Promise.all([loadOutletStock(), loadTodaysSales(),loadSaleCustomers()]));
   } catch (e) {
     showMessage(msgEl, e.message, true);
   }
@@ -353,7 +354,7 @@ async function loadTodaysSales() {
   const tbody = document.querySelector("#salesTable tbody");
   tbody.replaceChildren();
   for (const s of d.sales) {
-    textRow(tbody, [formatTime12(s.timestamp), s.customer_name + (s.is_edited === "yes" ? " (edited)" : ""), s.customer_mobile, s.bricks_purchased, money(s.total_amount), money(s.amount_paid)],
+    textRow(tbody, [formatTime12(s.timestamp), s.customer_name + (s.is_edited === "yes" ? " (edited)" : ""), s.customer_mobile, s.bricks_purchased, money(s.total_amount), money(s.amount_received)],
       [["Edit", "pencil", () => editSale(s)], ["Print Receipt", "printer", () => openReceipt(s.sale_id)]]);
   }
   refreshIcons();
@@ -366,12 +367,14 @@ function openReceipt(saleId) {
 
 function editSale(sale) {
   editingSaleId = sale.sale_id;
+  document.getElementById("saleCustomerAccount").value=String(sale.customer_id);
+  selectSaleCustomer();
   document.getElementById("saleCustomerName").value = sale.customer_name;
   document.getElementById("saleCustomerMobile").value = sale.customer_mobile;
   document.getElementById("saleBricksPurchased").value = sale.bricks_purchased;
   document.getElementById("saleCostPerBrick").value = sale.cost_per_brick;
   document.getElementById("saleOtherCharges").value = sale.other_charges;
-  document.getElementById("saleAmountPaid").value = sale.amount_paid;
+  document.getElementById("saleAmountPaid").value = sale.amount_received;
   ['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleAmountPaid'].forEach(id => sessionUI.record(document.getElementById(id)));
   recalculateSale();
   document.getElementById("saleCustomerName").scrollIntoView({ behavior: "smooth", block: "center" });

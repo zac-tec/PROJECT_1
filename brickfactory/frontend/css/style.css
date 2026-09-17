@@ -577,3 +577,5 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 
 .financial-positive, .financial-positive td { color: #15753b; font-weight: 700; }
 .financial-negative, .financial-negative td { color: #b42318; font-weight: 700; }
+
+.financial-credit, .financial-credit td { color:#175cd3; font-weight:700; }

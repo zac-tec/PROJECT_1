@@ -726,7 +726,7 @@ def view_all_brick_sales():
         cursor = conn.cursor()
         cursor.execute(
             """SELECT sale_id, sale_date, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
-                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount
+                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id
                FROM brick_sales ORDER BY sale_date DESC, sale_timestamp DESC"""
         )
         rows = cursor.fetchall()
@@ -750,6 +750,7 @@ def view_all_brick_sales():
             "total_amount": float(r["total_amount"]),
             "amount_paid": float(r["amount_paid"]),
             "is_edited": r["is_edited"],
+            "customer_id": r["customer_id"],
             "gst_amount": float(r["gst_amount"]) if r["gst_amount"] is not None else None,
             "taxable_amount": float(r["taxable_amount"]) if r["taxable_amount"] is not None else None,
         }

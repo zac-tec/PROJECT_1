@@ -11,19 +11,4 @@ class Settlement(BaseModel):
 
 @router.post('/{sale_id}/mark-paid')
 def mark_paid(sale_id:int,body:Settlement,user=Depends(require_admin)):
-    conn=get_connection()
-    try:
-        with conn.cursor() as c:
-            c.execute('SELECT total_amount,amount_paid FROM brick_sales WHERE sale_id=%s FOR UPDATE',(sale_id,))
-            row=c.fetchone()
-            if not row:raise HTTPException(404,'Sale not found.')
-            total,paid=row['total_amount'],row['amount_paid']
-            if paid>=total:return {'message':'Already fully paid.','amount_paid':paid,'balance':0}
-            if total!=body.expected_total or paid!=body.expected_paid:
-                raise HTTPException(409,'This invoice changed. Refresh and check the balance before marking it paid.')
-            c.execute('UPDATE brick_sales SET amount_paid=total_amount WHERE sale_id=%s',(sale_id,))
-            c.execute('INSERT INTO sale_payment_audit(sale_id,recorded_by,previous_paid,new_paid) VALUES(%s,%s,%s,%s)',(sale_id,user['username'],paid,total))
-        conn.commit()
-        return {'message':'Invoice marked fully paid.','amount_paid':total,'balance':0}
-    except Exception:conn.rollback();raise
-    finally:conn.close()
+    raise HTTPException(409,'Use Customer Accounts to record a payment. Payments clear the oldest unpaid invoices first.')

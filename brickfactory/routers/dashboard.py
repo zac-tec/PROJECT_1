@@ -73,6 +73,8 @@ def activity_for_date(target_date):
             "total_paid": round(float(sales_row["total_paid"]), 2),
         }
 
+        from customer_accounts import cash_received
+        sales["total_paid"]=float(cash_received(cursor,today,today))
         from historical_reporting import applied_days
         from production_metrics import daily_averages
         history=next((d for d in applied_days(cursor)['days'] if d['date']==str(today)),None)
@@ -344,7 +346,7 @@ def fun_facts():
         all_dates = [r["production_date"] for r in cursor.fetchall()]
 
         cursor.execute(
-            "SELECT COALESCE(SUM(total_amount - amount_paid), 0) AS pending FROM brick_sales WHERE total_amount > amount_paid"
+            "SELECT COALESCE(sum(GREATEST(balance,0)),0) AS pending FROM (SELECT sum(amount) AS balance FROM customer_ledger GROUP BY customer_id) accounts"
         )
         pending_dues = float(cursor.fetchone()["pending"])
 

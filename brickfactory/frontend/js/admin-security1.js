@@ -285,7 +285,7 @@ async function loadMonthlySalesSummary() {
       { label: "Sales revenue (excluding GST)", value: d.total_revenue === null ? "Price required — use Profit Calculator" : money(d.total_revenue) },
       { label: "GST on new invoices", value: money(d.recorded_gst) },
       { label: "Historical GST", value: d.historical_gst===null ? 'Not recorded' : money(d.historical_gst) },
-      { label: "Collected on new invoices (older payment details unavailable)", value: money(d.total_collected), bold: true },
+      { label: "Net payments received this month (includes later payments / refunds)", value: money(d.total_collected), bold: true },
     ]);
   } catch (e) { showMessage(msgEl, e.message, true); }
 }
@@ -300,16 +300,9 @@ async function loadAllBrickSales() {
       [["Print Receipt", "printer", () => openReceipt(s.sale_id)]]);
     const row=tbody.lastElementChild;
     row.children[7].classList.add(s.amount_paid>=s.total_amount ? 'financial-positive' : 'financial-negative');
-    if(s.amount_paid<s.total_amount){
-      const button=document.createElement('button');button.textContent='Mark paid';
-      button.addEventListener('click',async()=>{
-        if(!await confirmAction(`Confirm receipt of the remaining ${money(s.total_amount-s.amount_paid)} from ${s.customer_name}?`))return;
-        try{
-          await apiFetch(`/admin/sales/${s.sale_id}/mark-paid`,{method:'POST',body:{expected_total:s.total_amount,expected_paid:s.amount_paid}});
-          await loadAllBrickSales();await loadMonthlySalesSummary();
-        }catch(e){showMessage(msgEl,e.message,true);}
-      });row.lastElementChild.append(button);
-    }
+    const accountButton=document.createElement('button');accountButton.textContent='View account';
+    accountButton.addEventListener('click',()=>openCustomerAccount(s.customer_id));row.lastElementChild.append(accountButton);
+
   }
   refreshIcons();
   } catch (e) { showMessage(msgEl, e.message, true); }
@@ -420,7 +413,7 @@ onSectionLoad("productionCosts", loadProductionCosts);
 onSectionLoad("stock", () => Promise.all([loadStockOverview(), loadMaxProducible()]));
 onSectionLoad("profit", async () => { await loadOverheadDefaultsForProfit(); });
 onSectionLoad("orders", loadFunFacts);
-onSectionLoad("brickSales", () => Promise.all([loadAdminOutletStock(), loadMonthlySalesSummary(), loadAllBrickSales()]));
+onSectionLoad("brickSales", loadAdminOutletStock);
 
 (async function init() {
   try {

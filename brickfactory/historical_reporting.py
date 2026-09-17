@@ -42,6 +42,10 @@ def monthly_sales(cursor, month):
     count=sum(len(d['sales']) for d in days)
     cursor.execute("SELECT COALESCE(SUM(bricks_purchased),0) AS bricks, COALESCE(SUM(COALESCE(taxable_amount,total_amount)),0) AS revenue, COALESCE(SUM(total_amount),0) AS billed, COALESCE(SUM(gst_amount),0) AS gst, COALESCE(SUM(amount_paid),0) AS collected, COUNT(*) AS count FROM brick_sales WHERE TO_CHAR(sale_date,'YYYY-MM')=%s",(month,))
     r=cursor.fetchone()
+    from customer_accounts import cash_received
+    from calendar import monthrange
+    y,m=map(int,month.split('-'))
+    received=cash_received(cursor,date(y,m,1),date(y,m,monthrange(y,m)[1]))
     saved_price=get_text_setting(cursor,'historical_sales_price_'+month,'')
     price=float(saved_price) if saved_price else None
     gst_rate=float(get_text_setting(cursor,'historical_sales_gst_'+month,'0'))
@@ -52,5 +56,5 @@ def monthly_sales(cursor, month):
     hist_gross=float(sum(t['total_amount'] for t in taxes)) if price is not None else None
     hist_gst=float(sum(t['gst_amount'] for t in taxes)) if price is not None else None
     return dict(historical_unit_price=price, historical_base_price=net_price, historical_gst_rate=gst_rate, historical_billed=hist_gross,historical_gst=hist_gst, historical_revenue=hist_net, historical_bricks=historical,recorded_bricks=int(r['bricks']),total_bricks_sold=historical+int(r['bricks']),
-        recorded_revenue=float(r['revenue']),recorded_billed=float(r['billed']),recorded_gst=float(r['gst']),recorded_collected=float(r['collected']),
+        recorded_revenue=float(r['revenue']),recorded_billed=float(r['billed']),recorded_gst=float(r['gst']),recorded_collected=float(received),
         total_sales_count=count+int(r['count']),historical_sales_count=count)

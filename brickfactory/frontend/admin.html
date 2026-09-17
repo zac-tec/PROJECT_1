@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=gst1">
+<link rel="stylesheet" href="css/style.css?v=accounts1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -35,7 +35,8 @@
   <nav class="sidebar" id="sidebar">
     <button data-section="dashboard" title="Dashboard"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span><span id="dashboardBadge" class="hidden"></span></button>
     <button data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Daily Activity</span></button>
-    <button data-section="brickSales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
+    <button data-section="customerAccounts" onclick="closeRightMenu()" title="Customer Accounts"><i data-lucide="users" class="icon"></i><span>Customer Accounts</span></button>
+    <button data-section="brickSales" title="Brick Stock"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Stock</span></button>
     <button data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
     <button data-section="stock" title="Stock Overview"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
     <button data-section="pricing" title="Rates, Charges, Fixed, Price and Recipe"><i data-lucide="sliders-horizontal" class="icon"></i><span>Pricing</span></button>
@@ -50,7 +51,8 @@
     <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
     <button data-section="dashboard" onclick="closeRightMenu()"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span></button>
     <button data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Daily Activity</span></button>
-    <button data-section="brickSales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
+    <button data-section="customerAccounts" onclick="closeRightMenu()" title="Customer Accounts"><i data-lucide="users" class="icon"></i><span>Customer Accounts</span></button>
+    <button data-section="brickSales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Stock</span></button>
     <button data-section="productionCosts" onclick="closeRightMenu()"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
     <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Stock Overview</span></button>
     <button data-section="pricing" onclick="closeRightMenu()"><i data-lucide="sliders-horizontal" class="icon"></i><span>Pricing: Rates, Charges, Fixed, Price &amp; Recipe</span></button>
@@ -345,6 +347,16 @@
         <div id="stockHistoryOutput" style="overflow:auto;margin-top:16px"></div>
       </div>
 
+    </section>
+
+<section id="sec-customerAccounts" class="hidden">
+<div class="card"><h2>Customer Accounts</h2><p>Red: customer owes the factory · Green: settled · Blue: factory owes customer.</p>
+<label>Find customer<input id="accountSearch" placeholder="Name or phone"></label><button id="accountRefresh">Refresh accounts</button>
+<div id="accountList" class="table-scroll"></div></div>
+<div class="card"><h3>Add customer</h3><p>Enter a name or phone number; both are not required.</p>
+<label>Name<input id="newAccountName" maxlength="100"></label><label>Phone<input id="newAccountPhone" maxlength="30"></label>
+<button id="createAccount">Add customer</button><p id="accountMessage" role="status"></p></div>
+<div id="accountDetail" class="card hidden"></div>
       <div class="card">
         <h2>Monthly Sales Summary</h2>
         <label>Month (leave blank for current month)</label>
@@ -364,27 +376,20 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2><i data-lucide="search" class="icon"></i> Customer Lookup</h2>
-        <label>Search by Name or Mobile Number</label>
-        <input id="customerSearchInput" type="text" placeholder="e.g. Ramesh or 9876543210" oninput="searchCustomers()">
-        <div id="customerSearchResults" style="margin-top:10px;"></div>
-        <div id="customerHistoryOutput" style="margin-top:14px;"></div>
-      </div>
-    </section>
-
+</section>
   </main>
 </div>
 
 <script src="js/api-security1.js?v=push1"></script>
 <script src="js/recovery.js?v=activity2"></script>
-<script src="js/dashboard-security1.js?v=gst1"></script>
-<script src="js/admin-security1.js?v=gst1"></script>
+<script src="js/dashboard-security1.js?v=accounts1"></script>
+<script src="js/admin-security1.js?v=accounts1"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/manager-access.js?v=activity2"></script>
 <script src="js/notifications.js?v=push1"></script>
 <script src="js/production-settings.js?v=dates1"></script>
+<script src="js/customer-accounts.js?v=accounts1"></script>
 </body>
 </html>
