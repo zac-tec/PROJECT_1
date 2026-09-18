@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Manager — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=book2?v=manager-spacing1">
+<link rel="stylesheet" href="css/style.css?v=entrydates1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -30,7 +30,7 @@
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <button data-section="production" title="Today's Production"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
+    <button data-section="production" title="Production"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
     <button data-section="stock" title="Raw Materials"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
     <button data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
     <button data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
@@ -41,7 +41,7 @@
 
   <aside class="right-menu" aria-label="Full navigation menu">
     <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
-    <button data-section="production" onclick="closeRightMenu()"><i data-lucide="hard-hat" class="icon"></i><span>Today's Production</span></button>
+    <button data-section="production" onclick="closeRightMenu()"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
     <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Raw Materials Stock</span></button>
     <button data-section="sales" onclick="closeRightMenu()"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Sales</span></button>
     <button data-section="adjustments" onclick="closeRightMenu()"><i data-lucide="package-minus" class="icon"></i><span>Stock Adjustments</span></button>
@@ -51,6 +51,13 @@
 
   <main class="content">
     <div id="msg" class="msg hidden"></div>
+    <div class="card entry-date-card" id="entryDateCard">
+      <div><label for="productionDate">Entry date</label><p>Choose the day you are recording production and sales for.</p></div>
+      <div class="entry-date-controls"><input id="productionDate" type="date" aria-describedby="productionDateHelp">
+        <button type="button" class="secondary" id="entryToday">Today</button>
+        <button type="button" class="secondary" id="entryYesterday">Yesterday</button></div>
+      <p id="productionDateHelp" role="status"></p>
+    </div>
 
     <!-- PRODUCTION ENTRY -->
     <section id="sec-notifications" class="hidden"><div class="card" id="pushSettings"><h2>App notifications</h2>
@@ -60,7 +67,6 @@
 <button type="button" data-push-enable>Enable notifications</button>
 <button type="button" data-push-disable hidden>Disable notifications</button></div></section>
     <section id="sec-production">
-      <div class="card"><label for="productionDate">Production date</label><input id="productionDate" type="date"><p id="productionDateHelp"></p></div>
       <div class="card" id="existingEntryCard"></div>
 
       <div class="card">
@@ -152,7 +158,7 @@
       </div>
 
       <div class="card">
-        <h2>New Sale</h2>
+        <h2 id="saleFormHeading">New sale</h2><p id="saleDateNotice" role="status"></p>
         <label>Customer account<select id="saleCustomerAccount" onchange="selectSaleCustomer()"><option value="">New customer</option></select></label><p id="saleAccountBalance"></p><p>Name or phone is required for a new customer.</p>
         <label>Customer Name (optional if phone entered)</label>
         <input id="saleCustomerName" type="text" placeholder="Full name">
@@ -171,7 +177,7 @@
           <p style="margin:4px 0;">Total Amount (incl. other charges): <strong id="saleTotalAmount">—</strong></p>
         </div>
 
-        <label>Money received with this sale (Rs.)</label>
+        <label>Money received on the selected sale date (Rs.)</label>
         <input id="saleAmountPaid" type="number" step="0.01" min="0" oninput="recalculateSale()">
 
         <button id="saleSubmitBtn" class="primary hidden" onclick="submitSale()">Submit Sale</button>
@@ -179,10 +185,10 @@
       </div>
 
       <div class="card">
-        <h2>Today's Sales</h2>
+        <h2 id="selectedSalesHeading">Sales for selected date</h2><p id="selectedSalesStatus" role="status"></p>
         <button class="secondary" onclick="loadTodaysSales()"><i data-lucide="refresh-cw" class="icon"></i> Refresh</button>
         <table id="salesTable" style="margin-top:10px;">
-          <thead><tr><th>Time</th><th>Customer</th><th>Mobile</th><th>Bricks</th><th>Total</th><th>Received with sale</th><th></th></tr></thead>
+          <thead><tr><th>Entered</th><th>Customer</th><th>Mobile</th><th>Bricks</th><th>Total</th><th>Received with sale</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -253,10 +259,10 @@
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/labour-groups.js?v=activity2"></script>
-<script src="js/manager-security1.js?v=accounts1"></script>
+<script src="js/manager-security1.js?v=entrydates1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/notifications.js?v=push1"></script>
-<script src="js/production-settings.js?v=dates1"></script>
-<script src="js/sale-customer-account.js?v=accounts1"></script>
+<script src="js/production-settings.js?v=entrydates1"></script>
+<script src="js/sale-customer-account.js?v=entrydates1"></script>
 </body>
 </html>

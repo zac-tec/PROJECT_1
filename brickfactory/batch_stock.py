@@ -61,9 +61,35 @@ def sync_total(cursor):
     return cursor.fetchone()['total_bricks']
 
 
-def movement(cursor, batch_id, quantity, reason, sale_id=None):
-    cursor.execute('INSERT INTO brick_batch_movements(batch_id, quantity, reason, sale_id) VALUES(%s,%s,%s,%s)',
-                   (batch_id, quantity, reason, sale_id))
+def movement(cursor, batch_id, quantity, reason, sale_id=None, effective_date=None):
+    if effective_date and effective_date < factory_today():
+        effective = datetime.datetime.combine(effective_date, datetime.time.max, tzinfo=ZoneInfo('Asia/Kolkata'))
+        recorded = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        cursor.execute('INSERT INTO brick_batch_movements(batch_id,quantity,reason,sale_id,occurred_at) VALUES(%s,%s,%s,%s,%s)',
+                       (batch_id,quantity,f'{reason}; entered at {recorded}',sale_id,effective))
+    else:
+        cursor.execute('INSERT INTO brick_batch_movements(batch_id, quantity, reason, sale_id) VALUES(%s,%s,%s,%s)',
+                       (batch_id, quantity, reason, sale_id))
+
+
+def available_for_sale(cursor, today):
+    """Current unallocated stock that can also be removed on the selected day.
+
+    Reserve all later movements: a late entry must never make an intervening
+    batch balance negative or consume a delivery received after the sale.
+    """
+    cursor.execute("SELECT * FROM brick_batches WHERE remaining_quantity>0 AND received_date<=%s AND (source<>'production' OR production_date<=%s) ORDER BY COALESCE(production_date,received_date),batch_id FOR UPDATE",
+                   (today,today-datetime.timedelta(days=7)))
+    rows=cursor.fetchall()
+    if today < factory_today():
+        end=datetime.datetime.combine(today,datetime.time.max,tzinfo=ZoneInfo('Asia/Kolkata'))
+        for row in rows:
+            cursor.execute('SELECT quantity FROM brick_batch_movements WHERE batch_id=%s AND occurred_at>%s ORDER BY occurred_at DESC,id DESC',(row['batch_id'],end))
+            running=row['remaining_quantity'];available=running
+            for event in cursor.fetchall():
+                running-=event['quantity'];available=min(available,running)
+            row['remaining_quantity']=max(0,available)
+    return rows
 
 
 def production_change(cursor, date, delta):
@@ -98,34 +124,32 @@ def production_change(cursor, date, delta):
 
 def allocate_sale(cursor, sale_id, quantity, today=None):
     today = today or factory_today()
-    summary = stock_summary(cursor,today)
-    if quantity > summary['saleable']:
-        raise HTTPException(409, f"Only {summary['saleable']} bricks are saleable; {summary['curing']} are still under 7 days old. Requested: {quantity}.")
-    # Consume the oldest eligible stock first. Receipt date is the age reference
-    # for opening stock, returns, and transfers because they arrive fully cured.
-    cursor.execute("SELECT * FROM brick_batches WHERE remaining_quantity>0 AND (source<>'production' OR production_date<=%s) ORDER BY COALESCE(production_date,received_date),batch_id FOR UPDATE", (today-datetime.timedelta(days=7),))
+    rows = available_for_sale(cursor,today)
+    saleable = sum(row['remaining_quantity'] for row in rows)
+    if quantity > saleable:
+        raise HTTPException(409, f"Only {saleable} unallocated bricks are eligible for {today.strftime('%d-%m-%Y')}. Bricks must be at least 7 days old and already received on that date; later stock movements are protected.")
     remaining = quantity
-    for row in cursor.fetchall():
+    for row in rows:
         take = min(remaining,row['remaining_quantity'])
         if not take:
             break
         cursor.execute('UPDATE brick_batches SET remaining_quantity=remaining_quantity-%s WHERE batch_id=%s',(take,row['batch_id']))
         cursor.execute('INSERT INTO brick_sale_allocations(sale_id,batch_id,quantity) VALUES(%s,%s,%s)',(sale_id,row['batch_id'],take))
-        movement(cursor,row['batch_id'],-take,'sale',sale_id)
+        movement(cursor,row['batch_id'],-take,'sale',sale_id,today)
         remaining -= take
     if remaining:
         raise HTTPException(409, 'Stock changed. Reload and try again.')
     sync_total(cursor)
 
 
-def restore_sale(cursor, sale_id):
+def restore_sale(cursor, sale_id, effective_date=None):
     cursor.execute('SELECT batch_id,quantity FROM brick_sale_allocations WHERE sale_id=%s',(sale_id,))
     rows = cursor.fetchall()
     if not rows:
         raise HTTPException(409, 'This historical sale has no batch allocation and cannot be edited.')
     for row in rows:
         cursor.execute('UPDATE brick_batches SET remaining_quantity=remaining_quantity+%s WHERE batch_id=%s',(row['quantity'],row['batch_id']))
-        movement(cursor,row['batch_id'],row['quantity'],'sale correction reversal',sale_id)
+        movement(cursor,row['batch_id'],row['quantity'],'sale correction reversal',sale_id,effective_date)
     cursor.execute('DELETE FROM brick_sale_allocations WHERE sale_id=%s',(sale_id,))
     sync_total(cursor)
 

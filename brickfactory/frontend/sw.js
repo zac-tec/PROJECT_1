@@ -7,12 +7,12 @@
   Bump CACHE_NAME whenever you deploy new frontend files so old clients
   pick up the update instead of serving a stale cached copy.
 */
-const CACHE_NAME = "brickfactory-shell-book2";
+const CACHE_NAME = "brickfactory-shell-entrydates1";
 const SHELL_FILES = [
   "login.html",
   "js/customer-accounts.js?v=book2",
-  "js/sale-customer-account.js?v=accounts1",
-  "js/production-settings.js?v=dates1",
+  "js/sale-customer-account.js?v=entrydates1",
+  "js/production-settings.js?v=entrydates1",
   "js/notifications.js?v=push1",
   "js/date-display.js?v=activity2",
   "admin.html",
@@ -21,7 +21,7 @@ const SHELL_FILES = [
   "js/api-security1.js",
   "js/recovery.js",
   "js/admin-security1.js",
-  "js/manager-security1.js",
+  "js/manager-security1.js?v=entrydates1",
   "js/dashboard-security1.js",
   "manifest.json",
   "js/presence.js?v=presence2",

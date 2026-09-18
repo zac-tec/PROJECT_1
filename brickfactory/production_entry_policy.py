@@ -1,4 +1,4 @@
-"""Server-enforced production entry window in factory time."""
+"""Server-enforced production and sales entry window in factory time."""
 from datetime import timedelta
 from fastapi import HTTPException
 from batch_stock import factory_today
@@ -21,7 +21,7 @@ def validate_entry_date(cursor, target=None):
     window = entry_window(cursor)
     target = target or window['today']
     if target < window['earliest_date'] or target > window['today']:
-        raise HTTPException(403, 'Select a production date from '
+        raise HTTPException(403, 'Select an entry date from '
             + window['earliest_date'].strftime('%d-%m-%Y') + ' to '
             + window['today'].strftime('%d-%m-%Y') + '. The admin controls the previous-day allowance; finalized opening history is protected.')
     return target

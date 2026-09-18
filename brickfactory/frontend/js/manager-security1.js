@@ -5,14 +5,63 @@ const msgEl = document.getElementById("msg");
 let currentPreview = null; // holds {mixes, bricks_produced, calculated_field} between preview and save
 let editingSaleId = null;   // null = creating a new sale, otherwise editing this sale_id
 
-// -------------------- Today's Existing Entry --------------------
-// GET /manager/production/today -> {exists: bool, ...}
-async function checkExistingEntry() {
+let entryWindow = null;
+let acceptedEntryDate = '';
+let saleSaving = false;
+const displayEntryDate = value => value.split('-').reverse().join('-');
+function updateEntryLabels() {
+  const day = document.getElementById('productionDate').value;
+  if (!day) return;
+  document.getElementById('saleFormHeading').textContent = editingSaleId === null ? 'New sale' : 'Correct sale';
+  document.getElementById('saleDateNotice').textContent = `Sale date: ${displayEntryDate(day)}. Money entered here is recorded as received on this date. Later payments are entered by admin in Customer Accounts.`;
+  document.getElementById('selectedSalesHeading').textContent = `Sales · ${displayEntryDate(day)}`;
+}
+async function refreshEntryWindow() {
   const input = document.getElementById('productionDate');
-  const window = await apiFetch('/production-entry/settings');
-  input.min = window.earliest_date; input.max = window.today;
-  if (!input.value) input.value = window.today;
-  document.getElementById('productionDateHelp').textContent = `Admin allowance: ${window.backdate_days} previous day(s). Available: ${window.earliest_date.split('-').reverse().join('-')} to ${window.today.split('-').reverse().join('-')}.`;
+  entryWindow = await apiFetch('/production-entry/settings');
+  input.min = entryWindow.earliest_date; input.max = entryWindow.today;
+  if (!input.value) input.value = entryWindow.today;
+  if (!acceptedEntryDate) acceptedEntryDate = input.value;
+  const yesterday = new Date(entryWindow.today + 'T12:00:00Z');
+  yesterday.setUTCDate(yesterday.getUTCDate()-1);
+  document.getElementById('entryYesterday').dataset.date = yesterday.toISOString().slice(0,10);
+  document.getElementById('entryYesterday').disabled = yesterday.toISOString().slice(0,10) < input.min;
+  document.getElementById('productionDateHelp').textContent = `Production and sales: ${displayEntryDate(input.min)} to ${displayEntryDate(input.max)}. Admin allows ${entryWindow.backdate_days} previous day(s).`;
+  sessionUI.record(input);
+  updateEntryLabels();
+}
+async function changeEntryDate() {
+  const input = document.getElementById('productionDate');
+  const next = input.value;
+  if (saleSaving || !next || next < input.min || next > input.max) {
+    input.value = acceptedEntryDate;
+    sessionUI.record(input);
+    return showMessage(msgEl, 'Choose a date within the admin allowance.', true);
+  }
+  if (next === acceptedEntryDate) return;
+  const draftIds = ['mixesInput','bricksInput','labourersInput','labourHoursInput','miscAmountInput','miscNoteInput','saleCustomerName','saleCustomerMobile','saleBricksPurchased','saleCostPerBrick','saleAmountPaid'];
+  const hasDraft = draftIds.some(id => document.getElementById(id).value !== '') || [...document.querySelectorAll('[data-labour]')].some(el => el.value !== '') || editingSaleId !== null;
+  if (hasDraft && !confirm(`Change entry date to ${displayEntryDate(next)}? Unsaved production and sale entries will be cleared.`)) {
+    input.value = acceptedEntryDate; sessionUI.record(input); return;
+  }
+  if (hasDraft) {
+    for (const id of draftIds) document.getElementById(id).value = '';
+    sessionUI.discard([...draftIds,'labourGroupsDraft','labourManualMode']);
+    resetLabourGroups(); clearSaleForm();
+  }
+  acceptedEntryDate = next;
+  currentPreview = null;
+  document.getElementById('previewOutput').classList.add('hidden');
+  sessionUI.record(input); updateEntryLabels();
+  document.querySelector('#salesTable tbody').replaceChildren();
+  document.getElementById('selectedSalesStatus').textContent = 'Loading…';
+  document.getElementById('existingEntryCard').textContent = 'Loading…';
+  try { await Promise.all([checkExistingEntry(), loadTodaysSales()]); }
+  catch(e) { showMessage(msgEl, e.message, true); }
+}
+async function checkExistingEntry() {
+  await refreshEntryWindow();
+  const input = document.getElementById('productionDate');
   if (input.value < input.min || input.value > input.max) {
     document.getElementById('existingEntryCard').textContent = 'This date is outside the current allowance. Select an available date.';
     return;
@@ -303,7 +352,7 @@ function recalculateSale() {
 }
 
 function clearSaleForm() {
-  sessionUI.discard(['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleAmountPaid']);
+  sessionUI.discard(['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleAmountPaid', 'saleCustomerAccount']);
   sessionUI.saleCleared();
   document.getElementById("saleCustomerName").value = "";
   document.getElementById("saleCustomerMobile").value = "";
@@ -314,12 +363,17 @@ function clearSaleForm() {
   document.getElementById("saleCalculatedBox").classList.add("hidden");
   document.getElementById("saleSubmitBtn").classList.add("hidden");
   editingSaleId = null;
+  updateEntryLabels();
   if(window.resetSaleAccount)window.resetSaleAccount();
   prefillDefaultPrice().catch(e => showMessage(msgEl, e.message, true));
 }
 
 // POST /manager/sales (new) or PUT /manager/sales/{id} (editing)
 async function submitSale() {
+  if (saleSaving) return;
+  const dateInput = document.getElementById('productionDate');
+  const sale_date = dateInput.value;
+  if (!sale_date || !dateInput.checkValidity()) return showMessage(msgEl, 'Select an allowed entry date first.', true);
   const customer_name = document.getElementById("saleCustomerName").value.trim();
   const customer_mobile = document.getElementById("saleCustomerMobile").value.trim();
   const bricks_purchased = parseInt(document.getElementById("saleBricksPurchased").value, 10);
@@ -331,30 +385,41 @@ async function submitSale() {
     return showMessage(msgEl, "Enter the customer's name or phone number, or select an existing account.", true);
   }
 
-  const body = { customer_id:Number(document.getElementById("saleCustomerAccount").value)||null,request_id:window.saleAccountRequestId(),customer_name, customer_mobile, bricks_purchased, cost_per_brick, other_charges, amount_paid };
+  const body = { sale_date, customer_id:Number(document.getElementById("saleCustomerAccount").value)||null,request_id:window.saleAccountRequestId(),customer_name, customer_mobile, bricks_purchased, cost_per_brick, other_charges, amount_paid };
 
+  if (entryWindow && sale_date !== entryWindow.today && !confirm(`Save this sale and its money received for ${displayEntryDate(sale_date)}?`)) return;
+  saleSaving = true; dateInput.disabled = true;
+  document.getElementById('saleSubmitBtn').disabled = true;
   try {
     if (editingSaleId !== null) {
       await apiFetch(`/manager/sales/${editingSaleId}`, { method: "PUT", body });
-      showMessage(msgEl, "Sale updated.");
+      showMessage(msgEl, `Sale updated for ${displayEntryDate(sale_date)}.`);
     } else {
       await apiFetch("/manager/sales", { method: "POST", body });
-      showMessage(msgEl, "Sale recorded.");
+      showMessage(msgEl, `Sale recorded for ${displayEntryDate(sale_date)}.`);
     }
     clearSaleForm();
     await sessionUI.afterSave(() => Promise.all([loadOutletStock(), loadTodaysSales(),loadSaleCustomers()]));
   } catch (e) {
     showMessage(msgEl, e.message, true);
+  } finally {
+    saleSaving = false; dateInput.disabled = false;
+    document.getElementById('saleSubmitBtn').disabled = false;
   }
 }
 
 // GET /manager/sales/today -> {sales: [...]}
 async function loadTodaysSales() {
-  const d = await apiFetch("/manager/sales/today");
+  if (!entryWindow) await refreshEntryWindow();
+  const selected = document.getElementById('productionDate').value;
+  const d = await apiFetch('/manager/sales/today?date=' + encodeURIComponent(selected));
+  if (selected !== document.getElementById('productionDate').value) return;
+  updateEntryLabels();
+  document.getElementById('selectedSalesStatus').textContent = d.sales.length ? `${d.sales.length} sale(s) saved.` : 'No sales saved for this date.';
   const tbody = document.querySelector("#salesTable tbody");
   tbody.replaceChildren();
   for (const s of d.sales) {
-    textRow(tbody, [formatTime12(s.timestamp), s.customer_name + (s.is_edited === "yes" ? " (edited)" : ""), s.customer_mobile, s.bricks_purchased, money(s.total_amount), money(s.amount_received)],
+    textRow(tbody, [s.recorded_at ? new Date(s.recorded_at).toLocaleString('en-IN', {timeZone:'Asia/Kolkata',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : formatTime12(s.timestamp), s.customer_name + (s.is_edited === "yes" ? " (edited)" : ""), s.customer_mobile, s.bricks_purchased, money(s.total_amount), money(s.amount_received)],
       [["Edit", "pencil", () => editSale(s)], ["Print Receipt", "printer", () => openReceipt(s.sale_id)]]);
   }
   refreshIcons();
@@ -366,7 +431,9 @@ function openReceipt(saleId) {
 }
 
 function editSale(sale) {
+  if (sale.sale_date !== document.getElementById('productionDate').value) return;
   editingSaleId = sale.sale_id;
+  updateEntryLabels();
   document.getElementById("saleCustomerAccount").value=String(sale.customer_id);
   selectSaleCustomer();
   document.getElementById("saleCustomerName").value = sale.customer_name;
@@ -375,7 +442,7 @@ function editSale(sale) {
   document.getElementById("saleCostPerBrick").value = sale.cost_per_brick;
   document.getElementById("saleOtherCharges").value = sale.other_charges;
   document.getElementById("saleAmountPaid").value = sale.amount_received;
-  ['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleAmountPaid'].forEach(id => sessionUI.record(document.getElementById(id)));
+  ['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleAmountPaid', 'saleCustomerAccount', 'productionDate'].forEach(id => sessionUI.record(document.getElementById(id)));
   recalculateSale();
   document.getElementById("saleCustomerName").scrollIntoView({ behavior: "smooth", block: "center" });
   showMessage(msgEl, `Editing sale for ${sale.customer_name}. Change the fields and click Update Sale.`);
@@ -507,10 +574,14 @@ for (const id of ["mixesInput", "bricksInput", "productionDate"]) {
     document.getElementById("previewOutput").classList.add("hidden");
   });
 }
-document.getElementById('productionDate').addEventListener('change', () => {
-  checkExistingEntry().catch(e => showMessage(msgEl, e.message, true));
-});
+document.getElementById('productionDate').addEventListener('change', changeEntryDate);
+for (const [id, getDate] of [['entryToday', () => entryWindow?.today], ['entryYesterday', () => document.getElementById('entryYesterday').dataset.date]]) {
+  document.getElementById(id).addEventListener('click', () => {
+    if (saleSaving || !getDate()) return;
+    document.getElementById('productionDate').value = getDate(); changeEntryDate();
+  });
+}
 (async function init() {
-  try { refreshIcons(); await initSectionNav("production"); }
+  try { refreshIcons(); await initSectionNav("production"); await refreshEntryWindow(); }
   catch (e) { showMessage(msgEl, e.message, true); }
 })();

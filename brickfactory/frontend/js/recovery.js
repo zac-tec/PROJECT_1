@@ -34,7 +34,7 @@ const sessionUI = (() => {
     el.hidden = false;
   }
   function record(el) {
-    if (!el.id || !el.closest("main.content > section") || el.type === "password") return;
+    if (!el.id || (!el.closest("main.content > section") && el.id !== "productionDate") || el.type === "password") return;
     state.fields[el.id] = valueOf(el);
     if (["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleAmountPaid"].includes(el.id)) {
       for (const id of ["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleAmountPaid"]) {

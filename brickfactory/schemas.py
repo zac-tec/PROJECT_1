@@ -139,6 +139,7 @@ class DefaultPriceUpdateRequest(BaseModel):
 
 # --------------------------- Manager: Brick Sales ---------------------------
 class BrickSaleRequest(BaseModel):
+    sale_date: Optional[date] = None
     customer_id: Optional[int] = Field(default=None,gt=0)
     request_id: Optional[str] = None
     customer_name: str = Field(default='',max_length=100)

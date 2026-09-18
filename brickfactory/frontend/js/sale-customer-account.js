@@ -8,7 +8,7 @@ async function loadSaleCustomers(){
  const select=document.getElementById('saleCustomerAccount'),old=select.value;
  select.replaceChildren(new Option('New customer — enter name or phone',''));
  for(const c of saleCustomers)select.append(new Option(`${c.name||'Customer'}${c.phone?' · '+c.phone:''}`,c.customer_id));
- select.value=old;selectSaleCustomer();
+ sessionUI.savedValue('saleCustomerAccount',old);selectSaleCustomer();
 }
 function selectSaleCustomer(){
  const c=saleCustomers.find(c=>String(c.customer_id)===document.getElementById('saleCustomerAccount').value);

@@ -79,6 +79,7 @@ def _start_background_scheduler():
         connection.cursor().execute(Path(__file__).with_name("migration_sales_gst.sql").read_text())
         connection.cursor().execute(Path(__file__).with_name("migration_customer_accounts.sql").read_text())
         connection.cursor().execute(Path(__file__).with_name("migration_customer_book.sql").read_text())
+        connection.cursor().execute(Path(__file__).with_name("migration_sale_entry_date.sql").read_text())
         from customer_accounts import migrate_accounts
         migrate_accounts(connection.cursor())
         connection.commit()

@@ -14,6 +14,8 @@ To add a new brick-sales-related feature later: add a function here.
 """
 
 import datetime
+from zoneinfo import ZoneInfo
+from production_entry_policy import validate_entry_date
 from sales_tax import breakdown
 from customer_accounts import resolve_customer, lock_account, record_sale
 from batch_stock import lock_stock, stock_summary, allocate_sale, restore_sale, adjust_batches, factory_today
@@ -55,19 +57,21 @@ def view_default_price():
 # Today's Sales (view + edit)
 # ---------------------------------------------------------
 @router.get("/today", dependencies=[Depends(require_manager)])
-def view_todays_sales():
+def view_todays_sales(date: datetime.date | None = None):
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        today = datetime.date.today()
+        today = validate_entry_date(cursor, date)
         cursor.execute(
-            """SELECT sale_id, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
+            """SELECT sale_id, sale_date, recorded_at, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
                       cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received
                FROM brick_sales WHERE sale_date = %s ORDER BY sale_timestamp""",
             (today,),
         )
         rows = cursor.fetchall()
         cursor.close()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
@@ -76,6 +80,8 @@ def view_todays_sales():
     return {"sales": [
         {
             "sale_id": r["sale_id"],
+            "sale_date": str(r["sale_date"]),
+            "recorded_at": r["recorded_at"].isoformat() if r["recorded_at"] else None,
             "timestamp": r["sale_timestamp"].strftime("%H:%M:%S"),
             "customer_name": r["customer_name"],
             "customer_mobile": r["customer_mobile"],
@@ -111,22 +117,23 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
         cursor = conn.cursor()
         lock_stock(cursor)
         if body.request_id:
-            cursor.execute('SELECT sale_id,bricks_purchased,cost_per_brick,amount_received,other_charges,customer_id FROM brick_sales WHERE request_id=%s',(body.request_id,))
+            cursor.execute('SELECT sale_id,sale_date,bricks_purchased,cost_per_brick,amount_received,other_charges,customer_id FROM brick_sales WHERE request_id=%s',(body.request_id,))
             previous=cursor.fetchone()
             if previous:
                 if (previous['bricks_purchased']!=body.bricks_purchased or float(previous['cost_per_brick'])!=body.cost_per_brick
                     or float(previous['amount_received'])!=body.amount_paid or float(previous['other_charges'])!=body.other_charges
-                    or (body.customer_id and previous['customer_id']!=body.customer_id)):
-                    raise HTTPException(409,'This sale submission was already saved with different values. Check today’s sales and clear the form before adding another sale.')
+                    or (body.customer_id and previous['customer_id']!=body.customer_id)
+                    or (body.sale_date and previous['sale_date']!=body.sale_date)):
+                    raise HTTPException(409,'This sale submission was already saved with different values. Check the selected date’s sales and clear the form before adding another sale.')
                 return {'sale_id':previous['sale_id'],'message':'Sale already recorded.'}
+        today = validate_entry_date(cursor, body.sale_date)
         account=resolve_customer(cursor,body.customer_name,body.customer_mobile,body.customer_id)
         current_stock = get_outlet_stock(cursor)
 
         tax = breakdown(body.bricks_purchased,body.cost_per_brick,body.other_charges)
         amount_due, total_amount = tax["amount_due"], tax["total_amount"]
 
-        today = factory_today()
-        now_time = datetime.datetime.now().time()
+        now_time = datetime.datetime.now(ZoneInfo("Asia/Kolkata")).time()
 
         cursor.execute(
             """INSERT INTO brick_sales
@@ -143,7 +150,7 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
 
         cursor.execute('UPDATE brick_sales SET gst_rate=%s,taxable_amount=%s,gst_amount=%s WHERE sale_id=%s',
                        (tax['gst_rate'],tax['taxable_amount'],tax['gst_amount'],sale_id))
-        allocate_sale(cursor, sale_id, body.bricks_purchased)
+        allocate_sale(cursor, sale_id, body.bricks_purchased, today)
         account_balance=record_sale(cursor,account['customer_id'],sale_id,total_amount,body.amount_paid,user['username'],today)
 
         conn.commit()
@@ -166,7 +173,7 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
 
 
 # ---------------------------------------------------------
-# Edit a Sale (ONLY same-day, matches production_log correction rule)
+# Correct a sale within the shared entry allowance; its date stays fixed
 # ---------------------------------------------------------
 @router.put("/{sale_id}", dependencies=[Depends(require_manager)])
 def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manager)):
@@ -186,16 +193,16 @@ def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manag
         if row is None:
             raise HTTPException(status_code=404, detail="Sale not found.")
 
-        today = factory_today()
-        if row["sale_date"] != today:
-            raise HTTPException(status_code=403, detail="Only today's sales can be edited.")
+        today = validate_entry_date(cursor, row["sale_date"])
+        if body.sale_date is not None and body.sale_date != today:
+            raise HTTPException(409, 'A saved sale cannot be moved to another date. Select its original date to correct it.')
 
         cursor.execute('SELECT 1 FROM sale_payment_audit WHERE sale_id=%s LIMIT 1',(sale_id,))
         if cursor.fetchone():
             raise HTTPException(409, 'The admin has settled this invoice. Contact the admin before changing it.')
 
-        cursor.execute("INSERT INTO sale_price_revision_audit(sale_id,reason,previous_record) SELECT sale_id,%s,to_jsonb(s) FROM brick_sales s WHERE sale_id=%s",('Manager same-day sale/account correction',sale_id))
-        restore_sale(cursor, sale_id)
+        cursor.execute("INSERT INTO sale_price_revision_audit(sale_id,reason,previous_record) SELECT sale_id,%s,to_jsonb(s) FROM brick_sales s WHERE sale_id=%s",('Manager dated sale/account correction',sale_id))
+        restore_sale(cursor, sale_id, today)
 
         tax = breakdown(body.bricks_purchased,body.cost_per_brick,body.other_charges)
         amount_due, total_amount = tax["amount_due"], tax["total_amount"]
@@ -213,7 +220,7 @@ def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manag
 
         cursor.execute('UPDATE brick_sales SET gst_rate=%s,taxable_amount=%s,gst_amount=%s WHERE sale_id=%s',
                        (tax['gst_rate'],tax['taxable_amount'],tax['gst_amount'],sale_id))
-        allocate_sale(cursor, sale_id, body.bricks_purchased)
+        allocate_sale(cursor, sale_id, body.bricks_purchased, today)
         cursor.execute('UPDATE brick_sales SET amount_received=%s WHERE sale_id=%s',(body.amount_paid,sale_id))
         account_balance=record_sale(cursor,account['customer_id'],sale_id,total_amount,body.amount_paid,user['username'],today,replace=True)
 
@@ -313,7 +320,7 @@ def get_sale_receipt(sale_id: int):
     try:
         cursor = conn.cursor()
         cursor.execute(
-            """SELECT sale_id, sale_date, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
+            """SELECT sale_id, sale_date, recorded_at, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
                       cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received
                FROM brick_sales WHERE sale_id = %s""",
             (sale_id,),
@@ -332,6 +339,7 @@ def get_sale_receipt(sale_id: int):
         "sale_id": row["sale_id"],
         "date": row["sale_date"].strftime("%Y-%m-%d"),
         "time": row["sale_timestamp"].strftime("%H:%M:%S"),
+        "recorded_at": row["recorded_at"].astimezone(ZoneInfo("Asia/Kolkata")).strftime("%d-%m-%Y %H:%M IST") if row["recorded_at"] else None,
         "customer_name": row["customer_name"],
         "customer_mobile": row["customer_mobile"],
         "bricks_purchased": row["bricks_purchased"],
@@ -414,7 +422,7 @@ def customer_history(mobile: str):
     try:
         cursor = conn.cursor()
         cursor.execute(
-            """SELECT sale_id, sale_date, sale_timestamp, customer_name, bricks_purchased,
+            """SELECT sale_id, sale_date, recorded_at, sale_timestamp, customer_name, bricks_purchased,
                       cost_per_brick, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received
                FROM brick_sales WHERE customer_mobile = %s
                ORDER BY sale_date DESC, sale_timestamp DESC""",
@@ -445,6 +453,8 @@ def customer_history(mobile: str):
         "orders": [
             {
                 "sale_id": r["sale_id"],
+            "sale_date": str(r["sale_date"]),
+            "recorded_at": r["recorded_at"].isoformat() if r["recorded_at"] else None,
                 "date": r["sale_date"].strftime("%Y-%m-%d"),
                 "time": r["sale_timestamp"].strftime("%H:%M:%S"),
                 "bricks_purchased": r["bricks_purchased"],

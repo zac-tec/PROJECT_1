@@ -66,7 +66,7 @@ def record_sale(c,customer_id,sale_id,total,received,user,day,replace=False):
         c.execute("SELECT entry_id FROM customer_ledger WHERE sale_id=%s AND kind=ANY(%s)",(sale_id,['sale'] if kind=='sale' else ['sale_payment','import_payment']))
         row=c.fetchone()
         if row:
-            c.execute('UPDATE customer_ledger SET amount=%s,note=%s WHERE entry_id=%s',(amount,'Same-day sale correction; previous invoice retained in audit',row['entry_id']))
+            c.execute('UPDATE customer_ledger SET amount=%s,note=%s WHERE entry_id=%s',(amount,'Dated sale correction; previous invoice retained in audit',row['entry_id']))
         else:
             c.execute('INSERT INTO customer_ledger(customer_id,kind,amount,sale_id,effective_date,recorded_by) VALUES(%s,%s,%s,%s,%s,%s)',(customer_id,kind,amount,sale_id,day,user))
     return allocate(c,customer_id)

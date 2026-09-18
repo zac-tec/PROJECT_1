@@ -9,7 +9,7 @@
         const days = Number(field.value);
         if (field.value === '' || !Number.isInteger(days) || days < 0 || days > 3650) throw new Error('Enter a whole number from 0 to 3650.');
         const d = await apiFetch('/admin/production-entry/settings', {method:'PUT',body:{backdate_days:days}});
-        status.textContent = `Saved: ${d.backdate_days} previous day(s), plus today.`;
+        status.textContent = `Saved: ${d.backdate_days} previous day(s), plus today, for production and sales.`;
       } catch(e) {status.textContent = e.message;}
     });
   }

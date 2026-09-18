@@ -153,7 +153,11 @@ def generate_sale_receipt(sale: dict) -> bytes:
 
     pdf.set_font("Helvetica", "", 9)
     pdf.cell(0, 5, f"Receipt No: SR-{sale['sale_id']:05d}", ln=True)
-    pdf.cell(0, 5, f"Date: {display_date(sale['date'])}    Time: {sale['time']}", ln=True)
+    pdf.cell(0, 5, f"Sale date: {display_date(sale['date'])}", ln=True)
+    if sale.get('recorded_at'):
+        pdf.cell(0, 5, f"Entered: {sale['recorded_at']}", ln=True)
+    else:
+        pdf.cell(0, 5, f"Recorded time: {sale['time']}", ln=True)
     pdf.ln(2)
 
     # ---- Customer Info ----

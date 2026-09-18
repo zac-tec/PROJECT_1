@@ -138,10 +138,10 @@
     </section>
 
     <section id="sec-reportsettings" class="hidden">
-<div class="card"><h2>Manager production entry</h2>
+<div class="card"><h2>Manager production &amp; sales entry</h2>
 <label for="productionBackdateDays">Previous days the manager may enter</label>
 <input id="productionBackdateDays" type="number" min="0" max="3650" step="1" value="1">
-<p>1 allows today and yesterday; 0 allows today only. Finalized opening-stock history remains protected.</p>
+<p>Applies to both production and sales. 1 allows today and yesterday; 0 allows today only. Finalized history through 12 September stays protected.</p>
 <button type="button" id="saveProductionWindow">Save entry allowance</button><p id="productionWindowStatus" role="status"></p></div><div class="card" id="pushSettings"><h2>App notifications</h2>
 <p>Monday–Saturday: manager reminders at 8 PM and 10 PM; admin alert at 10 PM if production is missing. All times IST. No reminders after 10 PM or on Sundays.</p>
 <p>Saving production stops reminders. Sales can still be entered on Sundays. Closing the app keeps notifications enabled; signing out disables them on this device.</p>
@@ -391,7 +391,7 @@
 <script src="js/stock-history.js?v=history1"></script>
 <script src="js/manager-access.js?v=activity2"></script>
 <script src="js/notifications.js?v=push1"></script>
-<script src="js/production-settings.js?v=dates1"></script>
+<script src="js/production-settings.js?v=entrydates1"></script>
 <script src="js/customer-accounts.js?v=book2"></script>
 </body>
 </html>

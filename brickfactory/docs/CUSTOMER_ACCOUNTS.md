@@ -2,7 +2,7 @@
 
 Admin → Customer Accounts contains named accounts, invoice history and a signed transaction ledger. A name or phone is required; both are not mandatory. A stable customer ID links sales. Normalized phone matches are reused (including Indian +91 formatting); name-only creation reuses an unambiguous matching name. Customers with identical names and different phone numbers remain separate. Select the existing account to avoid creating an unintended duplicate.
 
-Managers can select an account or create a new customer while recording a sale. They can record money received with that sale, but cannot post standalone payments, refunds, balance reconciliations or reversals. Same-day sale correction retains the existing account and is blocked after admin payment activity; prior invoice values are audited.
+Managers can select an account or create a new customer while recording a sale. They can record money received with that sale, but cannot post standalone payments, refunds, balance reconciliations or reversals. Sale correction within the admin date allowance retains the existing account and is blocked after admin payment activity; prior invoice values are audited.
 
 Admin payments settle the oldest unpaid amounts first, then leave excess credit. Outstanding opening balances have priority over invoices. Credit is automatically available for the next purchase. Refunds cannot exceed available credit. Payment corrections reverse an existing entry with a reason, then the admin can post a replacement; the original remains visible. Invoice bill/GST revenue and stock do not change when a payment is posted.
 
