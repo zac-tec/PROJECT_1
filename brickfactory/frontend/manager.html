@@ -3,9 +3,9 @@
 <head>
 <script src="js/date-display.js?v=activity2"></script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Manager — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=entrydates1">
+<link rel="stylesheet" href="css/style.css?v=mobile1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -30,16 +30,17 @@
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <button data-section="production" title="Production"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
-    <button data-section="stock" title="Raw Materials"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
-    <button data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
-    <button data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
-    <button data-section="notifications" onclick="closeRightMenu()" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
-    <button data-section="utility" title="Utility Bills"><i data-lucide="receipt" class="icon"></i><span>Utility</span></button>
-    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
+    <button class="nav-primary" data-section="production" title="Production"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
+    <button class="nav-primary" data-section="stock" title="Raw Materials"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
+    <button class="nav-primary" data-section="sales" title="Brick Sales"><i data-lucide="shopping-cart" class="icon"></i><span>Sales</span></button>
+    <button class="nav-extra" data-section="adjustments" title="Stock Adjustments"><i data-lucide="package-minus" class="icon"></i><span>Adjust</span></button>
+    <button class="nav-extra" data-section="notifications" onclick="closeRightMenu()" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
+    <button class="nav-extra" data-section="utility" title="Utility Bills"><i data-lucide="receipt" class="icon"></i><span>Utility</span></button>
+    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="menu" class="icon"></i><span>More</span></button>
   </nav>
 
-  <aside class="right-menu" aria-label="Full navigation menu">
+  <div class="menu-backdrop" hidden onclick="closeRightMenu()"></div>
+  <aside class="right-menu" aria-label="Full navigation menu" inert>
     <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
     <button data-section="production" onclick="closeRightMenu()"><i data-lucide="hard-hat" class="icon"></i><span>Production</span></button>
     <button data-section="stock" onclick="closeRightMenu()"><i data-lucide="warehouse" class="icon"></i><span>Raw Materials Stock</span></button>
@@ -68,17 +69,6 @@
 <button type="button" data-push-disable hidden>Disable notifications</button></div></section>
     <section id="sec-production">
       <div class="card" id="existingEntryCard"></div>
-
-      <div class="card">
-        <h2><i data-lucide="send" class="icon"></i> Share Daily Report</h2>
-        <p style="font-size:12.5px; color:var(--muted); margin-top:-4px;">
-          Sends today's stock, production, and sales — you'll tap Send yourself in WhatsApp.
-        </p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-          <button class="primary" onclick="shareReportText()"><i data-lucide="message-circle" class="icon"></i> Send Text Summary</button>
-          <button class="secondary" onclick="shareReportPDF()"><i data-lucide="file-text" class="icon"></i> Share Full PDF</button>
-        </div>
-      </div>
 
       <div class="card">
         <h2><i data-lucide="clipboard-list" class="icon"></i> Enter Production Data</h2>
@@ -110,6 +100,17 @@
           </div>
         </div>
       </div>
+      <div class="card">
+        <h2><i data-lucide="send" class="icon"></i> Share Daily Report</h2>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:-4px;">
+          Sends today's stock, production, and sales — you'll tap Send yourself in WhatsApp.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <button class="primary" onclick="shareReportText()"><i data-lucide="message-circle" class="icon"></i> Send Text Summary</button>
+          <button class="secondary" onclick="shareReportPDF()"><i data-lucide="file-text" class="icon"></i> Share Full PDF</button>
+        </div>
+      </div>
+
     </section>
 
     <!-- STOCK -->
@@ -146,29 +147,17 @@
     <!-- BRICK SALES -->
     <section id="sec-sales" class="hidden">
       <div class="card">
-        <h2><i data-lucide="package" class="icon"></i> Finished Brick Availability</h2>
-        <div class="stock-stage-grid">
-          <div class="stat"><div class="value" id="outletStockValue">—</div><div class="label">total bricks</div></div>
-          <div class="stat"><div class="value" id="curingStockValue">—</div><div class="label">curing · under 7 days</div></div>
-          <div class="stat"><div class="value" id="earlySaleStockValue">—</div><div class="label">early-sale eligible · 7–13 days</div></div>
-          <div class="stat"><div class="value" id="fullyCuredStockValue">—</div><div class="label">fully cured · 14+ days</div></div>
-        </div>
-        <p><strong>Saleable now: <span id="saleableStockValue">—</span> bricks</strong></p>
-        <div class="table-scroll"><table id="brickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
-      </div>
-
-      <div class="card">
         <h2 id="saleFormHeading">New sale</h2><p id="saleDateNotice" role="status"></p>
         <label>Customer account<select id="saleCustomerAccount" onchange="selectSaleCustomer()"><option value="">New customer</option></select></label><p id="saleAccountBalance"></p><p>Name or phone is required for a new customer.</p>
-        <label>Customer Name (optional if phone entered)</label>
+        <label>Customer name</label>
         <input id="saleCustomerName" type="text" placeholder="Full name">
-        <label>Customer Mobile Number (optional if name entered)</label>
+        <label>Phone number</label>
         <input id="saleCustomerMobile" type="text" placeholder="10-digit mobile number">
-        <label>Number of Bricks Purchased</label>
+        <label>Bricks sold</label>
         <input id="saleBricksPurchased" type="number" step="1" min="1" oninput="recalculateSale()">
-        <label>Price Per Brick (Rs., including 12% GST)</label>
+        <label>Price per brick · ₹, includes 12% GST</label>
         <input id="saleCostPerBrick" type="number" step="0.01" min="0.01" oninput="recalculateSale()">
-        <label>Other Charges (Rs., including 12% GST if charged)</label>
+        <label>Other charges · ₹, includes GST</label>
         <input id="saleOtherCharges" type="number" step="0.01" min="0" value="0" oninput="recalculateSale()">
 
         <div id="saleCalculatedBox" class="hidden" style="background:var(--primary-light); border-radius:8px; padding:12px; margin-bottom:14px;">
@@ -177,11 +166,11 @@
           <p style="margin:4px 0;">Total Amount (incl. other charges): <strong id="saleTotalAmount">—</strong></p>
         </div>
 
-        <label>Money received on the selected sale date (Rs.)</label>
+        <label>Money received on this date · ₹</label>
         <input id="saleAmountPaid" type="number" step="0.01" min="0" oninput="recalculateSale()">
 
-        <button id="saleSubmitBtn" class="primary hidden" onclick="submitSale()">Submit Sale</button>
-        <button class="secondary" onclick="clearSaleForm()">Clear sale form / cancel edit</button>
+        <button id="saleSubmitBtn" class="primary" disabled onclick="submitSale()">Submit Sale</button>
+        <button class="secondary" onclick="clearSaleForm()">Clear / cancel edit</button>
       </div>
 
       <div class="card">
@@ -192,6 +181,18 @@
           <tbody></tbody>
         </table>
       </div>
+
+      <details class="card stock-details">
+        <summary>Current brick stock &amp; batches</summary>
+        <div class="stock-stage-grid">
+          <div class="stat"><div class="value" id="outletStockValue">—</div><div class="label">total bricks</div></div>
+          <div class="stat"><div class="value" id="curingStockValue">—</div><div class="label">curing · under 7 days</div></div>
+          <div class="stat"><div class="value" id="earlySaleStockValue">—</div><div class="label">early-sale eligible · 7–13 days</div></div>
+          <div class="stat"><div class="value" id="fullyCuredStockValue">—</div><div class="label">fully cured · 14+ days</div></div>
+        </div>
+        <p><strong>Saleable now: <span id="saleableStockValue">—</span> bricks</strong></p>
+        <div class="table-scroll"><table id="brickBatchesTable"><thead><tr><th>Batch</th><th>Date</th><th>Age</th><th>Status</th><th>Remaining</th></tr></thead><tbody></tbody></table></div>
+      </details>
 
       <div class="card">
         <h2><i data-lucide="search" class="icon"></i> Customer Lookup</h2>
@@ -255,14 +256,15 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=push1"></script>
+<script src="js/api-security1.js?v=mobile1"></script>
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/labour-groups.js?v=activity2"></script>
-<script src="js/manager-security1.js?v=entrydates1"></script>
+<script src="js/manager-security1.js?v=mobile1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/notifications.js?v=push1"></script>
 <script src="js/production-settings.js?v=entrydates1"></script>
 <script src="js/sale-customer-account.js?v=entrydates1"></script>
+<script src="js/responsive-layout.js?v=mobile1"></script>
 </body>
 </html>

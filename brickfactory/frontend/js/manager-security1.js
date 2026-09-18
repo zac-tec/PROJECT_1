@@ -329,7 +329,7 @@ function recalculateSale() {
 
   if (!bricks || bricks <= 0 || !costPerBrick || costPerBrick <= 0) {
     box.classList.add("hidden");
-    submitBtn.classList.add("hidden");
+    submitBtn.disabled = true;
     return;
   }
 
@@ -342,12 +342,12 @@ function recalculateSale() {
   document.getElementById("saleTotalAmount").textContent = money(totalAmount);
   box.classList.remove("hidden");
 
-  // Submit only appears once amount paid has also been entered.
+  // Keep the save action visible; enable it when the amounts are complete.
   if (amountPaidRaw !== "" && parseFloat(amountPaidRaw) >= 0) {
-    submitBtn.classList.remove("hidden");
+    submitBtn.disabled = false;
     submitBtn.textContent = editingSaleId !== null ? "Update Sale" : "Submit Sale";
   } else {
-    submitBtn.classList.add("hidden");
+    submitBtn.disabled = true;
   }
 }
 
@@ -361,7 +361,7 @@ function clearSaleForm() {
   document.getElementById("saleOtherCharges").value = "0";
   document.getElementById("saleAmountPaid").value = "";
   document.getElementById("saleCalculatedBox").classList.add("hidden");
-  document.getElementById("saleSubmitBtn").classList.add("hidden");
+  document.getElementById("saleSubmitBtn").disabled = true;
   editingSaleId = null;
   updateEntryLabels();
   if(window.resetSaleAccount)window.resetSaleAccount();
@@ -404,7 +404,7 @@ async function submitSale() {
     showMessage(msgEl, e.message, true);
   } finally {
     saleSaving = false; dateInput.disabled = false;
-    document.getElementById('saleSubmitBtn').disabled = false;
+    recalculateSale();
   }
 }
 

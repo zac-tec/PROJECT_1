@@ -588,3 +588,76 @@ button:focus-visible, .icon-btn:focus-visible, [role="button"]:focus-visible { o
 .entry-date-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .entry-date-controls input { width: auto; flex: 1 1 170px; margin: 0; min-width: 0; }
 .entry-date-controls button { margin: 0; }
+
+/* Shared workspace: quiet surfaces, readable navigation and phone-sized records. */
+body:has(main.content) { --bg:#f3f5f7; --border:#dce1e7; --primary-light:#eef1f5; --radius:14px; font-weight:400; line-height:1.5; }
+body:has(main.content)::before, body:has(main.content)::after { display:none; }
+body:has(main.content) .brand-lockup > span { animation:none; text-shadow:none; }
+body:has(main.content) header.topbar { background:#fff; color:var(--ink); border-bottom:1px solid var(--border); padding:12px 24px; }
+body:has(main.content) header.topbar h1 { position:static; transform:none; font-family:var(--font-body); letter-spacing:.04em; }
+body:has(main.content) header.topbar .brand-lockup > span { color:var(--ink); }
+body:has(main.content) header.topbar button { color:var(--ink); background:#f3f5f7; box-shadow:none; animation:none; min-height:40px; padding:8px 12px; gap:6px; }
+.layout { display:grid; grid-template-columns:220px minmax(0,1fr); align-items:start; }
+nav.sidebar, .manager-ui nav.sidebar { display:flex; flex-direction:column; align-items:stretch; position:sticky; top:0; height:100dvh; padding:20px 12px; gap:5px; background:#fff; border-right:1px solid var(--border); overflow-y:auto; }
+nav.sidebar button, .manager-ui nav.sidebar button { justify-content:flex-start; width:100%; flex:0 0 auto; padding:12px; color:#475467; font-size:14px; white-space:normal; text-align:left; gap:10px; }
+nav.sidebar button:hover, nav.sidebar button.active { background:#edf1f5; color:#101828; box-shadow:none; transform:none; }
+nav.sidebar .nav-settings { display:none !important; }
+main.content { width:100%; min-width:0; max-width:1200px; padding:24px 28px 48px; }
+main.content > section, .card, .pricing-panel { min-width:0; max-width:100%; }
+.card { box-shadow:0 1px 2px #10182805; padding:20px; }
+.card h2 { font-size:18px; line-height:1.4; }
+main.content p { line-height:1.5; overflow-wrap:anywhere; }
+main.content :is(input,select,textarea) { min-height:46px; max-width:100%; font-size:16px; border-width:1px; }
+main.content input[type=checkbox] { min-height:0; }
+main.content label { color:#344054; font-weight:600; margin-bottom:6px; }
+main.content :is(button.primary,button.secondary) { min-height:44px; box-shadow:none; font-size:15px; margin-top:4px; }
+main.content button:hover { transform:none; box-shadow:none; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid #4b6683; outline-offset:3px; }
+.table-scroll { width:100%; max-width:100%; overflow-x:auto; margin-top:12px; }
+th, td { vertical-align:top; }
+main.content table:not(.responsive-records) td { overflow-wrap:anywhere; }
+button.icon-btn { min-width:44px; min-height:44px; }
+.stock-stage-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.stock-stage-grid .stat { margin:0; padding:12px; }
+.stock-details summary { font-weight:600; cursor:pointer; padding:4px 0; }
+.menu-backdrop { position:fixed; inset:0; background:#10182866; z-index:55; }
+.menu-backdrop[hidden] { display:none; }
+body.menu-open { overflow:hidden; }
+.right-menu { top:0; visibility:hidden; transition:transform .2s,visibility .2s; padding:20px 16px; }
+.right-menu.open { visibility:visible; }
+.right-menu > button:not(.icon-btn) { min-height:46px; box-shadow:none; }
+.entry-date-card { border-left-width:3px; }
+.entry-date-card[hidden] { display:none; }
+@media (max-width:768px) {
+  .layout { display:block; }
+  body:has(main.content) header.topbar { min-height:56px; padding:10px 16px; }
+  nav.sidebar, .manager-ui nav.sidebar { position:fixed; inset:auto 0 0; width:100%; height:auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding:6px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; border:0; border-top:1px solid var(--border); background:#fff; overflow:visible; box-shadow:0 -2px 12px #10182808; }
+  nav.sidebar .nav-extra, .manager-ui nav.sidebar .nav-extra { display:none; }
+  nav.sidebar .nav-settings { display:flex !important; order:initial; }
+  nav.sidebar button, .manager-ui nav.sidebar button { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; min-height:54px; padding:6px 2px; text-align:center; font-size:12px; line-height:1.2; border-radius:10px; }
+  nav.sidebar button > span:not(#dashboardBadge) { display:inline; }
+  nav.sidebar button.active { background:#eaf0f5; }
+  nav.sidebar .icon { width:21px; height:21px; }
+  main.content { padding:16px 12px calc(100px + env(safe-area-inset-bottom)); }
+  .card { padding:16px; margin-bottom:14px; }
+  .card h2 { font-size:18px; }
+  .entry-date-controls input { flex-basis:100%; }
+  .entry-date-controls button { flex:1; }
+  .stock-stage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .account-overview { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .account-actions label { min-width:0; flex-basis:100%; }
+  .responsive-records, .responsive-records tbody { display:block; width:100%; }
+  .responsive-records thead { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .responsive-records tbody tr { display:block; padding:12px; border:1px solid var(--border); border-radius:10px; margin:10px 0; background:#fff; }
+  .responsive-records tbody td { display:grid; grid-template-columns:minmax(90px,40%) minmax(0,1fr); align-items:start; gap:12px; border:0; padding:6px 0; text-align:left !important; overflow-wrap:anywhere; font-size:14px; white-space:normal; }
+  .responsive-records tbody td::before { content:attr(data-label); color:#667085; font-size:12px; font-weight:500; line-height:1.6; }
+  .responsive-records tbody td.record-wide { display:block; }
+  .responsive-records tbody td.record-wide::before { display:none; }
+  .responsive-records td:has(button) { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .responsive-records td:has(button)::before { flex-basis:100%; }
+  .responsive-records .icon-btn { width:auto; gap:6px; padding:8px 10px; font-size:13px; }
+  .responsive-records .icon-btn[title]::after { content:attr(title); }
+  main.content canvas { max-width:100%; }
+  #saleSubmitBtn { width:100%; margin-bottom:8px; }
+}

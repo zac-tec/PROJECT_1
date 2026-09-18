@@ -116,6 +116,16 @@ function activateSection(section, skipCallback = false) {
   if (target) target.classList.remove("hidden");
   document.querySelectorAll("[data-section]").forEach((b) => b.classList.toggle("active", b.dataset.section === section));
   closeDrawer();
+  closeRightMenu();
+  const dateCard = document.getElementById('entryDateCard');
+  if (dateCard) dateCard.hidden = !['production','sales'].includes(section);
+  const more = document.querySelector('.nav-settings');
+  more?.classList.toggle('active', !document.querySelector(`nav.sidebar .nav-primary[data-section="${section}"]`));
+  document.querySelectorAll('[data-section]').forEach(b => {
+    if (b.dataset.section === section) b.setAttribute('aria-current','page');
+    else b.removeAttribute('aria-current');
+  });
+  window.scrollTo({top:0,behavior:'instant'});
   sessionUI.select(section);
   if (!skipCallback) return sessionUI.refresh(section, true);
 }
@@ -159,12 +169,23 @@ function toggleRightMenu() {
   if (!menu) return;
   const open = menu.classList.toggle("open");
   button?.setAttribute("aria-expanded", String(open));
+  menu.inert = !open;
+  const backdrop = document.querySelector('.menu-backdrop');
+  if (backdrop) backdrop.hidden = !open;
+  document.body.classList.toggle('menu-open',open);
+  if (open) menu.querySelector('button')?.focus();
 }
 
 function closeRightMenu() {
   const menu = document.querySelector(".right-menu");
   const button = document.querySelector(".nav-settings");
+  const wasOpen = menu?.classList.contains('open');
   menu?.classList.remove("open");
+  if (menu) menu.inert = true;
+  const backdrop = document.querySelector('.menu-backdrop');
+  if (backdrop) backdrop.hidden = true;
+  document.body.classList.remove('menu-open');
+  if (wasOpen) button?.focus();
   button?.setAttribute("aria-expanded", "false");
 }
 
@@ -172,14 +193,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeRightMenu();
 });
 
-let lastScrollY = 0;
-window.addEventListener("scroll", () => {
-  const nav = document.querySelector("nav.sidebar");
-  if (!nav) return;
-  const currentY = window.scrollY;
-  nav.classList.toggle("nav-receded", currentY > lastScrollY && currentY > 80);
-  lastScrollY = currentY;
-}, { passive: true });
 // -------------------- Daily Report Sharing (WhatsApp) --------------------
 // Sends the text summary via a wa.me link, pre-filled to the configured
 // client number — the user still taps "Send" themselves (WhatsApp/browsers

@@ -3,9 +3,9 @@
 <head>
 <script src="js/date-display.js?v=activity2"></script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Admin — NEO BRICKS</title>
-<link rel="stylesheet" href="css/style.css?v=book2">
+<link rel="stylesheet" href="css/style.css?v=mobile1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="admin-ui">
 
 <header class="topbar">
   <h1 class="brand-lockup"><span>NEO BRICKS</span></h1>
@@ -33,21 +33,22 @@
 
 <div class="layout">
   <nav class="sidebar" id="sidebar">
-    <button data-section="dashboard" title="Dashboard"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span><span id="dashboardBadge" class="hidden"></span></button>
-    <button data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Daily Activity</span></button>
-    <button data-section="customerAccounts" onclick="closeRightMenu()" title="Customer Accounts"><i data-lucide="users" class="icon"></i><span>Customer Accounts</span></button>
-    <button data-section="brickSales" title="Brick Stock"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Stock</span></button>
-    <button data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
-    <button data-section="stock" title="Stock Overview"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
-    <button data-section="pricing" title="Rates, Charges, Fixed, Price and Recipe"><i data-lucide="sliders-horizontal" class="icon"></i><span>Pricing</span></button>
-    <button data-section="orders" title="Order and Stock Planning"><i data-lucide="package-plus" class="icon"></i><span>Orders</span></button>
-    <button data-section="history" title="Rate and Charge History"><i data-lucide="history" class="icon"></i><span>History</span></button>
-    <button data-section="profit" title="Profit Calculator"><i data-lucide="trending-up" class="icon"></i><span>Profit</span></button>
-    <button data-section="reportsettings" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
-    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="settings-2" class="icon"></i></button>
+    <button class="nav-primary" data-section="dashboard" title="Dashboard"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span><span id="dashboardBadge" class="hidden"></span></button>
+    <button class="nav-primary" data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Activity</span></button>
+    <button class="nav-primary" data-section="customerAccounts" onclick="closeRightMenu()" title="Customer Accounts"><i data-lucide="users" class="icon"></i><span>Customers</span></button>
+    <button class="nav-extra" data-section="brickSales" title="Brick Stock"><i data-lucide="shopping-cart" class="icon"></i><span>Brick Stock</span></button>
+    <button class="nav-extra" data-section="productionCosts" title="Production and Costs"><i data-lucide="calculator" class="icon"></i><span>Production &amp; Costs</span></button>
+    <button class="nav-extra" data-section="stock" title="Stock Overview"><i data-lucide="warehouse" class="icon"></i><span>Stock</span></button>
+    <button class="nav-extra" data-section="pricing" title="Rates, Charges, Fixed, Price and Recipe"><i data-lucide="sliders-horizontal" class="icon"></i><span>Pricing</span></button>
+    <button class="nav-extra" data-section="orders" title="Order and Stock Planning"><i data-lucide="package-plus" class="icon"></i><span>Orders</span></button>
+    <button class="nav-extra" data-section="history" title="Rate and Charge History"><i data-lucide="history" class="icon"></i><span>History</span></button>
+    <button class="nav-extra" data-section="profit" title="Profit Calculator"><i data-lucide="trending-up" class="icon"></i><span>Profit</span></button>
+    <button class="nav-extra" data-section="reportsettings" title="Settings"><i data-lucide="settings" class="icon"></i><span>Settings</span></button>
+    <button class="nav-settings" type="button" title="Open full menu" aria-label="Open full menu" aria-expanded="false" onclick="toggleRightMenu()"><i data-lucide="menu" class="icon"></i><span>More</span></button>
   </nav>
 
-  <aside class="right-menu" aria-label="Full navigation menu">
+  <div class="menu-backdrop" hidden onclick="closeRightMenu()"></div>
+  <aside class="right-menu" aria-label="Full navigation menu" inert>
     <div class="right-menu-head"><strong>NEO BRICKS</strong><button type="button" class="icon-btn" onclick="closeRightMenu()" title="Close menu" aria-label="Close menu"><i data-lucide="x" class="icon"></i></button></div>
     <button data-section="dashboard" onclick="closeRightMenu()"><i data-lucide="layout-dashboard" class="icon"></i><span>Dashboard</span></button>
     <button data-section="activity" title="Activity by Date"><i data-lucide="calendar-days" class="icon"></i><span>Daily Activity</span></button>
@@ -382,7 +383,7 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=push1"></script>
+<script src="js/api-security1.js?v=mobile1"></script>
 <script src="js/recovery.js?v=activity2"></script>
 <script src="js/dashboard-security1.js?v=accounts1"></script>
 <script src="js/admin-security1.js?v=accounts1"></script>
@@ -393,5 +394,6 @@
 <script src="js/notifications.js?v=push1"></script>
 <script src="js/production-settings.js?v=entrydates1"></script>
 <script src="js/customer-accounts.js?v=book2"></script>
+<script src="js/responsive-layout.js?v=mobile1"></script>
 </body>
 </html>
