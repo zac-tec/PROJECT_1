@@ -1,18 +1,18 @@
 :root {
   /* Monochrome theme: edit this block to retheme the entire redesign. */
-  --black: #08090a;
-  --charcoal: #17191c;
+  --black: #102536;
+  --charcoal: #183548;
   --slate: #626872;
   --silver: #c8ccd1;
   --white: #fafafa;
   --signal: #f4f4f4;
   --signal-soft: #e6e7e9;
-  --signal-glow: rgba(255, 255, 255, 0.42);
+  --signal-glow: rgba(36, 118, 111, 0.12);
   --font-display: "Syne", "Arial Black", sans-serif;
   --font-body: "DM Sans", "Segoe UI", sans-serif;
-  --primary: var(--charcoal);
-  --primary-dark: var(--black);
-  --primary-light: var(--silver);
+  --primary: #24766f;
+  --primary-dark: #195c57;
+  --primary-light: #e8f2ef;
   --accent: var(--signal);
   --sidebar-bg: var(--black);
   --sidebar-text: var(--silver);
@@ -661,3 +661,24 @@ body.menu-open { overflow:hidden; }
   main.content canvas { max-width:100%; }
   #saleSubmitBtn { width:100%; margin-bottom:8px; }
 }
+
+/* Navy, muted teal and warm white; calm sign-in and launch surfaces. */
+body:has(main.content) { --bg:#f4f6f5; --primary-light:#e8f2ef; --border:#dce5e2; }
+button.primary, .report-actions button { background:var(--primary); color:#fff; }
+button.primary:hover, .report-actions button:hover { background:var(--primary-dark); }
+nav.sidebar button.active { background:#e8f2ef; color:#195c57; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline-color:#24766f; }
+.login-wrap { background:#102536; padding:24px; }
+.login-wrap::before, .login-wrap::after { display:none; }
+.login-card { width:380px; max-width:100%; background:#fbfcfa; border:1px solid #dce5e2; border-radius:20px; box-shadow:0 18px 50px #00000026; animation:none; }
+.login-card h1 { color:#183548; font-family:var(--font-body); font-size:25px; text-shadow:none; }
+.login-card .brand-lockup > span { animation:none; text-shadow:none; }
+.login-card h1::after { background:#24766f; box-shadow:none; }
+.login-card input { box-shadow:none; font-weight:400; }
+.login-card input:focus { border-color:#24766f; box-shadow:0 0 0 3px #24766f1a; }
+.login-card button.primary { box-shadow:none; min-height:46px; }
+.login-card .install-btn-standalone { box-shadow:none; }
+.brand-intro { background:#102536; color:#f7faf8; animation:introExit 240ms ease 450ms forwards; }
+.brand-intro-word { font-family:var(--font-body); font-weight:700; letter-spacing:.08em; border-bottom:3px solid #5fa69a; padding-bottom:18px; }
+.brand-intro-word span { opacity:1; transform:none; animation:none; text-shadow:none; }
+@media(prefers-reduced-motion:reduce) { .brand-intro { display:none; } }

@@ -36,8 +36,8 @@ const sessionUI = (() => {
   function record(el) {
     if (!el.id || (!el.closest("main.content > section") && el.id !== "productionDate") || el.type === "password") return;
     state.fields[el.id] = valueOf(el);
-    if (["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleAmountPaid"].includes(el.id)) {
-      for (const id of ["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleAmountPaid"]) {
+    if (["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleTransportMode", "saleTransportRate", "saleAmountPaid"].includes(el.id)) {
+      for (const id of ["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleTransportMode", "saleTransportRate", "saleAmountPaid"]) {
         state.fields[id] = valueOf(document.getElementById(id));
       }
     }

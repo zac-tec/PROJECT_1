@@ -185,6 +185,13 @@ def generate_sale_receipt(sale: dict) -> bytes:
     pdf.cell(col_widths[2], 7, f"{sale['cost_per_brick']:.2f}", border=1, align="R")
     pdf.cell(col_widths[3], 7, f"{sale['amount_due']:.2f}", border=1, align="R", ln=True)
 
+    if sale.get('transport_amount', 0) > 0:
+        per_brick = sale.get('transport_mode') == 'per_brick'
+        pdf.cell(col_widths[0], 7, 'Transportation', border=1)
+        pdf.cell(col_widths[1], 7, str(sale['bricks_purchased']) if per_brick else '-', border=1, align='C')
+        pdf.cell(col_widths[2], 7, f"{sale['transport_rate']:.2f}" if per_brick else '-', border=1, align='R')
+        pdf.cell(col_widths[3], 7, f"{sale['transport_amount']:.2f}", border=1, align='R', ln=True)
+
     if sale["other_charges"] > 0:
         pdf.cell(col_widths[0], 7, "Other Charges", border=1)
         pdf.cell(col_widths[1], 7, "-", border=1, align="C")

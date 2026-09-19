@@ -10,6 +10,7 @@ Material refill quantities allow decimals; mixes, bricks and labourers remain in
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Literal, Optional
 from datetime import date
+from decimal import Decimal
 
 
 # --------------------------- Auth ---------------------------
@@ -139,6 +140,8 @@ class DefaultPriceUpdateRequest(BaseModel):
 
 # --------------------------- Manager: Brick Sales ---------------------------
 class BrickSaleRequest(BaseModel):
+    transport_mode: Optional[Literal['none','per_brick','flat']] = None
+    transport_rate: Decimal = Field(default=Decimal('0'), ge=0, max_digits=12, decimal_places=2)
     sale_date: Optional[date] = None
     customer_id: Optional[int] = Field(default=None,gt=0)
     request_id: Optional[str] = None
@@ -148,6 +151,10 @@ class BrickSaleRequest(BaseModel):
     def identity(self):
         if not self.customer_id and not self.customer_name.strip() and not self.customer_mobile.strip():
             raise ValueError('Enter a customer name or phone number, or select an existing customer.')
+        if self.transport_mode in (None, 'none') and self.transport_rate != 0:
+            raise ValueError('Choose per-brick or total transport before entering a charge.')
+        if self.transport_mode in ('per_brick', 'flat') and self.transport_rate <= 0:
+            raise ValueError('Enter a transport charge greater than zero.')
         if self.request_id:
             from uuid import UUID
             self.request_id=str(UUID(self.request_id))

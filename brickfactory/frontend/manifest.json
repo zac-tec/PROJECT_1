@@ -6,8 +6,8 @@
   "scope": ".",
   "display": "fullscreen",
   "orientation": "portrait-primary",
-  "background_color": "#08090a",
-  "theme_color": "#17191c",
+  "background_color": "#102536",
+  "theme_color": "#102536",
   "icons": [
     {
       "src": "icons/nb-192-v2.png",

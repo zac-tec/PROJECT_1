@@ -11,3 +11,9 @@ Admin → Brick Sales → All Sales → Mark paid records the remaining balance 
 Profit results show a green Profit or red Loss label and amount. Fixed expenses and unknown opening-batch cost assumptions still apply; collection is distinct from profit.
 
 Migrations: migration_sale_payments.sql and migration_sales_gst.sql (startup). Unit test: python -m unittest discover -s tests -p test_sales_tax.py. Integration verified with rollback: repricing without changing payments, GST splitting, net revenue, stale settlement rejection, repeated settlement, manager edit protection and no stock change on payment.
+
+## Optional transportation (19 September)
+
+New sales support no separate transport charge, a per-brick transport rate, or one flat transport charge. Keep the brick price separate: 1,000 × ₹8.40 plus 1,000 × ₹0.75 transport is ₹9,150; a flat ₹500 transport charge instead totals ₹8,900. Other charges remain separate. All entered charges retain the app's existing GST-inclusive calculation; transport is included in the billed total and customer balance, with its own receipt line. This does not record a transporter expense or infer a transport cost.
+
+`transport_mode`, `transport_rate` and computed `transport_amount` are saved on each new sale. Existing invoices and historical sales are not repriced, and their original transport details remain unknown. Edits restore the saved transport selection; outdated clients cannot silently remove saved transport. Request retry matching includes transport values. Startup applies `migration_sale_transport.sql`. Focused tests are in `test_transport.py`; save/edit/receipt/ledger behaviour was verified on an isolated database copy.
