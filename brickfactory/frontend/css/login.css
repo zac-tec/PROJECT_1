@@ -1,0 +1,27 @@
+/* Login-only styling: one consistent navy identity from launch to sign-in. */
+.signin-page { background:#102536; font-weight:400; }
+.signin-page::before, .signin-page::after { display:none; }
+.signin-page .login-wrap { min-height:100svh; padding:32px 20px; background:radial-gradient(ellipse at 50% 35%,#203e50 0%,#102536 65%); }
+.signin-page .login-card { width:420px; max-width:100%; padding:38px 34px 34px; border-radius:24px; background:#fbfcfd; border:1px solid #ffffff66; box-shadow:0 24px 70px #07162140; animation:none; }
+.signin-page .brand-lockup { position:relative; z-index:4; margin:0; justify-content:center; font-family:"DM Sans","Segoe UI",sans-serif; font-size:28px; line-height:1.2; font-weight:700; letter-spacing:.02em; color:#102536; transform-origin:center; }
+.signin-page .brand-lockup > span { color:inherit; animation:none; text-shadow:inherit; }
+.signin-page .brand-lockup::after { display:none; }
+.login-subtitle { margin:12px 0 30px; text-align:center; color:#76828c; font-size:12px; line-height:1.5; }
+.signin-page #loginForm { border-top:1px solid #e4e9ed; padding-top:24px; }
+.signin-page #loginForm h2 { margin:0 0 5px; font-size:20px; font-weight:600; color:#183548; letter-spacing:-.02em; }
+.login-help { margin:0 0 22px; color:#76828c; font-size:14px; }
+.signin-page .login-card label { font-size:13px; font-weight:600; color:#344b5c; margin:18px 0 8px; }
+.signin-page .login-card label .icon { color:#526b7b; width:16px; height:16px; }
+.signin-page .login-card input { min-height:50px; padding:13px 14px; margin:0; background:#f4f7f9; border:1px solid #e1e7eb; border-radius:12px; box-shadow:none; font-size:16px; color:#183548; }
+.signin-page .login-card input::placeholder { color:#95a0a9; font-size:14px; }
+.signin-page .login-card input:focus { background:#fff; border-color:#526b7b; box-shadow:0 0 0 3px #526b7b14; outline:none; }
+.signin-page .login-card button.primary { display:flex; align-items:center; justify-content:space-between; background:#183548; border-radius:12px; margin-top:26px; padding:14px 18px; min-height:50px; box-shadow:none; font-size:15px; }
+.signin-page .login-card button.primary:hover { background:#244b62; transform:none; }
+.signin-page .login-card button.primary span { font-size:20px; line-height:1; }
+.signin-page .login-card button:focus-visible { outline:2px solid #526b7b; outline-offset:4px; }
+.login-arrival { display:none; }
+.login-intro-active .login-arrival { display:block; position:fixed; inset:0; z-index:3; background:#102536; pointer-events:none; }
+.login-intro-active #loginBrand { color:#f5f9fc; }
+.login-intro-active #loginForm, .login-intro-active .login-subtitle { opacity:0; }
+@media(max-width:480px) { .signin-page .login-card { padding:30px 24px; border-radius:20px; } .signin-page .brand-lockup { font-size:26px; } }
+@media(prefers-reduced-motion:reduce) { .login-arrival { display:none !important; } .signin-page .login-card { animation:none; } }

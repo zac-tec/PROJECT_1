@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Brick Factory Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sign in — NEO BRICKS</title>
 <link rel="stylesheet" href="css/style.css?v=transport1">
+<link rel="stylesheet" href="css/login.css?v=motion1">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="NEO BRICKS">
@@ -17,28 +18,33 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="signin-page">
 
-<div class="brand-intro" aria-hidden="true"><div class="brand-intro-word" aria-label="NEO BRICKS"><span>N</span><span>E</span><span>O</span><span>&nbsp;</span><span>B</span><span>R</span><span>I</span><span>C</span><span>K</span><span>S</span></div></div>
+
 
 <div class="login-wrap">
   <div class="login-card">
-    <h1 class="brand-lockup"><span>NEO BRICKS</span></h1>
+    <div class="login-arrival" aria-hidden="true"></div>
+    <h1 class="brand-lockup" id="loginBrand"><span>NEO BRICKS</span></h1>
+    <p class="login-subtitle">Your factory. Everything in one place.</p>
     <div id="msg" class="msg bad hidden"></div>
     <form id="loginForm">
+      <h2>Welcome back</h2>
+      <p class="login-help">Sign in to your workspace.</p>
       <label for="username"><i data-lucide="user-round" class="icon"></i>Username</label>
-      <input id="username" type="text" required autocomplete="username">
+      <input id="username" type="text" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter your username">
       <label for="password"><i data-lucide="lock-keyhole" class="icon"></i>Password</label>
-      <input id="password" type="password" required autocomplete="current-password">
-      <button type="submit" class="primary">Log In</button>
+      <input id="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+      <button type="submit" class="primary">Sign in <span aria-hidden="true">→</span></button>
     </form>
   </div>
 </div>
 
+<script src="js/login-motion.js?v=motion1"></script>
 <script src="js/api-security1.js?v=ui-live1"></script>
 <script src="js/pwa.js?v=ui-live1"></script>
 <script>
-lucide.createIcons();
+if (window.lucide) lucide.createIcons();
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
