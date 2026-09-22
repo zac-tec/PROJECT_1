@@ -263,7 +263,7 @@ def sales_trend(days: int = 30):
         cursor = conn.cursor()
         cutoff = datetime.date.today() - datetime.timedelta(days=days - 1)
         cursor.execute(
-            """SELECT sale_date, SUM(bricks_purchased) AS total_bricks, SUM(COALESCE(taxable_amount,total_amount)) AS total_revenue
+            """SELECT sale_date, SUM(bricks_purchased) AS total_bricks, SUM(COALESCE(taxable_amount,total_amount)-COALESCE(transport_base_amount,0)) AS total_revenue
                FROM brick_sales WHERE sale_date >= %s GROUP BY sale_date ORDER BY sale_date""",
             (cutoff,),
         )

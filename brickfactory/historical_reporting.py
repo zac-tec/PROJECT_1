@@ -40,7 +40,7 @@ def monthly_sales(cursor, month):
     days=[d for d in p['days'] if d['date'][:7]==month]
     historical=sum(sum(d['sales']) for d in days)
     count=sum(len(d['sales']) for d in days)
-    cursor.execute("SELECT COALESCE(SUM(bricks_purchased),0) AS bricks, COALESCE(SUM(COALESCE(taxable_amount,total_amount)),0) AS revenue, COALESCE(SUM(total_amount),0) AS billed, COALESCE(SUM(gst_amount),0) AS gst, COALESCE(SUM(amount_paid),0) AS collected, COUNT(*) AS count FROM brick_sales WHERE TO_CHAR(sale_date,'YYYY-MM')=%s",(month,))
+    cursor.execute("SELECT COALESCE(SUM(bricks_purchased),0) AS bricks, COALESCE(SUM(COALESCE(taxable_amount,total_amount)-COALESCE(transport_base_amount,0)),0) AS revenue, COALESCE(SUM(total_amount),0) AS billed, COALESCE(SUM(gst_amount),0) AS gst, COALESCE(SUM(amount_paid),0) AS collected, COUNT(*) AS count FROM brick_sales WHERE TO_CHAR(sale_date,'YYYY-MM')=%s",(month,))
     r=cursor.fetchone()
     from customer_accounts import cash_received
     from calendar import monthrange

@@ -6,6 +6,8 @@ const sessionUI = (() => {
   let state = { fields: {}, section: null, saleId: null };
   try { Object.assign(state, JSON.parse(sessionStorage.getItem(key) || "{}")); } catch (_) {}
   state.fields ||= {};
+  // Never reinterpret a pre-upgrade GST-inclusive draft as a pre-GST price.
+  if (state.fields.saleCostPerBrick && !state.fields.salePricingMode) state.fields.salePricingMode = 'legacy_inclusive';
   let recovery = null;
   let refreshing = false;
   let failures = 0;
@@ -36,8 +38,8 @@ const sessionUI = (() => {
   function record(el) {
     if (!el.id || (!el.closest("main.content > section") && el.id !== "productionDate") || el.type === "password") return;
     state.fields[el.id] = valueOf(el);
-    if (["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleTransportMode", "saleTransportRate", "saleAmountPaid"].includes(el.id)) {
-      for (const id of ["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "saleTransportMode", "saleTransportRate", "saleAmountPaid"]) {
+    if (["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "salePricingMode", "saleTransportMode", "saleTransportRate", "saleAmountPaid"].includes(el.id)) {
+      for (const id of ["saleCustomerName", "saleCustomerMobile", "saleBricksPurchased", "saleCostPerBrick", "saleOtherCharges", "salePricingMode", "saleTransportMode", "saleTransportRate", "saleAmountPaid"]) {
         state.fields[id] = valueOf(document.getElementById(id));
       }
     }

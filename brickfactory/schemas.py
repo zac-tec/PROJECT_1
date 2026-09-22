@@ -139,9 +139,27 @@ class DefaultPriceUpdateRequest(BaseModel):
 
 
 # --------------------------- Manager: Brick Sales ---------------------------
-class BrickSaleRequest(BaseModel):
+class SalePricingRequest(BaseModel):
+    pricing_mode: Literal['legacy_inclusive', 'brick_base', 'delivered_base'] = 'legacy_inclusive'
+    bricks_purchased: int = Field(..., gt=0, le=1000000)
+    cost_per_brick: Decimal = Field(..., gt=0, max_digits=16, decimal_places=6)
+    other_charges: Decimal = Field(default=Decimal('0'), ge=0, max_digits=12, decimal_places=2)
     transport_mode: Optional[Literal['none','per_brick','flat']] = None
     transport_rate: Decimal = Field(default=Decimal('0'), ge=0, max_digits=12, decimal_places=2)
+
+    @model_validator(mode='after')
+    def valid_pricing(self):
+        if self.transport_mode in (None, 'none') and self.transport_rate != 0:
+            raise ValueError('Choose per-brick or total transport before entering a charge.')
+        if self.transport_mode in ('per_brick', 'flat') and self.transport_rate <= 0:
+            raise ValueError('Enter a transport charge greater than zero.')
+        from sales_tax import price_sale
+        price_sale(self.bricks_purchased, self.cost_per_brick, self.other_charges,
+                   self.transport_mode, self.transport_rate, self.pricing_mode)
+        return self
+
+
+class BrickSaleRequest(SalePricingRequest):
     sale_date: Optional[date] = None
     customer_id: Optional[int] = Field(default=None,gt=0)
     request_id: Optional[str] = None
@@ -151,17 +169,10 @@ class BrickSaleRequest(BaseModel):
     def identity(self):
         if not self.customer_id and not self.customer_name.strip() and not self.customer_mobile.strip():
             raise ValueError('Enter a customer name or phone number, or select an existing customer.')
-        if self.transport_mode in (None, 'none') and self.transport_rate != 0:
-            raise ValueError('Choose per-brick or total transport before entering a charge.')
-        if self.transport_mode in ('per_brick', 'flat') and self.transport_rate <= 0:
-            raise ValueError('Enter a transport charge greater than zero.')
         if self.request_id:
             from uuid import UUID
             self.request_id=str(UUID(self.request_id))
         return self
-    bricks_purchased: int = Field(..., gt=0)
-    cost_per_brick: float = Field(..., gt=0, allow_inf_nan=False)
-    other_charges: float = Field(default=0.0, ge=0,allow_inf_nan=False)
     amount_paid: float = Field(..., ge=0,allow_inf_nan=False)
 
 

@@ -25,13 +25,13 @@ function requireRole(role) {
   }
 }
 
-async function apiFetch(path, { method = "GET", body = null } = {}) {
+async function apiFetch(path, { method = "GET", body = null, busy = true } = {}) {
   const headers = { "Content-Type": "application/json" };
   const token = sessionStorage.getItem("access_token");
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  const buttons = method !== "GET" ? [...document.querySelectorAll("button:not(:disabled), main.content input:not(:disabled), main.content select:not(:disabled), main.content textarea:not(:disabled)")] : [];
+  const buttons = busy && method !== "GET" ? [...document.querySelectorAll("button:not(:disabled), main.content input:not(:disabled), main.content select:not(:disabled), main.content textarea:not(:disabled)")] : [];
   buttons.forEach(button => { button.disabled = true; button.setAttribute("aria-busy", "true"); });
   let res;
   try {

@@ -16,18 +16,40 @@ To add a new brick-sales-related feature later: add a function here.
 import datetime
 from zoneinfo import ZoneInfo
 from production_entry_policy import validate_entry_date
-from sales_tax import breakdown, transport_total
+from sales_tax import price_sale
 from customer_accounts import resolve_customer, lock_account, record_sale
 from batch_stock import lock_stock, stock_summary, allocate_sale, restore_sale, adjust_batches, factory_today
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import Response
 from database import get_connection
 from services import get_outlet_stock, apply_outlet_stock_change
-from schemas import BrickSaleRequest, StockAdjustmentRequest
+from schemas import BrickSaleRequest, StockAdjustmentRequest, SalePricingRequest
 from pdf_generator import generate_sale_receipt
 from dependencies import require_manager, get_current_user
 
 router = APIRouter(prefix="/manager/sales", tags=["brick sales"])
+
+
+def sale_pricing(body):
+    return price_sale(body.bricks_purchased, body.cost_per_brick, body.other_charges,
+                      body.transport_mode, body.transport_rate, body.pricing_mode)
+
+
+@router.post('/preview', dependencies=[Depends(require_manager)])
+def preview_sale(body: SalePricingRequest):
+    return sale_pricing(body)
+
+
+def save_pricing(cursor, sale_id, body, tax):
+    cursor.execute('UPDATE brick_sales SET pricing_mode=%s,entered_unit_price=%s,brick_base_amount=%s,transport_base_amount=%s,other_base_amount=%s WHERE sale_id=%s',
+                   (body.pricing_mode, body.cost_per_brick, tax['brick_base_amount'],
+                    tax['transport_base_amount'], tax['other_base_amount'], sale_id))
+
+
+def pricing_fields(row):
+    return {key: (float(row[key]) if row[key] is not None and key != 'pricing_mode' else row[key])
+            for key in ('pricing_mode', 'entered_unit_price', 'brick_base_amount', 'transport_base_amount', 'other_base_amount')}
+
 
 
 # ---------------------------------------------------------
@@ -64,7 +86,7 @@ def view_todays_sales(date: datetime.date | None = None):
         today = validate_entry_date(cursor, date)
         cursor.execute(
             """SELECT sale_id, sale_date, recorded_at, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
-                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received, transport_mode, transport_rate, transport_amount
+                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received, transport_mode, transport_rate, transport_amount, pricing_mode, entered_unit_price, brick_base_amount, transport_base_amount, other_base_amount
                FROM brick_sales WHERE sale_date = %s ORDER BY sale_timestamp""",
             (today,),
         )
@@ -79,6 +101,7 @@ def view_todays_sales(date: datetime.date | None = None):
 
     return {"sales": [
         {
+            **pricing_fields(r),
             "sale_id": r["sale_id"],
             "sale_date": str(r["sale_date"]),
             "recorded_at": r["recorded_at"].isoformat() if r["recorded_at"] else None,
@@ -120,11 +143,12 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
         cursor = conn.cursor()
         lock_stock(cursor)
         if body.request_id:
-            cursor.execute('SELECT sale_id,sale_date,bricks_purchased,cost_per_brick,amount_received,other_charges,customer_id,transport_mode,transport_rate FROM brick_sales WHERE request_id=%s',(body.request_id,))
+            cursor.execute('SELECT sale_id,sale_date,bricks_purchased,cost_per_brick,amount_received,other_charges,customer_id,transport_mode,transport_rate,pricing_mode,entered_unit_price,other_base_amount FROM brick_sales WHERE request_id=%s',(body.request_id,))
             previous=cursor.fetchone()
             if previous:
-                if (previous['bricks_purchased']!=body.bricks_purchased or float(previous['cost_per_brick'])!=body.cost_per_brick
-                    or float(previous['amount_received'])!=body.amount_paid or float(previous['other_charges'])!=body.other_charges
+                if (previous['bricks_purchased']!=body.bricks_purchased or (previous['entered_unit_price'] if previous['entered_unit_price'] is not None else previous['cost_per_brick'])!=body.cost_per_brick
+                    or previous['pricing_mode']!=body.pricing_mode
+                    or float(previous['amount_received'])!=body.amount_paid or (previous['other_base_amount'] if previous['other_base_amount'] is not None else previous['other_charges'])!=body.other_charges
                     or (body.customer_id and previous['customer_id']!=body.customer_id)
                     or (body.sale_date and previous['sale_date']!=body.sale_date)
                     or (previous['transport_mode'] or 'none') != (body.transport_mode or 'none')
@@ -135,8 +159,8 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
         account=resolve_customer(cursor,body.customer_name,body.customer_mobile,body.customer_id)
         current_stock = get_outlet_stock(cursor)
 
-        transport_amount = transport_total(body.bricks_purchased,body.transport_mode,body.transport_rate)
-        tax = breakdown(body.bricks_purchased,body.cost_per_brick,body.other_charges,transport_amount=transport_amount)
+        tax = sale_pricing(body)
+        transport_amount = tax['transport_amount']
         amount_due, total_amount = tax["amount_due"], tax["total_amount"]
 
         now_time = datetime.datetime.now(ZoneInfo("Asia/Kolkata")).time()
@@ -148,7 +172,7 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'no')
                RETURNING sale_id""",
             (today, now_time, account["name"], account["phone"], body.bricks_purchased,
-             body.cost_per_brick, amount_due, body.other_charges, total_amount, body.amount_paid),
+             tax['cost_per_brick'], amount_due, tax['other_charges'], total_amount, body.amount_paid),
         )
         sale_id = cursor.fetchone()["sale_id"]
         cursor.execute('UPDATE brick_sales SET customer_id=%s,amount_received=%s,request_id=%s WHERE sale_id=%s',
@@ -158,6 +182,7 @@ def create_sale(body: BrickSaleRequest, user=Depends(require_manager)):
                        (tax['gst_rate'],tax['taxable_amount'],tax['gst_amount'],sale_id))
         cursor.execute('UPDATE brick_sales SET transport_mode=%s,transport_rate=%s,transport_amount=%s WHERE sale_id=%s',
                        (body.transport_mode or 'none',body.transport_rate,transport_amount,sale_id))
+        save_pricing(cursor, sale_id, body, tax)
         allocate_sale(cursor, sale_id, body.bricks_purchased, today)
         account_balance=record_sale(cursor,account['customer_id'],sale_id,total_amount,body.amount_paid,user['username'],today)
 
@@ -196,11 +221,13 @@ def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manag
         account=lock_account(cursor,identity['customer_id'])
         if body.customer_id and body.customer_id!=account['customer_id']:
             raise HTTPException(409,'A saved sale cannot be moved to a different customer.')
-        cursor.execute("SELECT sale_date, bricks_purchased, transport_mode FROM brick_sales WHERE sale_id = %s FOR UPDATE", (sale_id,))
+        cursor.execute("SELECT sale_date, bricks_purchased, transport_mode, pricing_mode FROM brick_sales WHERE sale_id = %s FOR UPDATE", (sale_id,))
         row = cursor.fetchone()
         if row is None:
             raise HTTPException(status_code=404, detail="Sale not found.")
 
+        if row['pricing_mode'] != 'legacy_inclusive' and body.pricing_mode == 'legacy_inclusive':
+            raise HTTPException(409, 'This sale uses pre-GST pricing. Reopen the updated app before correcting it.')
         if row['transport_mode'] in ('per_brick','flat') and body.transport_mode is None:
             raise HTTPException(409, 'This sale includes transport. Reopen the updated app before correcting it.')
         today = validate_entry_date(cursor, row["sale_date"])
@@ -214,8 +241,8 @@ def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manag
         cursor.execute("INSERT INTO sale_price_revision_audit(sale_id,reason,previous_record) SELECT sale_id,%s,to_jsonb(s) FROM brick_sales s WHERE sale_id=%s",('Manager dated sale/account correction',sale_id))
         restore_sale(cursor, sale_id, today)
 
-        transport_amount = transport_total(body.bricks_purchased,body.transport_mode,body.transport_rate)
-        tax = breakdown(body.bricks_purchased,body.cost_per_brick,body.other_charges,transport_amount=transport_amount)
+        tax = sale_pricing(body)
+        transport_amount = tax['transport_amount']
         amount_due, total_amount = tax["amount_due"], tax["total_amount"]
 
         cursor.execute(
@@ -225,7 +252,7 @@ def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manag
                  total_amount = %s, amount_paid = %s, is_edited = 'yes'
                WHERE sale_id = %s""",
             (account["name"], account["phone"], body.bricks_purchased,
-             body.cost_per_brick, amount_due, body.other_charges, total_amount,
+             tax['cost_per_brick'], amount_due, tax['other_charges'], total_amount,
              body.amount_paid, sale_id),
         )
 
@@ -233,6 +260,7 @@ def update_sale(sale_id: int, body: BrickSaleRequest, user=Depends(require_manag
                        (tax['gst_rate'],tax['taxable_amount'],tax['gst_amount'],sale_id))
         cursor.execute('UPDATE brick_sales SET transport_mode=%s,transport_rate=%s,transport_amount=%s WHERE sale_id=%s',
                        (body.transport_mode or 'none',body.transport_rate,transport_amount,sale_id))
+        save_pricing(cursor, sale_id, body, tax)
         allocate_sale(cursor, sale_id, body.bricks_purchased, today)
         cursor.execute('UPDATE brick_sales SET amount_received=%s WHERE sale_id=%s',(body.amount_paid,sale_id))
         account_balance=record_sale(cursor,account['customer_id'],sale_id,total_amount,body.amount_paid,user['username'],today,replace=True)
@@ -334,7 +362,7 @@ def get_sale_receipt(sale_id: int):
         cursor = conn.cursor()
         cursor.execute(
             """SELECT sale_id, sale_date, recorded_at, sale_timestamp, customer_name, customer_mobile, bricks_purchased,
-                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received, transport_mode, transport_rate, transport_amount
+                      cost_per_brick, amount_due, other_charges, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received, transport_mode, transport_rate, transport_amount, pricing_mode, entered_unit_price, brick_base_amount, transport_base_amount, other_base_amount
                FROM brick_sales WHERE sale_id = %s""",
             (sale_id,),
         )
@@ -349,6 +377,7 @@ def get_sale_receipt(sale_id: int):
         raise HTTPException(status_code=404, detail="Sale not found.")
 
     sale = {
+        **pricing_fields(row),
         "sale_id": row["sale_id"],
         "date": row["sale_date"].strftime("%Y-%m-%d"),
         "time": row["sale_timestamp"].strftime("%H:%M:%S"),
@@ -439,7 +468,7 @@ def customer_history(mobile: str):
         cursor = conn.cursor()
         cursor.execute(
             """SELECT sale_id, sale_date, recorded_at, sale_timestamp, customer_name, bricks_purchased,
-                      cost_per_brick, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received, transport_mode, transport_rate, transport_amount
+                      cost_per_brick, total_amount, amount_paid, is_edited, gst_rate, taxable_amount, gst_amount, customer_id, amount_received, transport_mode, transport_rate, transport_amount, pricing_mode, entered_unit_price, brick_base_amount, transport_base_amount, other_base_amount
                FROM brick_sales WHERE customer_mobile = %s
                ORDER BY sale_date DESC, sale_timestamp DESC""",
             (mobile,),

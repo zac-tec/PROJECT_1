@@ -318,57 +318,91 @@ async function prefillDefaultPrice() {
 }
 
 // Recomputes amount due / total, and only reveals Submit once everything is filled.
+let salePreviewTimer;
+let salePreviewVersion = 0;
+let salePreview = null;
+function salePricingInput() {
+  return {
+    pricing_mode: document.getElementById('salePricingMode').value,
+    bricks_purchased: Number(document.getElementById('saleBricksPurchased').value),
+    cost_per_brick: document.getElementById('saleCostPerBrick').value,
+    other_charges: document.getElementById('saleOtherCharges').value || '0',
+    transport_mode: document.getElementById('saleTransportMode').value,
+    transport_rate: document.getElementById('saleTransportMode').value === 'none' ? '0' : document.getElementById('saleTransportRate').value
+  };
+}
 function recalculateSale() {
-  const transportMode = document.getElementById('saleTransportMode').value;
-  const transportInput = document.getElementById('saleTransportRate');
-  const transportRate = transportMode === 'none' ? 0 : Number(transportInput.value);
-  document.getElementById('saleTransportFields').hidden = transportMode === 'none';
-  document.getElementById('saleTransportRateLabel').textContent = transportMode === 'per_brick' ? 'Transport per brick · ₹, includes GST' : 'Total transport for this sale · ₹, includes GST';
-  const bricks = parseInt(document.getElementById("saleBricksPurchased").value, 10);
-  const costPerBrick = parseFloat(document.getElementById("saleCostPerBrick").value);
-  const otherCharges = parseFloat(document.getElementById("saleOtherCharges").value) || 0;
-  const amountPaidRaw = document.getElementById("saleAmountPaid").value;
-
-  const box = document.getElementById("saleCalculatedBox");
-  const submitBtn = document.getElementById("saleSubmitBtn");
-
-  if (!bricks || bricks <= 0 || !costPerBrick || costPerBrick <= 0) {
-    box.classList.add("hidden");
-    submitBtn.disabled = true;
-    return;
-  }
-
-  if (transportMode !== 'none' && (!transportInput.value || !transportInput.checkValidity() || !Number.isFinite(transportRate) || transportRate <= 0)) {
-    box.classList.add('hidden'); submitBtn.disabled = true; return;
-  }
-  const transportAmount = Math.round(transportRate * (transportMode === 'per_brick' ? bricks : 1) * 100) / 100;
-  document.getElementById('saleTransportSummary').textContent = transportMode === 'none' ? 'No separate transport charge' : `Transport: ${money(transportAmount)} · Delivered price: ${money(costPerBrick + transportAmount/bricks)}/brick (before other charges)`;
-  const amountDue = bricks * costPerBrick;
-  const totalAmount = Math.round((amountDue + transportAmount + otherCharges)*100)/100;
-  const netAmount = Math.round(totalAmount/1.12*100)/100;
-  document.getElementById('saleGstBreakdown').textContent = `Base price: ${money(costPerBrick/1.12)}/brick · Before GST: ${money(netAmount)} · GST included (12%): ${money(totalAmount-netAmount)}`;
-
-  document.getElementById("saleAmountDue").textContent = money(amountDue);
-  document.getElementById("saleTotalAmount").textContent = money(totalAmount);
-  box.classList.remove("hidden");
-
-  // Keep the save action visible; enable it when the amounts are complete.
-  if (amountPaidRaw !== "" && parseFloat(amountPaidRaw) >= 0) {
-    submitBtn.disabled = false;
-    submitBtn.textContent = editingSaleId !== null ? "Update Sale" : "Submit Sale";
-  } else {
-    submitBtn.disabled = true;
-  }
+  clearTimeout(salePreviewTimer);
+  const version = ++salePreviewVersion;
+  salePreview = null;
+  const input = salePricingInput();
+  const legacy = input.pricing_mode === 'legacy_inclusive';
+  const delivered = input.pricing_mode === 'delivered_base';
+  const suffix = legacy ? 'includes GST' : 'before GST';
+  document.getElementById('salePriceLabel').textContent = `${delivered ? 'Delivered price' : 'Brick price'} per brick · ₹, ${suffix}`;
+  document.getElementById('saleOtherLabel').textContent = `Other charges · ₹, ${suffix}`;
+  document.getElementById('saleTransportFields').hidden = input.transport_mode === 'none';
+  document.getElementById('saleTransportRateLabel').textContent = `${input.transport_mode === 'per_brick' ? 'Driver charge per brick' : 'Total driver charge for this sale'} · ₹, ${suffix}`;
+  document.getElementById('saleTransportHint').textContent = legacy
+    ? 'Existing bill: values include GST. Choose a pre-GST method and enter the agreed amounts to correct it.'
+    : delivered ? 'Driver charge is already within the delivered price. We subtract it to find the brick value, then add GST once.'
+    : 'Enter the driver payment before GST. It is added to the brick value and excluded from profit.';
+  const box = document.getElementById('saleCalculatedBox');
+  const status = document.getElementById('salePricingStatus');
+  const button = document.getElementById('saleSubmitBtn');
+  button.disabled = true;
+  box.classList.add('hidden');
+  status.textContent = '';
+  const ids = ['saleBricksPurchased','saleCostPerBrick','saleOtherCharges'];
+  if (input.transport_mode !== 'none') ids.push('saleTransportRate');
+  if (ids.some(id => !document.getElementById(id).checkValidity()) || !input.bricks_purchased || !input.cost_per_brick || (input.transport_mode !== 'none' && !input.transport_rate)) return;
+  status.textContent = 'Calculating…';
+  salePreviewTimer = setTimeout(async () => {
+    try {
+      const d = await apiFetch('/manager/sales/preview', {method:'POST', body:input, busy:false});
+      if (version !== salePreviewVersion) return;
+      salePreview = {key:JSON.stringify(input), data:d};
+      status.textContent = '';
+      const rate = value => Number(value).toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:6});
+      document.getElementById('saleTransportSummary').textContent = legacy
+        ? `Transportation including GST: ${money(d.transport_amount)}`
+        : `Driver payment: ${money(d.transport_base_amount)} ÷ ${input.bricks_purchased} bricks = ₹${rate(d.transport_per_brick)}/brick. Brick price: ₹${rate(d.base_unit_price)} + transport: ₹${rate(d.transport_per_brick)} = ₹${rate(d.delivered_base_price)}/brick before GST (excluding other charges).`;
+      const breakdown = document.getElementById('saleGstBreakdown');
+      breakdown.replaceChildren();
+      const rows = legacy ? [['Before GST', d.taxable_amount], ['GST included (12%)', d.gst_amount]] : [
+        ['Bricks before GST', d.brick_base_amount], ['Driver payment', d.transport_base_amount],
+        ['Other charges before GST', d.other_base_amount], ['Subtotal before GST', d.taxable_amount],
+        ['GST on bricks', d.brick_gst], ['GST on transportation', d.transport_gst],
+        ['GST on other charges', d.other_gst], ['Total GST (12%)', d.gst_amount]
+      ];
+      for (const [label, amount] of rows) {
+        const term = document.createElement('dt'); term.textContent = label;
+        const value = document.createElement('dd'); value.textContent = money(amount); value.style.margin = '0';
+        breakdown.append(term, value);
+      }
+      document.getElementById('saleBrickAmountLabel').textContent = legacy ? 'Bricks including GST' : 'Revenue excluding GST and driver payment';
+      document.getElementById('saleAmountDue').textContent = money(legacy ? d.amount_due : Number(d.taxable_amount) - Number(d.transport_base_amount));
+      document.getElementById('saleTotalAmount').textContent = money(d.total_amount);
+      box.classList.remove('hidden');
+      const paid = document.getElementById('saleAmountPaid');
+      button.disabled = saleSaving || paid.value === '' || !paid.checkValidity();
+      button.textContent = editingSaleId !== null ? 'Update Sale' : 'Submit Sale';
+    } catch (error) {
+      if (version !== salePreviewVersion) return;
+      status.textContent = error.message || 'Unable to calculate. Check the amounts and your connection.';
+    }
+  }, 180);
 }
 
 function clearSaleForm() {
-  sessionUI.discard(['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleTransportMode', 'saleTransportRate', 'saleAmountPaid', 'saleCustomerAccount']);
+  sessionUI.discard(['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'salePricingMode', 'saleTransportMode', 'saleTransportRate', 'saleAmountPaid', 'saleCustomerAccount']);
   sessionUI.saleCleared();
   document.getElementById("saleCustomerName").value = "";
   document.getElementById("saleCustomerMobile").value = "";
   document.getElementById("saleBricksPurchased").value = "";
   document.getElementById("saleCostPerBrick").value = "";
   document.getElementById("saleOtherCharges").value = "0";
+  document.getElementById("salePricingMode").value = "brick_base";
   document.getElementById('saleTransportMode').value = 'none';
   document.getElementById('saleTransportRate').value = '';
   document.getElementById("saleAmountPaid").value = "";
@@ -383,6 +417,9 @@ function clearSaleForm() {
 // POST /manager/sales (new) or PUT /manager/sales/{id} (editing)
 async function submitSale() {
   if (saleSaving) return;
+  const pricing = salePricingInput();
+  if (!salePreview || salePreview.key !== JSON.stringify(pricing)) return showMessage(msgEl, 'Wait for the current price calculation before saving.', true);
+  if (editingSaleId !== null && !confirm(`Update this bill to ${money(salePreview.data.total_amount)} including GST? The customer account balance will be recalculated.`)) return;
   const dateInput = document.getElementById('productionDate');
   const sale_date = dateInput.value;
   if (!sale_date || !dateInput.checkValidity()) return showMessage(msgEl, 'Select an allowed entry date first.', true);
@@ -400,7 +437,7 @@ async function submitSale() {
   const transport_mode = document.getElementById('saleTransportMode').value;
   const transport_rate = transport_mode === 'none' ? 0 : Number(document.getElementById('saleTransportRate').value);
   if (transport_mode !== 'none' && (!document.getElementById('saleTransportRate').checkValidity() || !Number.isFinite(transport_rate) || transport_rate <= 0)) return showMessage(msgEl,'Enter a valid transport charge.',true);
-  const body = { sale_date, transport_mode, transport_rate, customer_id:Number(document.getElementById("saleCustomerAccount").value)||null,request_id:window.saleAccountRequestId(),customer_name, customer_mobile, bricks_purchased, cost_per_brick, other_charges, amount_paid };
+  const body = { sale_date, transport_mode, transport_rate, customer_id:Number(document.getElementById("saleCustomerAccount").value)||null,request_id:window.saleAccountRequestId(),customer_name, customer_mobile, bricks_purchased, cost_per_brick, other_charges, amount_paid, ...pricing };
 
   if (entryWindow && sale_date !== entryWindow.today && !confirm(`Save this sale and its money received for ${displayEntryDate(sale_date)}?`)) return;
   saleSaving = true; dateInput.disabled = true;
@@ -454,12 +491,13 @@ function editSale(sale) {
   document.getElementById("saleCustomerName").value = sale.customer_name;
   document.getElementById("saleCustomerMobile").value = sale.customer_mobile;
   document.getElementById("saleBricksPurchased").value = sale.bricks_purchased;
-  document.getElementById("saleCostPerBrick").value = sale.cost_per_brick;
-  document.getElementById("saleOtherCharges").value = sale.other_charges;
+  document.getElementById("salePricingMode").value = sale.pricing_mode || "legacy_inclusive";
+  document.getElementById("saleCostPerBrick").value = sale.entered_unit_price ?? sale.cost_per_brick;
+  document.getElementById("saleOtherCharges").value = sale.other_base_amount ?? sale.other_charges;
   document.getElementById('saleTransportMode').value = sale.transport_mode || 'none';
   document.getElementById('saleTransportRate').value = sale.transport_rate || '';
   document.getElementById("saleAmountPaid").value = sale.amount_received;
-  ['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'saleTransportMode', 'saleTransportRate', 'saleAmountPaid', 'saleCustomerAccount', 'productionDate'].forEach(id => sessionUI.record(document.getElementById(id)));
+  ['saleCustomerName', 'saleCustomerMobile', 'saleBricksPurchased', 'saleCostPerBrick', 'saleOtherCharges', 'salePricingMode', 'saleTransportMode', 'saleTransportRate', 'saleAmountPaid', 'saleCustomerAccount', 'productionDate'].forEach(id => sessionUI.record(document.getElementById(id)));
   recalculateSale();
   document.getElementById("saleCustomerName").scrollIntoView({ behavior: "smooth", block: "center" });
   showMessage(msgEl, `Editing sale for ${sale.customer_name}. Change the fields and click Update Sale.`);

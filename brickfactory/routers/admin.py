@@ -695,7 +695,7 @@ def calculate_monthly_profit(body: ProfitCalculatorRequest):
         estimated_cost_of_sales=round(cogs,2) if cogs is not None else None,overhead=overhead,
         misc_expenses=report['misc_expenses'],total_expenditures=round(expense,2) if expense is not None else None,
         net_profit=round(profit,2) if profit is not None else None,
-        note='Estimated profit: Revenue excludes GST. Entered sale prices include 12% GST; historical revenue uses the confirmed price where available. New invoice revenue uses saved taxable amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
+        note='Estimated profit: Revenue excludes GST and explicitly recorded driver charges. New sale entry supports pre-GST brick or delivered prices; historical estimates include 12% GST; historical revenue uses the confirmed price where available. New invoice revenue uses saved taxable amounts. Cost of sold bricks uses this month’s weighted production cost because opening-batch costs are unknown. Historical labour remains a legacy estimate where hours are missing. Full-month fixed charges apply; unrecorded expenses and historical payment status are unknown.')
 
 
 # ---------------------------------------------------------

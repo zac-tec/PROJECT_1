@@ -155,27 +155,34 @@
         <input id="saleCustomerMobile" type="text" placeholder="10-digit mobile number">
         <label>Bricks sold</label>
         <input id="saleBricksPurchased" type="number" step="1" min="1" oninput="recalculateSale()">
-        <label>Price per brick · ₹, includes 12% GST</label>
-        <input id="saleCostPerBrick" type="number" step="0.01" min="0.01" oninput="recalculateSale()">
+        <label for="salePricingMode">How was the price agreed?</label>
+        <select id="salePricingMode" onchange="recalculateSale()">
+          <option value="brick_base">Brick price + transportation, before GST</option>
+          <option value="delivered_base">Delivered price including transportation, before GST</option>
+          <option value="legacy_inclusive" hidden>Existing bill: amounts include GST</option>
+        </select>
+        <label for="saleCostPerBrick" id="salePriceLabel">Brick price per brick · ₹, before GST</label>
+        <input id="saleCostPerBrick" type="number" step="0.000001" min="0.01" oninput="recalculateSale()">
         <label for="saleTransportMode">Transportation</label>
         <select id="saleTransportMode" onchange="recalculateSale()">
           <option value="none">No transport charge</option>
-          <option value="per_brick">Add transport per brick</option>
-          <option value="flat">Add one total transport charge</option>
+          <option value="per_brick">Driver charge per brick</option>
+          <option value="flat">Total driver charge for this sale</option>
         </select>
         <div id="saleTransportFields" hidden>
-          <label for="saleTransportRate" id="saleTransportRateLabel">Transport charge · ₹, includes GST</label>
+          <label for="saleTransportRate" id="saleTransportRateLabel">Driver charge · ₹, before GST</label>
           <input id="saleTransportRate" type="number" min="0.01" step="0.01" inputmode="decimal" oninput="recalculateSale()">
         </div>
-        <p id="saleTransportHint">Enter the brick price above. Add transport here only when it is charged separately.</p>
-        <label>Other charges · ₹, includes GST</label>
+        <p id="saleTransportHint">Enter the amount paid to the driver. GST is added to the bill, not to the driver payment.</p>
+        <label id="saleOtherLabel">Other charges · ₹, before GST</label>
         <input id="saleOtherCharges" type="number" step="0.01" min="0" value="0" oninput="recalculateSale()">
 
+        <p id="salePricingStatus" role="status"></p>
         <div id="saleCalculatedBox" class="hidden" style="background:var(--primary-light); border-radius:8px; padding:12px; margin-bottom:14px;">
           <p id="saleTransportSummary" style="margin:4px 0;"></p>
-          <p id="saleGstBreakdown" style="margin:4px 0;"></p>
-          <p style="margin:4px 0;">Amount Due: <strong id="saleAmountDue">—</strong></p>
-          <p style="margin:4px 0;">Total Amount (incl. other charges): <strong id="saleTotalAmount">—</strong></p>
+          <dl id="saleGstBreakdown" style="display:grid;grid-template-columns:1fr auto;gap:8px;margin:12px 0;"></dl>
+          <p style="margin:4px 0;"><span id="saleBrickAmountLabel">Bricks before GST</span>: <strong id="saleAmountDue">—</strong></p>
+          <p style="margin:4px 0;">Final bill including GST: <strong id="saleTotalAmount">—</strong></p>
         </div>
 
         <label>Money received on this date · ₹</label>
@@ -268,11 +275,11 @@
   </main>
 </div>
 
-<script src="js/api-security1.js?v=mobile1"></script>
-<script src="js/recovery.js?v=transport1"></script>
+<script src="js/api-security1.js?v=pricing1"></script>
+<script src="js/recovery.js?v=pricing1"></script>
 <script src="js/pwa.js?v=activity2"></script>
 <script src="js/labour-groups.js?v=activity2"></script>
-<script src="js/manager-security1.js?v=transport1"></script>
+<script src="js/manager-security1.js?v=pricing1"></script>
 <script src="js/presence.js?v=presence2"></script>
 <script src="js/notifications.js?v=push1"></script>
 <script src="js/production-settings.js?v=entrydates1"></script>

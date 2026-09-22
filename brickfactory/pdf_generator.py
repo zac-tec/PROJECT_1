@@ -168,48 +168,84 @@ def generate_sale_receipt(sale: dict) -> bytes:
     pdf.cell(0, 5, f"Mobile: {sale['customer_mobile']}", ln=True)
     pdf.ln(3)
 
-    # ---- Line Items Table ----
-    # Usable width on A5 with 12mm margins each side = 148 - 24 = 124mm.
-    # These must add up to 124 or less, or columns run off the page edge.
-    col_widths = [58, 18, 22, 26]  # Description, Qty, Rate, Amount — sums to 124
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_fill_color(240, 240, 240)
-    pdf.cell(col_widths[0], 7, "Description", border=1, fill=True)
-    pdf.cell(col_widths[1], 7, "Qty", border=1, align="C", fill=True)
-    pdf.cell(col_widths[2], 7, "Rate incl. GST", border=1, align="R", fill=True)
-    pdf.cell(col_widths[3], 7, "Amount", border=1, align="R", fill=True, ln=True)
-
-    pdf.set_font("Helvetica", "", 9)
-    pdf.cell(col_widths[0], 7, "Fly Ash Bricks", border=1)
-    pdf.cell(col_widths[1], 7, str(sale["bricks_purchased"]), border=1, align="C")
-    pdf.cell(col_widths[2], 7, f"{sale['cost_per_brick']:.2f}", border=1, align="R")
-    pdf.cell(col_widths[3], 7, f"{sale['amount_due']:.2f}", border=1, align="R", ln=True)
-
-    if sale.get('transport_amount', 0) > 0:
-        per_brick = sale.get('transport_mode') == 'per_brick'
-        pdf.cell(col_widths[0], 7, 'Transportation', border=1)
-        pdf.cell(col_widths[1], 7, str(sale['bricks_purchased']) if per_brick else '-', border=1, align='C')
-        pdf.cell(col_widths[2], 7, f"{sale['transport_rate']:.2f}" if per_brick else '-', border=1, align='R')
-        pdf.cell(col_widths[3], 7, f"{sale['transport_amount']:.2f}", border=1, align='R', ln=True)
-
-    if sale["other_charges"] > 0:
-        pdf.cell(col_widths[0], 7, "Other Charges", border=1)
-        pdf.cell(col_widths[1], 7, "-", border=1, align="C")
-        pdf.cell(col_widths[2], 7, "-", border=1, align="R")
-        pdf.cell(col_widths[3], 7, f"{sale['other_charges']:.2f}", border=1, align="R", ln=True)
-
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.cell(sum(col_widths[:3]), 7, "Total", border=1, align="R")
-    pdf.cell(col_widths[3], 7, f"Rs. {sale['total_amount']:.2f}", border=1, align="R", ln=True)
-    pdf.ln(4)
-
-    if sale.get('gst_rate') is not None:
+    if sale.get('brick_base_amount') is not None:
+        # New invoices display pre-GST line values, then add GST exactly once.
+        widths = [66, 24, 34]
+        pdf.set_font('Helvetica', 'B', 9)
+        for width, label in zip(widths, ['Description (before GST)', 'Qty', 'Amount (Rs.)']):
+            pdf.cell(width, 7, label, border=1)
+        pdf.ln()
         pdf.set_font('Helvetica', '', 9)
-        base_rate=sale['cost_per_brick']/(1+sale['gst_rate']/100)
-        pdf.cell(0, 5, f"Base price per brick: Rs. {base_rate:.4f}", ln=True)
-        pdf.cell(0, 5, f"Taxable value: Rs. {sale['taxable_amount']:.2f}", ln=True)
-        pdf.cell(0, 5, f"GST included ({sale['gst_rate']:g}%): Rs. {sale['gst_amount']:.2f}", ln=True)
+        def invoice_row(label, quantity, amount):
+            pdf.cell(widths[0], 7, label, border=1)
+            pdf.cell(widths[1], 7, str(quantity), border=1, align='R')
+            pdf.cell(widths[2], 7, f"{amount:,.2f}", border=1, align='R', ln=True)
+        invoice_row('Fly Ash Bricks', sale['bricks_purchased'], sale['brick_base_amount'])
+        invoice_row('Transportation', '-', sale['transport_base_amount'])
+        if sale['other_base_amount']:
+            invoice_row('Other charges', '-', sale['other_base_amount'])
+        invoice_row('Subtotal before GST', '-', sale['taxable_amount'])
+        from decimal import Decimal, ROUND_HALF_UP
+        transport_gst = (Decimal(str(sale['transport_base_amount'])) * Decimal('0.12')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        other_gst = (Decimal(str(sale['other_base_amount'])) * Decimal('0.12')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        brick_gst = Decimal(str(sale['gst_amount'])) - transport_gst - other_gst
+        invoice_row('GST 12% - bricks', '-', brick_gst)
+        invoice_row('GST 12% - transportation', '-', transport_gst)
+        if other_gst:
+            invoice_row('GST 12% - other charges', '-', other_gst)
+        pdf.set_font('Helvetica', 'B', 9)
+        invoice_row('Total including GST', '-', sale['total_amount'])
+        pdf.set_font('Helvetica', '', 9)
+        q = sale['bricks_purchased']
         pdf.ln(2)
+        pdf.cell(0, 5, f"Brick rate before GST: Rs. {sale['brick_base_amount']/q:.6f}", ln=True)
+        pdf.cell(0, 5, f"Transport per brick before GST: Rs. {sale['transport_base_amount']/q:.6f}", ln=True)
+        pdf.cell(0, 5, f"Delivered rate before GST: Rs. {(sale['brick_base_amount']+sale['transport_base_amount'])/q:.6f}", ln=True)
+        pdf.cell(0, 5, 'Unit rates shown rounded; invoice totals use full amounts.', ln=True)
+        pdf.ln(2)
+    else:
+        # ---- Line Items Table ----
+        # Usable width on A5 with 12mm margins each side = 148 - 24 = 124mm.
+        # These must add up to 124 or less, or columns run off the page edge.
+        col_widths = [58, 18, 22, 26]  # Description, Qty, Rate, Amount — sums to 124
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(col_widths[0], 7, "Description", border=1, fill=True)
+        pdf.cell(col_widths[1], 7, "Qty", border=1, align="C", fill=True)
+        pdf.cell(col_widths[2], 7, "Rate incl. GST", border=1, align="R", fill=True)
+        pdf.cell(col_widths[3], 7, "Amount", border=1, align="R", fill=True, ln=True)
+
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(col_widths[0], 7, "Fly Ash Bricks", border=1)
+        pdf.cell(col_widths[1], 7, str(sale["bricks_purchased"]), border=1, align="C")
+        pdf.cell(col_widths[2], 7, f"{sale['cost_per_brick']:.2f}", border=1, align="R")
+        pdf.cell(col_widths[3], 7, f"{sale['amount_due']:.2f}", border=1, align="R", ln=True)
+
+        if sale.get('transport_amount', 0) > 0:
+            per_brick = sale.get('transport_mode') == 'per_brick'
+            pdf.cell(col_widths[0], 7, 'Transportation', border=1)
+            pdf.cell(col_widths[1], 7, str(sale['bricks_purchased']) if per_brick else '-', border=1, align='C')
+            pdf.cell(col_widths[2], 7, f"{sale['transport_rate']:.2f}" if per_brick else '-', border=1, align='R')
+            pdf.cell(col_widths[3], 7, f"{sale['transport_amount']:.2f}", border=1, align='R', ln=True)
+
+        if sale["other_charges"] > 0:
+            pdf.cell(col_widths[0], 7, "Other Charges", border=1)
+            pdf.cell(col_widths[1], 7, "-", border=1, align="C")
+            pdf.cell(col_widths[2], 7, "-", border=1, align="R")
+            pdf.cell(col_widths[3], 7, f"{sale['other_charges']:.2f}", border=1, align="R", ln=True)
+
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.cell(sum(col_widths[:3]), 7, "Total", border=1, align="R")
+        pdf.cell(col_widths[3], 7, f"Rs. {sale['total_amount']:.2f}", border=1, align="R", ln=True)
+        pdf.ln(4)
+
+        if sale.get('gst_rate') is not None:
+            pdf.set_font('Helvetica', '', 9)
+            base_rate=sale['cost_per_brick']/(1+sale['gst_rate']/100)
+            pdf.cell(0, 5, f"Base price per brick: Rs. {base_rate:.4f}", ln=True)
+            pdf.cell(0, 5, f"Taxable value: Rs. {sale['taxable_amount']:.2f}", ln=True)
+            pdf.cell(0, 5, f"GST included ({sale['gst_rate']:g}%): Rs. {sale['gst_amount']:.2f}", ln=True)
+            pdf.ln(2)
 
     # ---- Payment Summary ----
     balance_due = round(sale["total_amount"] - sale["amount_paid"], 2)
