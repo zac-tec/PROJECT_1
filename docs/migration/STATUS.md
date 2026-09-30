@@ -60,3 +60,13 @@ If www is an A record instead, point it to the new IP. TTL300 if available. Pres
 ## Rollback
 
 New production writes may now exist on target. NEVER simply re-enable the old app or redirect traffic to its stale database. Freeze target writes, back up current target data, and synchronize it into a compatible rollback environment or fix forward. The source final dump is a historical recovery point only.
+
+## 1 October 2026 — app subdomain transition
+
+- `app.neobrickskerala.com` configured with its own Let's Encrypt certificate alongside `neobricks.online`, serving the same frontend/backend/database.
+- Both origins allowed in CORS. VAPID contact subject updated to the new app address; signing keys and existing subscriptions retained.
+- Existing users/accounts/data unchanged. New-origin PWA requires separate installation/login and push enrollment. Old address remains available.
+- User reports Resend domain verified; public DKIM and return-path records exist for `mail.neobrickskerala.com`.
+- Existing email sender/API key remain active. Replacement key has NOT been installed or tested.
+- Secure key-entry helper installed: `sudo /usr/local/sbin/neo-stage-resend-key`. Reads a hidden key interactively and writes root-only `/root/migration/resend-key.pending`; does not activate it or send email.
+- Next: user privately stages a replacement key (not the one previously disclosed in chat) and specifies an authorized test recipient; then verify and switch sender to the verified mail subdomain.
