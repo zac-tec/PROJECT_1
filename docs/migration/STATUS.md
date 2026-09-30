@@ -2,7 +2,7 @@
 
 ## Current state
 
-**The new VPS is the sole production writer. The old VPS only forwards the production domains. DNS updates are pending user confirmation.**
+**Migration complete. The new VPS is the sole production writer. Both domains now point to it on authoritative DNS; the old VPS forwards cached traffic during propagation.**
 
 - New server: `neo-admin@187.126.116.149`. Key-only SSH and passwordless sudo verified. Root SSH disabled. Hostinger console remains the recovery route.
 - Old server: `neo-admin@187.53.135.144`. `brickfactory.service` stopped and disabled. Source backup cron disabled. Do NOT restart its stale database-backed app.
@@ -12,7 +12,7 @@
 - Snapshot contained 17 sales, billed total ₹631,486. This is a cutover snapshot, not a permanent current balance.
 - App baseline: `0a1d0e2` plus scheduler guard from `82f7fb0`. No historical imports or opening-balance resets performed.
 - Authenticated sales retrieval, live ₹22,876 price example, app health and all three public HTTPS hosts passed.
-- Current operator is still finalizing backup/certificate verification and DNS. Other sessions must read the latest checkpoint before making changes.
+- Current migration session complete; no server operation remains running. Another session may resume maintenance after reading this checkpoint.
 
 ## Configuration
 
@@ -37,11 +37,13 @@ Existing layout preserved: app `/home/vps/apps/brickfactory`, company website `/
 - Google Drive destination: `gdrive:brickfactory-backups/hostinger/client-vps-187126116149`, using the EXISTING rclone account. This migration does not transfer Google Drive or Resend account ownership/billing.
 - New target configuration archive: `/root/migration/new-vps-config-20260930.tar.gz` (private).
 - Certbot renewal timer enabled on target for the two production certificates. Old renewal entries for these two domains parked with source final backup; preview/test renewals remain separate.
-- Cloud backup restore and renewal dry-run: verification running at this checkpoint; update result before claiming complete.
+- Cloud backup uploaded, downloaded back byte-for-byte, and fully restored to a temporary database successfully. Temporary verification database removed.
+- Certbot dry-run succeeded for both production certificates, including www.
+- Private configuration backup also downloaded to local `work/migration/new-vps-config-20260930.tar.gz`, mode 600.
 
 ## DNS instructions and remaining steps
 
-User has been asked to update:
+Verified on authoritative nameservers (`helios` for the app; `nova` and `cosmos` for the company domain):
 
 | Zone | Type / name | Target |
 |---|---|---|
@@ -51,11 +53,9 @@ User has been asked to update:
 
 If www is an A record instead, point it to the new IP. TTL300 if available. Preserve mail/TXT/NS records. Public resolver checks found no actual AAAA record; local DNS64 synthesis is not a DNS-zone AAAA record and must not be treated as one.
 
-1. Finish offsite restore and certificate renewal verification.
-2. Verify user DNS edits on authoritative servers and public resolvers.
-3. Retain old forwarding server through propagation and agreed rollback window. Do not cancel it immediately after DNS change.
-4. Client reviews normal app/website workflows. Client ownership of backup/email accounts and domain renewal still needs a separate handover if currently developer-owned.
-5. Retire old forwarding and securely remove client data/secrets only after explicit retirement coordination.
+1. Keep old forwarding server running for at least 48 hours while resolver caches expire; app TTL was 14,400 seconds and company TTL3,600 at verification. Retain backups for the agreed rollback window.
+2. Client reviews normal app/website workflows. No real email/push test was sent; settings and secrets were preserved. Client ownership of backup/email accounts and domain renewal still needs a separate handover if currently developer-owned.
+3. Retire old forwarding and securely remove client data/secrets only after explicit retirement coordination. No automatic shutdown is scheduled.
 
 ## Rollback
 
