@@ -15,6 +15,7 @@ be normal, boring, synchronous Python — no async complexity needed.
 """
 
 import datetime
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -72,7 +73,10 @@ def _parse_time(time_str: str):
 
 
 def start_scheduler():
-    """Call once at app startup — reads the current schedule time from the DB and starts the job."""
+    """Call once at startup. Disable on migration rehearsals to prevent duplicate deliveries."""
+    if os.getenv('ENABLE_SCHEDULER', 'true').lower() not in ('1', 'true', 'yes'):
+        print('[scheduler] Disabled by ENABLE_SCHEDULER.')
+        return
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -94,7 +98,9 @@ def start_scheduler():
 
 
 def reschedule(time_str: str):
-    """Called from the Delivery Settings endpoint whenever the admin changes the send time."""
+    """Called from Delivery Settings; rehearsal environments do not run jobs."""
+    if os.getenv('ENABLE_SCHEDULER', 'true').lower() not in ('1', 'true', 'yes'):
+        return
     hour, minute = _parse_time(time_str)
     scheduler.reschedule_job(JOB_ID, trigger=CronTrigger(hour=hour, minute=minute))
     print(f"[scheduler] Daily report job rescheduled to {hour:02d}:{minute:02d}.")
