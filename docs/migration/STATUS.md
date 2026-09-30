@@ -70,3 +70,12 @@ New production writes may now exist on target. NEVER simply re-enable the old ap
 - Existing email sender/API key remain active. Replacement key has NOT been installed or tested.
 - Secure key-entry helper installed: `sudo /usr/local/sbin/neo-stage-resend-key`. Reads a hidden key interactively and writes root-only `/root/migration/resend-key.pending`; does not activate it or send email.
 - Next: user privately stages a replacement key (not the one previously disclosed in chat) and specifies an authorized test recipient; then verify and switch sender to the verified mail subdomain.
+
+## 1 October 2026 — Resend transition completed
+
+- One authorized test sent to sachusaji675@gmail.com from `NEO BRICKS <reports@mail.neobrickskerala.com>` using the privately staged replacement key.
+- Resend reported `delivered` for message `01a0f3b3-5387-7548-b639-3a69f4c1ae50` (provider delivery confirmation, not confirmation of inbox placement).
+- Production `RESEND_API_KEY` and `RESEND_FROM_EMAIL` switched to the new account and sender. App restarted successfully; both app addresses remain healthy.
+- Prior configuration preserved root-only at `/root/migration/app-subdomain-20261001/env.before-resend-switch`; pending key file removed. Old private backup archives still contain prior credentials and must be protected.
+- No customer report recipient, report schedule, business record, or PWA signing key changed.
+- Old Resend key/account can be retired separately after confirming it is not used elsewhere. No key was revoked by this operation.
