@@ -1,5 +1,7 @@
 # NEO BRICKS migration handover
 
+> Migration progressed on 30 September 2026: read **STATUS.md first**. The new VPS is now the production writer; the old app is disabled. The preparation notes below are historical context, not current execution instructions.
+
 Updated: 24 September 2026. Use this file to resume the migration from another coding session/account.
 
 ## Current decision and status
